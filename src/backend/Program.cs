@@ -1,10 +1,33 @@
+// 1. Todas as diretivas 'using' devem vir primeiro, no topo do arquivo.
+using Microsoft.EntityFrameworkCore;
+using CajuAjuda.Backend.Data;
+using CajuAjuda.Backend.Repositories;
+using CajuAjuda.Backend.Services;
+
+// 2. A variável 'builder' é criada apenas UMA vez.
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// 3. Aqui adicionamos todos os serviços que a aplicação vai usar.
+// Pega a string de conexão do appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Registra o DbContext e configura para usar o SQL Server
+builder.Services.AddDbContext<CajuAjudaDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+builder.Services.AddControllers();
+
+
+// Serviços para a documentação da API (Swagger)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddControllers();
+
+
+// 4. A variável 'app' é criada para configurar o pipeline de requisições.
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,29 +39,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Mapeia os controllers que criaremos no futuro
+app.MapControllers();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
