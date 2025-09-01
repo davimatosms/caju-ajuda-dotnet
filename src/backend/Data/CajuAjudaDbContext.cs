@@ -14,7 +14,7 @@ public class CajuAjudaDbContext : DbContext
     public DbSet<Mensagem> Mensagens { get; set; }
     public DbSet<Anexo> Anexos { get; set; }
 
-    // ADICIONE ESTE MÉTODO ABAIXO
+   
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -24,18 +24,18 @@ public class CajuAjudaDbContext : DbContext
             .HasOne(m => m.Chamado)
             .WithMany(c => c.Mensagens)
             .HasForeignKey(m => m.ChamadoId)
-            .OnDelete(DeleteBehavior.Restrict); // <-- AQUI ESTÁ A MUDANÇA
+            .OnDelete(DeleteBehavior.Restrict); 
 
         modelBuilder.Entity<Mensagem>()
             .HasOne(m => m.Autor)
             .WithMany() // Relação sem coleção de volta em Usuario
             .HasForeignKey(m => m.AutorId)
-            .OnDelete(DeleteBehavior.Cascade); // Mantemos o cascade para o autor
+            .OnDelete(DeleteBehavior.Cascade); 
             
         modelBuilder.Entity<Chamado>()
             .HasOne(c => c.Cliente)
             .WithMany(u => u.Chamados)
             .HasForeignKey(c => c.ClienteId)
-            .OnDelete(DeleteBehavior.Cascade); // Mantemos o cascade para o cliente
+            .OnDelete(DeleteBehavior.Cascade); 
     }
 }
