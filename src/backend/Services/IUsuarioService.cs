@@ -6,4 +6,5 @@ namespace CajuAjuda.Backend.Services;
 public interface IUsuarioService
 {
     Task<Usuario> RegisterClienteAsync(UsuarioCreateDto usuarioDto);
+    Task<Usuario?> AuthenticateAsync(LoginDto loginDto);
 }

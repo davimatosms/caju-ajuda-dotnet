@@ -32,13 +32,26 @@ public class UsuarioService : IUsuarioService
             Nome = usuarioDto.Nome,
             Email = usuarioDto.Email,
             Senha = passwordHash,
-            Role = Role.CLIENTE, // Todo novo cadastro é um cliente
-            Enabled = true // No futuro, podemos mudar para false para verificação de e-mail
+            Role = Role.CLIENTE, // Todo novo cadastro via este método é um cliente
+            Enabled = true
         };
 
         // 4. Salvar o novo usuário no banco de dados
         await _usuarioRepository.AddAsync(novoUsuario);
 
         return novoUsuario;
+    }
+
+    public async Task<Usuario?> AuthenticateAsync(LoginDto loginDto)
+    {
+        var user = await _usuarioRepository.GetByEmailAsync(loginDto.Email);
+
+        // Se o usuário não existe ou a senha está incorreta (após verificação do hash), retorna nulo
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Senha, user.Senha))
+        {
+            return null;
+        }
+
+        return user;
     }
 }
