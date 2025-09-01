@@ -1,0 +1,19 @@
+meta {
+  name: Cadastro de Cliente
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://localhost:7113/api/auth/register/cliente
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nome": "Cliente Bruno Teste",
+    "email": "bruno@teste.com",
+    "senha": "senha123"
+  }
+}
