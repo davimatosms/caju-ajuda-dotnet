@@ -8,7 +8,6 @@ public class UsuarioRepository : IUsuarioRepository
 {
     private readonly CajuAjudaDbContext _context;
 
-    // O DbContext é injetado aqui pelo sistema de injeção de dependência do .NET
     public UsuarioRepository(CajuAjudaDbContext context)
     {
         _context = context;
@@ -16,15 +15,23 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario?> GetByEmailAsync(string email)
     {
-        // Usa LINQ para buscar o primeiro usuário que corresponde ao e-mail
         return await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<Usuario?> GetByIdAsync(long id)
+    {
+        return await _context.Usuarios.FindAsync(id);
     }
 
     public async Task AddAsync(Usuario usuario)
     {
-        // Adiciona o novo usuário ao DbContext
         _context.Usuarios.Add(usuario);
-        // Salva as mudanças no banco de dados
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(Usuario usuario)
+    {
+        _context.Usuarios.Update(usuario);
         await _context.SaveChangesAsync();
     }
 }
