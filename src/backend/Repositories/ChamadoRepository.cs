@@ -21,28 +21,42 @@ public class ChamadoRepository : IChamadoRepository
 
     public async Task<IEnumerable<Chamado>> GetByClienteIdAsync(long clienteId)
     {
-        // Retorna todos os chamados onde o ClienteId corresponde ao ID fornecido
         return await _context.Chamados
             .Where(c => c.ClienteId == clienteId)
-            .OrderByDescending(c => c.DataCriacao) // Ordena pelos mais recentes
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Chamado>> GetAllAsync()
-    {
-        // Retorna todos os chamados, incluindo os dados do cliente relacionado
-        // "Include" é o equivalente ao JOIN para carregar o objeto Usuario
-        // Ordena pelos mais recentes
-        return await _context.Chamados
-            .Include(c => c.Cliente)
             .OrderByDescending(c => c.DataCriacao)
             .ToListAsync();
     }
 
+    public async Task<(IEnumerable<Chamado> Chamados, int TotalCount)> GetAllAsync(int pageNumber, int pageSize, StatusChamado? status, PrioridadeChamado? prioridade)
+    {
+        var query = _context.Chamados.Include(c => c.Cliente).AsQueryable();
+
+        // Aplica os filtros se eles foram fornecidos
+        if (status.HasValue)
+        {
+            query = query.Where(c => c.Status == status.Value);
+        }
+
+        if (prioridade.HasValue)
+        {
+            query = query.Where(c => c.Prioridade == prioridade.Value);
+        }
+
+        // Conta o total de itens *depois* de aplicar os filtros
+        var totalCount = await query.CountAsync();
+
+        // Aplica a paginação e ordenação
+        var chamados = await query
+            .OrderByDescending(c => c.DataCriacao)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (chamados, totalCount);
+    }
+
     public async Task<Chamado?> GetByIdAsync(long id)
     {
-        // Retorna um único chamado pelo seu ID
-        // Inclui o Cliente, as Mensagens e o Autor de cada mensagem para a tela de detalhes
         return await _context.Chamados
             .Include(c => c.Cliente)
             .Include(c => c.Mensagens)
@@ -51,9 +65,8 @@ public class ChamadoRepository : IChamadoRepository
     }
 
     public async Task UpdateAsync(Chamado chamado)
-{
-    // Marca a entidade como modificada para que o EF Core gere o comando UPDATE
-    _context.Chamados.Update(chamado);
-    await _context.SaveChangesAsync();
-}
+    {
+        _context.Chamados.Update(chamado);
+        await _context.SaveChangesAsync();
+    }
 }
