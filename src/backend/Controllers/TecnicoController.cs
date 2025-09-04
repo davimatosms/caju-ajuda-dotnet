@@ -1,14 +1,17 @@
+using CajuAjuda.Backend.Helpers;
+using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace CajuAjuda.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "TECNICO,ADMIN")] // Protege todos os endpoints para Técnicos e Admins
+[Authorize(Roles = "TECNICO,ADMIN")]
 public class TecnicoController : ControllerBase
 {
     private readonly IChamadoService _chamadoService;
@@ -20,13 +23,25 @@ public class TecnicoController : ControllerBase
         _mensagemService = mensagemService;
     }
 
-    [HttpGet("chamados")] // Rota: GET api/tecnico/chamados
-    public async Task<IActionResult> GetAllChamados()
+    [HttpGet("chamados")]
+    public async Task<IActionResult> GetAllChamados([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] StatusChamado? status = null, [FromQuery] PrioridadeChamado? prioridade = null)
     {
         try
         {
-            var chamados = await _chamadoService.GetAllChamadosAsync();
-            return Ok(chamados);
+            var pagedResult = await _chamadoService.GetAllChamadosAsync(pageNumber, pageSize, status, prioridade);
+
+            var paginationMetadata = new
+            {
+                pagedResult.TotalCount,
+                pagedResult.PageSize,
+                pagedResult.CurrentPage,
+                pagedResult.TotalPages,
+                pagedResult.HasNext,
+                pagedResult.HasPrevious
+            };
+            Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+            return Ok(pagedResult.Items);
         }
         catch (Exception ex)
         {
@@ -34,7 +49,7 @@ public class TecnicoController : ControllerBase
         }
     }
     
-    [HttpGet("chamados/{id}")] // Rota: GET api/tecnico/chamados/123
+    [HttpGet("chamados/{id}")]
     public async Task<IActionResult> GetChamadoById(long id)
     {
         var userEmail = User.FindFirstValue(ClaimTypes.Email);
@@ -60,7 +75,7 @@ public class TecnicoController : ControllerBase
         }
     }
 
-    [HttpPost("chamados/{id}/mensagens")] // Rota: POST api/tecnico/chamados/123/mensagens
+    [HttpPost("chamados/{id}/mensagens")]
     public async Task<IActionResult> AddMensagemTecnico(long id, [FromBody] MensagemCreateDto mensagemDto)
     {
         if (!ModelState.IsValid)
@@ -91,7 +106,7 @@ public class TecnicoController : ControllerBase
         }
     }
     
-    [HttpPatch("chamados/{id}/status")] // Rota: PATCH api/tecnico/chamados/123/status
+    [HttpPatch("chamados/{id}/status")]
     public async Task<IActionResult> UpdateChamadoStatus(long id, [FromBody] ChamadoUpdateStatusDto statusDto)
     {
         if (!ModelState.IsValid)
