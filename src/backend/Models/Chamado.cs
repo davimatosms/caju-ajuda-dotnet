@@ -42,15 +42,21 @@ public class Chamado
 
     public DateTime? DataFechamento { get; set; }
     
-    // Chave Estrangeira para o Cliente
+    public int? NotaAvaliacao { get; set; } // Nota de 1 a 5, pode ser nula
+    
+    public string? ComentarioAvaliacao { get; set; } // Comentário opcional
+    
+    // Relação com o Cliente
     public long ClienteId { get; set; }
-
     [ForeignKey("ClienteId")]
     public virtual Usuario Cliente { get; set; } = null!;
     
-    // Propriedade de navegação: um chamado pode ter muitas mensagens
+    // Relação com o Técnico Responsável (pode ser nulo)
+    public long? TecnicoResponsavelId { get; set; }
+    [ForeignKey("TecnicoResponsavelId")]
+    public virtual Usuario? TecnicoResponsavel { get; set; }
+    
+    // Propriedades de navegação
     public virtual ICollection<Mensagem> Mensagens { get; set; } = new List<Mensagem>();
-
-    // Propriedade de navegação: um chamado pode ter muitos anexos (diretamente)
     public virtual ICollection<Anexo> Anexos { get; set; } = new List<Anexo>();
 }

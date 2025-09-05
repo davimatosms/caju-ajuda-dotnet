@@ -4,6 +4,7 @@ using CajuAjuda.Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CajuAjuda.Backend.Migrations
 {
     [DbContext(typeof(CajuAjudaDbContext))]
-    partial class CajuAjudaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250905165803_AddAvaliacaoToChamado")]
+    partial class AddAvaliacaoToChamado
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,51 +103,6 @@ namespace CajuAjuda.Backend.Migrations
                     b.HasIndex("TecnicoResponsavelId");
 
                     b.ToTable("Chamados");
-                });
-
-            modelBuilder.Entity("CajuAjuda.Backend.Models.KbArtigo", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("CategoriaId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Conteudo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoriaId");
-
-                    b.ToTable("KbArtigos");
-                });
-
-            modelBuilder.Entity("CajuAjuda.Backend.Models.KbCategoria", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("KbCategorias");
                 });
 
             modelBuilder.Entity("CajuAjuda.Backend.Models.Mensagem", b =>
@@ -269,17 +227,6 @@ namespace CajuAjuda.Backend.Migrations
                     b.Navigation("TecnicoResponsavel");
                 });
 
-            modelBuilder.Entity("CajuAjuda.Backend.Models.KbArtigo", b =>
-                {
-                    b.HasOne("CajuAjuda.Backend.Models.KbCategoria", "Categoria")
-                        .WithMany("Artigos")
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Categoria");
-                });
-
             modelBuilder.Entity("CajuAjuda.Backend.Models.Mensagem", b =>
                 {
                     b.HasOne("CajuAjuda.Backend.Models.Usuario", "Autor")
@@ -304,11 +251,6 @@ namespace CajuAjuda.Backend.Migrations
                     b.Navigation("Anexos");
 
                     b.Navigation("Mensagens");
-                });
-
-            modelBuilder.Entity("CajuAjuda.Backend.Models.KbCategoria", b =>
-                {
-                    b.Navigation("Artigos");
                 });
 
             modelBuilder.Entity("CajuAjuda.Backend.Models.Usuario", b =>
