@@ -1,3 +1,4 @@
+using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Repositories;
 using CajuAjuda.Backend.Services.Dtos;
@@ -19,57 +20,77 @@ public class MensagemService : IMensagemService
 
     public async Task<Mensagem> AddMensagemAsync(long chamadoId, MensagemCreateDto mensagemDto, string userEmail, string userRole)
     {
-        // 1. Validações
         var autor = await _usuarioRepository.GetByEmailAsync(userEmail);
         if (autor == null)
         {
-            throw new Exception("Usuário autor não encontrado.");
+            throw new NotFoundException("Utilizador autor não encontrado.");
         }
 
         var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
         if (chamado == null)
         {
-            throw new Exception("Chamado não encontrado.");
+            throw new NotFoundException("Chamado não encontrado.");
         }
 
-        // 2. Lógica de permissão
-        // Um técnico/admin pode comentar em qualquer chamado.
-        // Um cliente só pode comentar no seu próprio chamado.
         if (userRole != "TECNICO" && userRole != "ADMIN" && chamado.ClienteId != autor.Id)
         {
             throw new UnauthorizedAccessException("Você não tem permissão para adicionar mensagens a este chamado.");
         }
         
-        // Impede que mensagens sejam adicionadas a um chamado fechado
         if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
         {
-            throw new Exception("Não é possível adicionar mensagens a um chamado fechado ou cancelado.");
+            throw new BusinessRuleException("Não é possível adicionar mensagens a um chamado fechado ou cancelado.");
         }
 
-        // 3. Criar a nova entidade Mensagem
         var novaMensagem = new Mensagem
         {
             Texto = mensagemDto.Texto,
             DataEnvio = DateTime.UtcNow,
             AutorId = autor.Id,
-            ChamadoId = chamadoId
+            ChamadoId = chamadoId,
+            IsNotaInterna = false,
+            LidoPeloCliente = (autor.Role == Role.CLIENTE)
         };
         
-        // Opcional: Se um técnico responde, o status do chamado muda
         if (autor.Role == Role.TECNICO || autor.Role == Role.ADMIN)
         {
             chamado.Status = StatusChamado.AGUARDANDO_CLIENTE;
         }
-        else // Se um cliente responde, o status volta para em andamento
+        else 
         {
             chamado.Status = StatusChamado.EM_ANDAMENTO;
         }
 
-        // 4. Salvar no banco de dados
         await _mensagemRepository.AddAsync(novaMensagem);
         
-        // Futuramente, aqui dispararíamos o e-mail de notificação
-
         return novaMensagem;
+    }
+
+    public async Task<Mensagem> AddNotaInternaAsync(long chamadoId, MensagemCreateDto notaDto, string tecnicoEmail)
+    {
+        var autor = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
+        if (autor == null || autor.Role == Role.CLIENTE)
+        {
+            throw new UnauthorizedAccessException("Apenas técnicos ou administradores podem adicionar notas internas.");
+        }
+
+        var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+        if (chamado == null)
+        {
+            throw new NotFoundException("Chamado não encontrado.");
+        }
+
+        var novaNota = new Mensagem
+        {
+            Texto = notaDto.Texto,
+            DataEnvio = DateTime.UtcNow,
+            AutorId = autor.Id,
+            ChamadoId = chamadoId,
+            IsNotaInterna = true, 
+            LidoPeloCliente = false
+        };
+
+        await _mensagemRepository.AddAsync(novaNota);
+        return novaNota;
     }
 }

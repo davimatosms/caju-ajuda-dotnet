@@ -7,4 +7,5 @@ public class MensagemResponseDto
     public DateTime DataEnvio { get; set; }
     public string AutorNome { get; set; } = string.Empty;
     public long AutorId { get; set; }
+    public bool IsNotaInterna { get; set; } 
 }

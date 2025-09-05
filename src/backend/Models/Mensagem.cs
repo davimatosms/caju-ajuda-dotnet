@@ -14,15 +14,16 @@ public class Mensagem
 
     public DateTime DataEnvio { get; set; } = DateTime.UtcNow;
 
-    // Chave Estrangeira para o Autor da mensagem
-    public long AutorId { get; set; }
+    public bool LidoPeloCliente { get; set; } = false;
+    
+    public bool IsNotaInterna { get; set; } = false; 
 
+    // Chaves Estrangeiras...
+    public long AutorId { get; set; }
     [ForeignKey("AutorId")]
     public virtual Usuario Autor { get; set; } = null!;
     
-    // Chave Estrangeira para o Chamado
     public long ChamadoId { get; set; }
-
     [ForeignKey("ChamadoId")]
     public virtual Chamado Chamado { get; set; } = null!;
 }
