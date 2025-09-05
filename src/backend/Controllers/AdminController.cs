@@ -11,10 +11,19 @@ namespace CajuAjuda.Backend.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
+    private readonly IDashboardService _dashboardService; 
 
-    public AdminController(IAdminService adminService)
+    public AdminController(IAdminService adminService, IDashboardService dashboardService) 
     {
         _adminService = adminService;
+        _dashboardService = dashboardService; 
+    }
+
+    [HttpGet("dashboard")] // Rota: GET api/admin/dashboard
+    public async Task<IActionResult> GetDashboardMetrics()
+    {
+        var metrics = await _dashboardService.GetDashboardMetricsAsync();
+        return Ok(metrics);
     }
 
     [HttpGet("tecnicos")]
@@ -31,47 +40,22 @@ public class AdminController : ControllerBase
         {
             return BadRequest(ModelState);
         }
-
-        try
-        {
-            var tecnicoAtualizado = await _adminService.UpdateTecnicoAsync(id, tecnicoDto);
-            return Ok(tecnicoAtualizado);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        
+        var tecnicoAtualizado = await _adminService.UpdateTecnicoAsync(id, tecnicoDto);
+        return Ok(tecnicoAtualizado);
     }
     
     [HttpPatch("tecnicos/{id}/status")]
     public async Task<IActionResult> ToggleTecnicoStatus(long id)
     {
-        try
-        {
-            var novoStatus = await _adminService.ToggleTecnicoStatusAsync(id);
-            return Ok(new { message = $"Status do técnico {id} atualizado.", enabled = novoStatus });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var novoStatus = await _adminService.ToggleTecnicoStatusAsync(id);
+        return Ok(new { message = $"Status do técnico {id} atualizado.", enabled = novoStatus });
     }
     
     [HttpPost("tecnicos/{id}/reset-password")]
     public async Task<IActionResult> ResetPassword(long id)
     {
-        try
-        {
-            var novaSenha = await _adminService.ResetPasswordAsync(id);
-            return Ok(new { message = $"Senha do técnico {id} redefinida com sucesso.", temporaryPassword = novaSenha });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var novaSenha = await _adminService.ResetPasswordAsync(id);
+        return Ok(new { message = $"Senha do técnico {id} redefinida com sucesso.", temporaryPassword = novaSenha });
     }
 }
