@@ -1,5 +1,4 @@
 using CajuAjuda.Backend.Models;
-using CajuAjuda.Backend.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace CajuAjuda.Backend.Data;
@@ -21,41 +20,95 @@ public class DataInitializer
         // Aplica quaisquer migrações pendentes para garantir que o BD esteja atualizado
         await context.Database.MigrateAsync();
 
-        // Verifica se já existem usuários
+        // Verifica se já existem usuários para não popular novamente
         if (await context.Usuarios.AnyAsync())
         {
-            return; // O banco de dados já foi populado
+            return;
         }
 
-        // Criação de usuários padrão
-        var admin = new Usuario
-        {
-            Nome = "Admin Caju",
-            Email = "admin@cajuajuda.com",
-            Senha = BCrypt.Net.BCrypt.HashPassword("senha123"),
-            Role = Role.ADMIN,
-            Enabled = true
-        };
-
-        var tecnico = new Usuario
-        {
-            Nome = "Tecnico Caju",
-            Email = "tecnico@cajuajuda.com",
-            Senha = BCrypt.Net.BCrypt.HashPassword("senha123"),
-            Role = Role.TECNICO,
-            Enabled = true
-        };
+        // --- CRIAÇÃO DE USUÁRIOS ---
+        var admin = new Usuario { Nome = "Admin Caju", Email = "admin@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.ADMIN, Enabled = true };
+        var tecnico = new Usuario { Nome = "Tecnico Caju", Email = "tecnico@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.TECNICO, Enabled = true };
+        var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
+        var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
+        var clienteInativo = new Usuario { Nome = "Carlos Inativo", Email = "carlos.inativo@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = false };
         
-        var cliente = new Usuario
+        await context.Usuarios.AddRangeAsync(admin, tecnico, cliente1, cliente2, clienteInativo);
+        await context.SaveChangesAsync(); // Salva para obter os IDs
+
+        // --- CRIAÇÃO DE CHAMADOS ---
+        var chamadoAberto = new Chamado
         {
-            Nome = "Cliente Caju",
-            Email = "cliente@cajuajuda.com",
-            Senha = BCrypt.Net.BCrypt.HashPassword("senha123"),
-            Role = Role.CLIENTE,
-            Enabled = true
+            Titulo = "Problema Crítico: Sistema de pagamentos fora do ar",
+            Descricao = "Nenhum cliente consegue finalizar a compra. Erro 500 em todas as transações.",
+            Status = StatusChamado.ABERTO,
+            Prioridade = PrioridadeChamado.ALTA,
+            ClienteId = cliente1.Id
         };
 
-        await context.Usuarios.AddRangeAsync(admin, tecnico, cliente);
+        var chamadoEmAndamento = new Chamado
+        {
+            Titulo = "Lentidão ao gerar relatórios",
+            Descricao = "O relatório de vendas mensais está demorando mais de 5 minutos para ser gerado.",
+            Status = StatusChamado.EM_ANDAMENTO,
+            Prioridade = PrioridadeChamado.MEDIA,
+            ClienteId = cliente2.Id,
+            TecnicoResponsavelId = tecnico.Id // Chamado já atribuído
+        };
+
+        var chamadoFechado = new Chamado
+        {
+            Titulo = "Dúvida sobre a cor de um botão",
+            Descricao = "Gostaria de saber se é possível alterar a cor do botão 'Salvar' para azul.",
+            Status = StatusChamado.FECHADO,
+            Prioridade = PrioridadeChamado.BAIXA,
+            ClienteId = cliente1.Id,
+            TecnicoResponsavelId = tecnico.Id,
+            DataFechamento = DateTime.UtcNow.AddDays(-5)
+        };
+
+        await context.Chamados.AddRangeAsync(chamadoAberto, chamadoEmAndamento, chamadoFechado);
+        await context.SaveChangesAsync(); // Salva para obter os IDs
+
+        // --- CRIAÇÃO DE MENSAGENS ---
+        var mensagens = new List<Mensagem>
+        {
+            new() { Texto = "Olá Beto, recebi seu chamado sobre a lentidão. Estou investigando a causa.", ChamadoId = chamadoEmAndamento.Id, AutorId = tecnico.Id, LidoPeloCliente = false },
+            new() { Texto = "Obrigado pelo retorno! Fico no aguardo.", ChamadoId = chamadoEmAndamento.Id, AutorId = cliente2.Id, LidoPeloCliente = true, IsNotaInterna = false},
+            new() { Texto = "NOTA: Verificar os índices da tabela de vendas. Pode ser a causa da lentidão.", ChamadoId = chamadoEmAndamento.Id, AutorId = tecnico.Id, IsNotaInterna = true}
+        };
+
+        await context.Mensagens.AddRangeAsync(mensagens);
+
+        // --- CRIAÇÃO DE RESPOSTAS PRONTAS ---
+        if (!await context.RespostasProntas.AnyAsync())
+        {
+            var respostas = new List<RespostaPronta>
+            {
+                new() { Titulo = "Saudação Inicial", Corpo = "Olá! Agradecemos o seu contato. Meu nome é [SEU NOME] e vou te ajudar com o seu chamado." },
+                new() { Titulo = "Reset de Senha", Corpo = "Para redefinir sua senha, por favor, acesse o link a seguir e siga as instruções: [LINK]" },
+                new() { Titulo = "Aguardando Informações", Corpo = "Olá! Para prosseguir com o atendimento, preciso de mais algumas informações. Você poderia me fornecer [INFORMAÇÃO NECESSÁRIA]?" },
+                new() { Titulo = "Encerramento", Corpo = "Fico feliz em ajudar! Estou encerrando este chamado. Se precisar de mais alguma coisa, basta abrir um novo ticket. Tenha um ótimo dia!" }
+            };
+            await context.RespostasProntas.AddRangeAsync(respostas);
+        }
+        
+        // --- CRIAÇÃO DA KNOWLEDGE BASE ---
+        if (!await context.KbCategorias.AnyAsync())
+        {
+            var catLogin = new KbCategoria { Nome = "Problemas de Login" };
+            var catPagamentos = new KbCategoria { Nome = "Pagamentos e Faturas" };
+
+            await context.KbCategorias.AddRangeAsync(catLogin, catPagamentos);
+            await context.SaveChangesAsync(); // Salva para obter os IDs das categorias
+
+            var art1 = new KbArtigo { Titulo = "Como redefinir minha senha?", Conteudo = "Para redefinir sua senha, clique em 'Esqueci minha senha' na tela de login e siga as instruções enviadas para o seu e-mail.", CategoriaId = catLogin.Id };
+            var art2 = new KbArtigo { Titulo = "Não recebi o e-mail de verificação", Conteudo = "Caso não tenha recebido o e-mail de verificação, por favor, verifique sua caixa de spam ou lixo eletrônico.", CategoriaId = catLogin.Id };
+            var art3 = new KbArtigo { Titulo = "Como emitir a segunda via da fatura?", Conteudo = "Acesse o painel financeiro no menu principal e clique na opção 'Minhas Faturas' para visualizar e imprimir a segunda via.", CategoriaId = catPagamentos.Id };
+
+            await context.KbArtigos.AddRangeAsync(art1, art2, art3);
+        }
+        
         await context.SaveChangesAsync();
     }
 }
