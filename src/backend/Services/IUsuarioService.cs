@@ -7,4 +7,5 @@ public interface IUsuarioService
 {
     Task<Usuario> RegisterClienteAsync(UsuarioCreateDto usuarioDto);
     Task<Usuario?> AuthenticateAsync(LoginDto loginDto);
+    Task<bool> VerifyEmailAsync(string token);
 }

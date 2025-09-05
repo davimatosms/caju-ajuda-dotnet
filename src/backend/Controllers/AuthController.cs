@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CajuAjuda.Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] // Define a rota base como "api/auth"
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
@@ -17,38 +17,20 @@ public class AuthController : ControllerBase
         _tokenService = tokenService;
     }
 
-    [HttpPost("register/cliente")] // Rota: POST api/auth/register/cliente
+    [HttpPost("register/cliente")]
     public async Task<IActionResult> RegisterCliente([FromBody] UsuarioCreateDto usuarioDto)
     {
-        // A validação do DTO (usando os atributos [Required], etc.) é feita automaticamente pelo ASP.NET
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
+        
+        var novoUsuario = await _usuarioService.RegisterClienteAsync(usuarioDto);
 
-        try
-        {
-            var novoUsuario = await _usuarioService.RegisterClienteAsync(usuarioDto);
-
-            // Cria um DTO de resposta para não expor dados sensíveis como a senha
-            var responseDto = new UsuarioResponseDto
-            {
-                Id = novoUsuario.Id,
-                Nome = novoUsuario.Nome,
-                Email = novoUsuario.Email
-            };
-
-            // Retorna o status 201 Created com os dados do usuário criado
-            return CreatedAtAction(null, new { id = responseDto.Id }, responseDto);
-        }
-        catch (Exception ex)
-        {
-            // Se o serviço lançar uma exceção (ex: e-mail duplicado), retorna um erro 400 Bad Request
-            return BadRequest(new { message = ex.Message });
-        }
+        return CreatedAtAction(null, new { id = novoUsuario.Id }, new { message = "Registo bem-sucedido. Por favor, verifique o seu e-mail para ativar a conta." });
     }
 
-    [HttpPost("login")] // Rota: POST api/auth/login
+    [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         if (!ModelState.IsValid)
@@ -60,11 +42,23 @@ public class AuthController : ControllerBase
 
         if (user == null)
         {
-            return Unauthorized("E-mail ou senha inválidos.");
+            return Unauthorized("E-mail ou senha inválidos, ou a conta não foi verificada.");
         }
 
         var token = _tokenService.GenerateToken(user);
-
         return Ok(new { token });
+    }
+
+    [HttpGet("verify")]
+    public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+    {
+        var success = await _usuarioService.VerifyEmailAsync(token);
+        if (success)
+        {
+            // Idealmente, redirecionaria para uma página de sucesso no frontend.
+            // Por agora, retornamos uma mensagem.
+            return Ok("<h1>E-mail verificado com sucesso!</h1><p>Você já pode fechar esta aba e fazer o login na aplicação.</p>");
+        }
+        return BadRequest("<h1>Erro na Verificação</h1><p>Token inválido ou expirado. Por favor, tente se registar novamente.</p>");
     }
 }

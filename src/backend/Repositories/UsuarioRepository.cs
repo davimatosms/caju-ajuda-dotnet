@@ -34,4 +34,9 @@ public class UsuarioRepository : IUsuarioRepository
         _context.Usuarios.Update(usuario);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<Usuario?> GetByVerificationTokenAsync(string token)
+    {
+        return await _context.Usuarios.FirstOrDefaultAsync(u => u.VerificationToken == token);
+    }
 }
