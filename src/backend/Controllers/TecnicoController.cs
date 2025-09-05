@@ -1,5 +1,5 @@
 using CajuAjuda.Backend.Helpers;
-using CajuAjuda.Backend.Models;
+using CajuAjuda.Backend.Models; 
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -26,27 +26,20 @@ public class TecnicoController : ControllerBase
     [HttpGet("chamados")]
     public async Task<IActionResult> GetAllChamados([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] StatusChamado? status = null, [FromQuery] PrioridadeChamado? prioridade = null)
     {
-        try
-        {
-            var pagedResult = await _chamadoService.GetAllChamadosAsync(pageNumber, pageSize, status, prioridade);
+        var pagedResult = await _chamadoService.GetAllChamadosAsync(pageNumber, pageSize, status, prioridade);
 
-            var paginationMetadata = new
-            {
-                pagedResult.TotalCount,
-                pagedResult.PageSize,
-                pagedResult.CurrentPage,
-                pagedResult.TotalPages,
-                pagedResult.HasNext,
-                pagedResult.HasPrevious
-            };
-            Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
-
-            return Ok(pagedResult.Items);
-        }
-        catch (Exception ex)
+        var paginationMetadata = new
         {
-            return StatusCode(500, new { message = "Ocorreu um erro interno ao buscar os chamados.", error = ex.Message });
-        }
+            pagedResult.TotalCount,
+            pagedResult.PageSize,
+            pagedResult.CurrentPage,
+            pagedResult.TotalPages,
+            pagedResult.HasNext,
+            pagedResult.HasPrevious
+        };
+        Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+        return Ok(pagedResult.Items);
     }
     
     [HttpGet("chamados/{id}")]
@@ -59,20 +52,9 @@ public class TecnicoController : ControllerBase
         {
             return Unauthorized();
         }
-
-        try
-        {
-            var chamado = await _chamadoService.GetChamadoByIdAsync(id, userEmail, userRole);
-            if (chamado == null)
-            {
-                return NotFound(new { message = $"Chamado com ID {id} não encontrado." });
-            }
-            return Ok(chamado);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Ocorreu um erro interno.", error = ex.Message });
-        }
+        
+        var chamado = await _chamadoService.GetChamadoByIdAsync(id, userEmail, userRole);
+        return Ok(chamado);
     }
 
     [HttpPost("chamados/{id}/mensagens")]
@@ -91,19 +73,8 @@ public class TecnicoController : ControllerBase
             return Unauthorized();
         }
 
-        try
-        {
-            var novaMensagem = await _mensagemService.AddMensagemAsync(id, mensagemDto, userEmail, userRole);
-            return Ok(novaMensagem);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var novaMensagem = await _mensagemService.AddMensagemAsync(id, mensagemDto, userEmail, userRole);
+        return Ok(novaMensagem);
     }
     
     [HttpPatch("chamados/{id}/status")]
@@ -114,14 +85,20 @@ public class TecnicoController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        try
+        await _chamadoService.UpdateChamadoStatusAsync(id, statusDto.NovoStatus);
+        return Ok(new { message = $"Status do chamado {id} atualizado para {statusDto.NovoStatus}." });
+    }
+
+    [HttpPost("chamados/{id}/atribuir")]
+    public async Task<IActionResult> AssignChamado(long id)
+    {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (userEmail == null)
         {
-            await _chamadoService.UpdateChamadoStatusAsync(id, statusDto.NovoStatus);
-            return Ok(new { message = $"Status do chamado {id} atualizado para {statusDto.NovoStatus}." });
+            return Unauthorized();
         }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        
+        await _chamadoService.AssignChamadoAsync(id, userEmail);
+        return Ok(new { message = $"Chamado {id} atribuído ao técnico {userEmail} com sucesso." });
     }
 }

@@ -13,4 +13,6 @@ public interface IChamadoService
     Task<ChamadoDetailResponseDto?> GetChamadoByIdAsync(long chamadoId, string userEmail, string userRole);
     Task UpdateChamadoStatusAsync(long chamadoId, StatusChamado novoStatus);
     Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail);
+    Task AssignChamadoAsync(long chamadoId, string tecnicoEmail);
+    Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail);
 }

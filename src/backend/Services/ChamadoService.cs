@@ -1,8 +1,11 @@
+using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Helpers;
+using CajuAjuda.Backend.Hubs;
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Repositories;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CajuAjuda.Backend.Services;
 
@@ -13,19 +16,22 @@ public class ChamadoService : IChamadoService
     private readonly IFileStorageService _fileStorageService;
     private readonly IAnexoRepository _anexoRepository;
     private readonly IMensagemRepository _mensagemRepository;
+    private readonly IHubContext<NotificacaoHub> _hubContext;
 
     public ChamadoService(
         IChamadoRepository chamadoRepository, 
         IUsuarioRepository usuarioRepository, 
         IFileStorageService fileStorageService, 
         IAnexoRepository anexoRepository,
-        IMensagemRepository mensagemRepository)
+        IMensagemRepository mensagemRepository,
+        IHubContext<NotificacaoHub> hubContext)
     {
         _chamadoRepository = chamadoRepository;
         _usuarioRepository = usuarioRepository;
         _fileStorageService = fileStorageService;
         _anexoRepository = anexoRepository;
         _mensagemRepository = mensagemRepository;
+        _hubContext = hubContext;
     }
 
     public async Task<Chamado> CreateAsync(ChamadoCreateDto chamadoDto, string clienteEmail)
@@ -33,7 +39,7 @@ public class ChamadoService : IChamadoService
         var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
         if (cliente == null || cliente.Role != Role.CLIENTE)
         {
-            throw new Exception("Cliente não encontrado ou usuário não autorizado para criar chamados.");
+            throw new BusinessRuleException("Cliente não encontrado ou utilizador não autorizado para criar chamados.");
         }
         var novoChamado = new Chamado
         {
@@ -45,6 +51,12 @@ public class ChamadoService : IChamadoService
             ClienteId = cliente.Id
         };
         await _chamadoRepository.AddAsync(novoChamado);
+        await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new 
+        { 
+            id = novoChamado.Id, 
+            titulo = novoChamado.Titulo,
+            clienteNome = cliente.Nome
+        });
         return novoChamado;
     }
 
@@ -53,11 +65,9 @@ public class ChamadoService : IChamadoService
         var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
         if (cliente == null)
         {
-            throw new Exception("Cliente não encontrado.");
+            throw new NotFoundException("Cliente não encontrado.");
         }
-
         var chamados = await _chamadoRepository.GetByClienteIdAsync(cliente.Id);
-
         return chamados.Select(c => new ChamadoListResponseDto
         {
             Id = c.Id,
@@ -72,17 +82,16 @@ public class ChamadoService : IChamadoService
     public async Task<PagedList<ChamadoResponseDto>> GetAllChamadosAsync(int pageNumber, int pageSize, StatusChamado? status, PrioridadeChamado? prioridade)
     {
         var (chamados, totalCount) = await _chamadoRepository.GetAllAsync(pageNumber, pageSize, status, prioridade);
-
         var chamadosDto = chamados.Select(c => new ChamadoResponseDto
         {
             Id = c.Id,
             Titulo = c.Titulo,
             NomeCliente = c.Cliente.Nome,
+            NomeTecnicoResponsavel = c.TecnicoResponsavel?.Nome,
             Status = c.Status,
             Prioridade = c.Prioridade,
             DataCriacao = c.DataCriacao
         }).ToList();
-
         return new PagedList<ChamadoResponseDto>(chamadosDto, totalCount, pageNumber, pageSize);
     }
 
@@ -91,7 +100,7 @@ public class ChamadoService : IChamadoService
         var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
         if (chamado == null)
         {
-            return null;
+            throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
         }
 
         if (userRole != "TECNICO" && userRole != "ADMIN" && chamado.Cliente.Email != userEmail)
@@ -103,6 +112,14 @@ public class ChamadoService : IChamadoService
         {
             await _mensagemRepository.MarkMessagesAsReadByClienteAsync(chamadoId);
         }
+        
+        var mensagensParaMostrar = chamado.Mensagens.AsQueryable();
+        
+        // SE O UTILIZADOR FOR UM CLIENTE, FILTRA AS NOTAS INTERNAS
+        if (userRole == "CLIENTE")
+        {
+            mensagensParaMostrar = mensagensParaMostrar.Where(m => !m.IsNotaInterna);
+        }
 
         return new ChamadoDetailResponseDto
         {
@@ -110,17 +127,21 @@ public class ChamadoService : IChamadoService
             Titulo = chamado.Titulo,
             Descricao = chamado.Descricao,
             NomeCliente = chamado.Cliente.Nome,
+            NomeTecnicoResponsavel = chamado.TecnicoResponsavel?.Nome,
             Status = chamado.Status,
             Prioridade = chamado.Prioridade,
             DataCriacao = chamado.DataCriacao,
             DataFechamento = chamado.DataFechamento,
-            Mensagens = chamado.Mensagens.Select(m => new MensagemResponseDto
+            NotaAvaliacao = chamado.NotaAvaliacao,
+            ComentarioAvaliacao = chamado.ComentarioAvaliacao,
+            Mensagens = mensagensParaMostrar.Select(m => new MensagemResponseDto
             {
                 Id = m.Id,
                 Texto = m.Texto,
                 DataEnvio = m.DataEnvio,
                 AutorNome = m.Autor.Nome,
-                AutorId = m.Autor.Id
+                AutorId = m.Autor.Id,
+                IsNotaInterna = m.IsNotaInterna // Mapeia o novo campo
             }).OrderBy(m => m.DataEnvio).ToList()
         };
     }
@@ -130,11 +151,11 @@ public class ChamadoService : IChamadoService
         var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
         if (chamado == null)
         {
-            throw new KeyNotFoundException("Chamado não encontrado.");
+            throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
         }
         if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
         {
-            throw new Exception("Não é possível alterar o status de um chamado que já foi fechado ou cancelado.");
+            throw new BusinessRuleException("Não é possível alterar o status de um chamado que já foi fechado ou cancelado.");
         }
         chamado.Status = novoStatus;
         if (novoStatus == StatusChamado.FECHADO)
@@ -149,7 +170,7 @@ public class ChamadoService : IChamadoService
         var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
         if (chamado == null)
         {
-            throw new KeyNotFoundException("Chamado não encontrado.");
+            throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
         }
         if (chamado.Cliente.Email != userEmail)
         {
@@ -165,5 +186,63 @@ public class ChamadoService : IChamadoService
         };
         await _anexoRepository.AddAsync(anexo);
         return anexo;
+    }
+
+    public async Task AssignChamadoAsync(long chamadoId, string tecnicoEmail)
+    {
+        var tecnico = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
+        if (tecnico == null || tecnico.Role == Role.CLIENTE)
+        {
+            throw new BusinessRuleException("Utilizador técnico não encontrado ou inválido.");
+        }
+
+        var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+        if (chamado == null)
+        {
+            throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+        }
+
+        if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
+        {
+            throw new BusinessRuleException("Não é possível atribuir um chamado fechado ou cancelado.");
+        }
+
+        chamado.TecnicoResponsavelId = tecnico.Id;
+        
+        if (chamado.Status == StatusChamado.ABERTO)
+        {
+            chamado.Status = StatusChamado.EM_ANDAMENTO;
+        }
+
+        await _chamadoRepository.UpdateAsync(chamado);
+    }
+
+    public async Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail)
+    {
+        var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
+        if (cliente == null)
+        {
+            throw new NotFoundException("Utilizador cliente não encontrado.");
+        }
+        var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+        if (chamado == null)
+        {
+            throw new NotFoundException("Chamado não encontrado.");
+        }
+        if (chamado.ClienteId != cliente.Id)
+        {
+            throw new UnauthorizedAccessException("Você não tem permissão para avaliar este chamado.");
+        }
+        if (chamado.Status != StatusChamado.FECHADO)
+        {
+            throw new BusinessRuleException("Só é possível avaliar chamados que já foram fechados.");
+        }
+        if (chamado.NotaAvaliacao.HasValue)
+        {
+            throw new BusinessRuleException("Este chamado já foi avaliado anteriormente.");
+        }
+        chamado.NotaAvaliacao = avaliacaoDto.Nota;
+        chamado.ComentarioAvaliacao = avaliacaoDto.Comentario;
+        await _chamadoRepository.UpdateAsync(chamado);
     }
 }
