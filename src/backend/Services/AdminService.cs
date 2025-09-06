@@ -21,6 +21,8 @@ public class AdminService : IAdminService
         _logger = logger;
     }
 
+    // --- MÉTODOS PARA GESTÃO DE TÉCNICOS ---
+
     public async Task<IEnumerable<TecnicoResponseDto>> GetAllTecnicosAsync()
     {
         _logger.LogInformation("Buscando todos os técnicos.");
@@ -108,6 +110,43 @@ public class AdminService : IAdminService
 
         return novaSenha;
     }
+
+    // --- MÉTODOS PARA GESTÃO DE CLIENTES ---
+
+    public async Task<IEnumerable<ClienteResponseDto>> GetAllClientesAsync()
+    {
+        _logger.LogInformation("Buscando todos os clientes.");
+        return await _context.Usuarios
+            .Where(u => u.Role == Role.CLIENTE)
+            .Select(u => new ClienteResponseDto
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Email = u.Email,
+                Enabled = u.Enabled
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> ToggleClienteStatusAsync(long id)
+    {
+        _logger.LogInformation("Tentando alterar o status do cliente com ID: {ClienteId}", id);
+        
+        var cliente = await _usuarioRepository.GetByIdAsync(id);
+        if (cliente == null || cliente.Role != Role.CLIENTE)
+        {
+            _logger.LogWarning("Cliente com ID: {ClienteId} não encontrado para alteração de status.", id);
+            throw new NotFoundException("Cliente não encontrado.");
+        }
+
+        cliente.Enabled = !cliente.Enabled;
+        await _usuarioRepository.UpdateAsync(cliente);
+        
+        _logger.LogInformation("Status do cliente com ID: {ClienteId} alterado para {Status}", id, cliente.Enabled);
+        return cliente.Enabled;
+    }
+
+    // --- MÉTODOS PRIVADOS ---
 
     private static string GenerateRandomPassword(int length = 12)
     {

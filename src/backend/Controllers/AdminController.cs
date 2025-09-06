@@ -11,21 +11,22 @@ namespace CajuAjuda.Backend.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
-    private readonly IDashboardService _dashboardService; 
+    private readonly IDashboardService _dashboardService;
 
-    public AdminController(IAdminService adminService, IDashboardService dashboardService) 
+    public AdminController(IAdminService adminService, IDashboardService dashboardService)
     {
         _adminService = adminService;
-        _dashboardService = dashboardService; 
+        _dashboardService = dashboardService;
     }
 
-    [HttpGet("dashboard")] // Rota: GET api/admin/dashboard
+    [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboardMetrics()
     {
         var metrics = await _dashboardService.GetDashboardMetricsAsync();
         return Ok(metrics);
     }
 
+    // --- ENDPOINTS DE TÉCNICOS ---
     [HttpGet("tecnicos")]
     public async Task<IActionResult> GetAllTecnicos()
     {
@@ -36,11 +37,7 @@ public class AdminController : ControllerBase
     [HttpPut("tecnicos/{id}")]
     public async Task<IActionResult> UpdateTecnico(long id, [FromBody] TecnicoUpdateDto tecnicoDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-        
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var tecnicoAtualizado = await _adminService.UpdateTecnicoAsync(id, tecnicoDto);
         return Ok(tecnicoAtualizado);
     }
@@ -57,5 +54,20 @@ public class AdminController : ControllerBase
     {
         var novaSenha = await _adminService.ResetPasswordAsync(id);
         return Ok(new { message = $"Senha do técnico {id} redefinida com sucesso.", temporaryPassword = novaSenha });
+    }
+
+    // --- ENDPOINTS NOVOS DE CLIENTES ---
+    [HttpGet("clientes")] // Rota: GET api/admin/clientes
+    public async Task<IActionResult> GetAllClientes()
+    {
+        var clientes = await _adminService.GetAllClientesAsync();
+        return Ok(clientes);
+    }
+
+    [HttpPatch("clientes/{id}/status")] // Rota: PATCH api/admin/clientes/123/status
+    public async Task<IActionResult> ToggleClienteStatus(long id)
+    {
+        var novoStatus = await _adminService.ToggleClienteStatusAsync(id);
+        return Ok(new { message = $"Status do cliente {id} atualizado.", enabled = novoStatus });
     }
 }
