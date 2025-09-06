@@ -15,4 +15,5 @@ public interface IChamadoService
     Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail);
     Task AssignChamadoAsync(long chamadoId, string tecnicoEmail);
     Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail);
+    Task MergeChamadosAsync(long chamadoDuplicadoId, long chamadoPrincipalId, string tecnicoEmail);
 }

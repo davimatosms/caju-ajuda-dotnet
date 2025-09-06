@@ -4,6 +4,7 @@ using CajuAjuda.Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CajuAjuda.Backend.Migrations
 {
     [DbContext(typeof(CajuAjudaDbContext))]
-    partial class CajuAjudaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250906023518_AddMergeFieldsToChamado")]
+    partial class AddMergeFieldsToChamado
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

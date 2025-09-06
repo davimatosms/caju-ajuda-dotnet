@@ -1,5 +1,5 @@
 using CajuAjuda.Backend.Helpers;
-using CajuAjuda.Backend.Models; 
+using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -100,5 +100,41 @@ public class TecnicoController : ControllerBase
         
         await _chamadoService.AssignChamadoAsync(id, userEmail);
         return Ok(new { message = $"Chamado {id} atribuído ao técnico {userEmail} com sucesso." });
+    }
+    
+    [HttpPost("chamados/{id}/notas")]
+    public async Task<IActionResult> AddNotaInterna(long id, [FromBody] MensagemCreateDto notaDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (userEmail == null)
+        {
+            return Unauthorized();
+        }
+
+        var novaNota = await _mensagemService.AddNotaInternaAsync(id, notaDto, userEmail);
+        return Ok(novaNota);
+    }
+    
+    [HttpPost("chamados/{id}/mesclar")]
+    public async Task<IActionResult> MergeChamado(long id, [FromBody] ChamadoMergeDto mergeDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (userEmail == null)
+        {
+            return Unauthorized();
+        }
+        
+        await _chamadoService.MergeChamadosAsync(id, mergeDto.ChamadoPrincipalId, userEmail);
+        return Ok(new { message = $"Chamado #{id} mesclado com sucesso no chamado #{mergeDto.ChamadoPrincipalId}." });
     }
 }

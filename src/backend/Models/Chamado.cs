@@ -9,7 +9,8 @@ public enum StatusChamado
     EM_ANDAMENTO,
     AGUARDANDO_CLIENTE,
     FECHADO,
-    CANCELADO
+    CANCELADO,
+    MESCLADO 
 }
 
 public enum PrioridadeChamado
@@ -42,16 +43,20 @@ public class Chamado
 
     public DateTime? DataFechamento { get; set; }
     
-    public int? NotaAvaliacao { get; set; } // Nota de 1 a 5, pode ser nula
+    public int? NotaAvaliacao { get; set; }
     
-    public string? ComentarioAvaliacao { get; set; } // Comentário opcional
+    public string? ComentarioAvaliacao { get; set; }
     
-    // Relação com o Cliente
+    // --- CAMPOS PARA MESCLAGEM ---
+    public long? ChamadoPrincipalId { get; set; } 
+    [ForeignKey("ChamadoPrincipalId")]
+    public virtual Chamado? ChamadoPrincipal { get; set; }
+    
+    // Relações...
     public long ClienteId { get; set; }
     [ForeignKey("ClienteId")]
     public virtual Usuario Cliente { get; set; } = null!;
     
-    // Relação com o Técnico Responsável (pode ser nulo)
     public long? TecnicoResponsavelId { get; set; }
     [ForeignKey("TecnicoResponsavelId")]
     public virtual Usuario? TecnicoResponsavel { get; set; }
