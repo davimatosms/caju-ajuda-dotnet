@@ -5,17 +5,21 @@ namespace CajuAjuda.Backend.Data;
 
 public class CajuAjudaDbContext : DbContext
 {
+    // Adicione um construtor sem parâmetros para o Moq
+    public CajuAjudaDbContext() {}
+    
     public CajuAjudaDbContext(DbContextOptions<CajuAjudaDbContext> options) : base(options)
     {
     }
 
-    public DbSet<Usuario> Usuarios { get; set; }
-    public DbSet<Chamado> Chamados { get; set; }
-    public DbSet<Mensagem> Mensagens { get; set; }
-    public DbSet<Anexo> Anexos { get; set; }
-    public DbSet<RespostaPronta> RespostasProntas { get; set; }
-    public DbSet<KbCategoria> KbCategorias { get; set; }
-    public DbSet<KbArtigo> KbArtigos { get; set; }
+    // Adicione a palavra-chave 'virtual' a todos os DbSets
+    public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<Chamado> Chamados { get; set; }
+    public virtual DbSet<Mensagem> Mensagens { get; set; }
+    public virtual DbSet<Anexo> Anexos { get; set; }
+    public virtual DbSet<RespostaPronta> RespostasProntas { get; set; }
+    public virtual DbSet<KbCategoria> KbCategorias { get; set; }
+    public virtual DbSet<KbArtigo> KbArtigos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
