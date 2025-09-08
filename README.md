@@ -12,7 +12,7 @@ O **Caju Ajuda** é uma solução de suporte e gerenciamento de tickets (helpdes
 
 * **[📈 Product Backlog](./documentacao/Backlog.md)**: A lista completa de funcionalidades, épicos e user stories do projeto.
 * **[📅 Roadmap de Sprints](./documentacao/sprint.md)**: O cronograma detalhado de cada Sprint, com objetivos e escopo de entrega.
-* **[📚 Pasta de Documentação](./docs/)**: Acesso a todos os artefatos do projeto, incluindo diagramas, manuais e definições.
+* **[📚 Pasta de Documentação](./documentacao/Diagramas)**: Acesso a todos os artefatos do projeto, incluindo diagramas, manuais e definições.
 
 ---
 
@@ -75,4 +75,4 @@ gantt
 
 | Foto | Nome Completo | Papel | Contato |
 | :--- | :--- | :--- | :--- |
-| <img src="https://avatars.githubusercontent.com/u/101799753?v=4" width=115> | Davi Matos Marques Silva | Desenvolvedor Full-Stack & Arquiteto do Projeto | [LinkedIn](URL_DO_SEU_LINKEDIN_AQUI) |
+| <img src="https://avatars.githubusercontent.com/u/101799753?v=4" width=115> | Davi Matos Marques Silva | Desenvolvedor Full-Stack & Arquiteto do Projeto | [LinkedIn](linkedin.com/in/davimatoss/) |
