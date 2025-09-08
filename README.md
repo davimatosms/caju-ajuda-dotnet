@@ -10,8 +10,8 @@ O **Caju Ajuda** é uma solução de suporte e gerenciamento de tickets (helpdes
 
 ### **Documentação e Planejamento**
 
-* **[📈 Product Backlog](./docs/PRODUCT_BACKLOG.md)**: A lista completa de funcionalidades, épicos e user stories do projeto.
-* **[📅 Roadmap de Sprints](./docs/ROADMAP.md)**: O cronograma detalhado de cada Sprint, com objetivos e escopo de entrega.
+* **[📈 Product Backlog](./documentacao/Backlog.md)**: A lista completa de funcionalidades, épicos e user stories do projeto.
+* **[📅 Roadmap de Sprints](./documentacao/sprint.md)**: O cronograma detalhado de cada Sprint, com objetivos e escopo de entrega.
 * **[📚 Pasta de Documentação](./docs/)**: Acesso a todos os artefatos do projeto, incluindo diagramas, manuais e definições.
 
 ---
