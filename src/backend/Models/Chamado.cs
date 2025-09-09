@@ -17,7 +17,8 @@ public enum PrioridadeChamado
 {
     BAIXA,
     MEDIA,
-    ALTA
+    ALTA,
+    URGENTE 
 }
 
 [Table("Chamados")]

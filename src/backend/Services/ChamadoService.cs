@@ -9,6 +9,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
 
 namespace CajuAjuda.Backend.Services;
 
@@ -22,16 +26,18 @@ public class ChamadoService : IChamadoService
     private readonly IMensagemRepository _mensagemRepository;
     private readonly IHubContext<NotificacaoHub> _hubContext;
     private readonly ILogger<ChamadoService> _logger;
+    private readonly IAIService _aiService; // Dependência da IA
 
     public ChamadoService(
         CajuAjudaDbContext context,
-        IChamadoRepository chamadoRepository, 
-        IUsuarioRepository usuarioRepository, 
-        IFileStorageService fileStorageService, 
+        IChamadoRepository chamadoRepository,
+        IUsuarioRepository usuarioRepository,
+        IFileStorageService fileStorageService,
         IAnexoRepository anexoRepository,
         IMensagemRepository mensagemRepository,
         IHubContext<NotificacaoHub> hubContext,
-        ILogger<ChamadoService> logger)
+        ILogger<ChamadoService> logger,
+        IAIService aiService) // Injeção da dependência da IA
     {
         _context = context;
         _chamadoRepository = chamadoRepository;
@@ -41,33 +47,39 @@ public class ChamadoService : IChamadoService
         _mensagemRepository = mensagemRepository;
         _hubContext = hubContext;
         _logger = logger;
+        _aiService = aiService; // Atribuição da dependência da IA
     }
 
     public async Task<Chamado> CreateAsync(ChamadoCreateDto chamadoDto, string clienteEmail)
     {
         _logger.LogInformation("Tentativa de criação de chamado pelo cliente: {ClienteEmail}", clienteEmail);
-        
+
         var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
         if (cliente == null || cliente.Role != Role.CLIENTE)
         {
             throw new BusinessRuleException("Cliente não encontrado ou utilizador não autorizado para criar chamados.");
         }
+
+        // CHAMA A IA PARA DEFINIR A PRIORIDADE
+        var prioridadeDefinidaPelaIA = await _aiService.DefinirPrioridadeAsync(chamadoDto.Titulo, chamadoDto.Descricao);
+        
         var novoChamado = new Chamado
         {
             Titulo = chamadoDto.Titulo,
             Descricao = chamadoDto.Descricao,
-            Prioridade = chamadoDto.Prioridade,
+            Prioridade = prioridadeDefinidaPelaIA, // USA A PRIORIDADE DA IA
             Status = StatusChamado.ABERTO,
             DataCriacao = DateTime.UtcNow,
             ClienteId = cliente.Id
         };
         await _chamadoRepository.AddAsync(novoChamado);
-        
-        _logger.LogInformation("Chamado {ChamadoId} criado com sucesso para o cliente {ClienteId}", novoChamado.Id, cliente.Id);
-        
-        await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new 
-        { 
-            id = novoChamado.Id, 
+
+        _logger.LogInformation("Chamado {ChamadoId} criado com sucesso para o cliente {ClienteId} com prioridade {Prioridade}", novoChamado.Id, cliente.Id, novoChamado.Prioridade);
+
+        // Notifica o hub sobre o novo chamado
+        await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new
+        {
+            id = novoChamado.Id,
             titulo = novoChamado.Titulo,
             clienteNome = cliente.Nome
         });
@@ -126,9 +138,9 @@ public class ChamadoService : IChamadoService
         {
             await _mensagemRepository.MarkMessagesAsReadByClienteAsync(chamadoId);
         }
-        
+
         var mensagensParaMostrar = chamado.Mensagens.AsQueryable();
-        
+
         if (userRole == "CLIENTE")
         {
             mensagensParaMostrar = mensagensParaMostrar.Where(m => !m.IsNotaInterna);
@@ -181,7 +193,7 @@ public class ChamadoService : IChamadoService
         await _chamadoRepository.UpdateAsync(chamado);
         _logger.LogInformation("Status do chamado ID: {ChamadoId} atualizado com sucesso.", chamadoId);
     }
-    
+
     public async Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail)
     {
         var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
@@ -225,7 +237,7 @@ public class ChamadoService : IChamadoService
         }
 
         chamado.TecnicoResponsavelId = tecnico.Id;
-        
+
         if (chamado.Status == StatusChamado.ABERTO)
         {
             chamado.Status = StatusChamado.EM_ANDAMENTO;
@@ -262,7 +274,7 @@ public class ChamadoService : IChamadoService
         chamado.ComentarioAvaliacao = avaliacaoDto.Comentario;
         await _chamadoRepository.UpdateAsync(chamado);
     }
-    
+
     public async Task MergeChamadosAsync(long chamadoDuplicadoId, long chamadoPrincipalId, string tecnicoEmail)
     {
         if (chamadoDuplicadoId == chamadoPrincipalId)
@@ -287,7 +299,7 @@ public class ChamadoService : IChamadoService
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
-        
+
         try
         {
             var notaDeMerge = new Mensagem
@@ -303,18 +315,18 @@ public class ChamadoService : IChamadoService
             {
                 mensagem.ChamadoId = chamadoPrincipal.Id;
             }
-            
+
             foreach (var anexo in chamadoDuplicado.Anexos)
             {
                 anexo.ChamadoId = chamadoPrincipal.Id;
             }
-            
+
             chamadoDuplicado.Status = StatusChamado.MESCLADO;
             chamadoDuplicado.DataFechamento = DateTime.UtcNow;
             chamadoDuplicado.ChamadoPrincipalId = chamadoPrincipal.Id;
 
             await _context.SaveChangesAsync();
-            
+
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -325,7 +337,3 @@ public class ChamadoService : IChamadoService
         }
     }
 }
-
-
-
-

@@ -1,0 +1,72 @@
+.dashboardContainer {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    margin: 0;
+    color: #333;
+}
+
+.newTicketButton {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.newTicketButton:hover {
+    background-color: #218838;
+}
+
+.chamadosTable {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chamadosTable th,
+.chamadosTable td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.chamadosTable th {
+    background-color: #f7f7f7;
+    font-weight: 600;
+}
+
+.statusBadge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+}
+
+.statusAberto { background-color: #007bff; }
+.statusAndamento { background-color: #ffc107; color: #333 }
+.statusPendente { background-color: #6c757d; }
+.statusResolvido { background-color: #28a745; }
+
+.loading, .error, .noTickets {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
