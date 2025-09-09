@@ -33,7 +33,7 @@ public class UsuarioService : IUsuarioService
             Email = usuarioDto.Email,
             Senha = passwordHash,
             Role = Role.CLIENTE,
-            Enabled = false, // O utilizador começa desativado
+            Enabled = true, // O utilizador começa desativado
             VerificationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(64)) // Gera um token seguro
         };
 
@@ -43,7 +43,7 @@ public class UsuarioService : IUsuarioService
         var verificationLink = $"https://localhost:7113/api/auth/verify?token={novoUsuario.VerificationToken}";
         var emailBody = $"<h1>Bem-vindo ao Caju Ajuda!</h1><p>Por favor, clique no link abaixo para verificar seu e-mail e ativar sua conta:</p><a href='{verificationLink}'>Verificar E-mail</a>";
         
-        await _emailService.SendEmailAsync(novoUsuario.Email, "Verifique seu e-mail - Caju Ajuda", emailBody);
+        // await _emailService.SendEmailAsync(novoUsuario.Email, "Verifique seu e-mail - Caju Ajuda", emailBody);
 
         return novoUsuario;
     }
