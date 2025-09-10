@@ -10,8 +10,10 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient();
 builder.Services.AddTransient<GlobalExceptionHandler>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -66,6 +68,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+   
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve; 
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

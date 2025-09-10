@@ -1,79 +1,68 @@
 using CajuAjuda.Backend.Models;
-using Google.Api.Gax.Grpc;
-using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CajuAjuda.Backend.Services;
 
 public class AIService : IAIService
 {
-    private readonly string _projectId;
-    private readonly string _location;
-    private readonly string _model;
+    private readonly string _apiKey;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _model = "gemini-1.5-flash-latest"; 
 
-    public AIService(IConfiguration configuration)
+    public AIService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
-        
-        _projectId = configuration["Gemini:ProjectId"]!; 
-        _location = "us-central1";
-        _model = "gemini-1.5-flash-001";
+        // Lê a chave de API que configuramos no Secret Manager
+        _apiKey = configuration["Gemini:ApiKey"]!;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<PrioridadeChamado> DefinirPrioridadeAsync(string titulo, string descricao)
     {
+        var httpClient = _httpClientFactory.CreateClient();
         
-        var predictionServiceClient = await new PredictionServiceClientBuilder
-        {
-            Endpoint = $"{_location}-aiplatform.googleapis.com"
-            
-        }.BuildAsync();
-
-        var endpointName = EndpointName.FromProjectLocationPublisherModel(_projectId, _location, "google", _model);
+        // Este é o endpoint correto e mais simples da API Generative Language
+        var requestUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={_apiKey}";
 
         var prompt = $@"
             Analise o seguinte ticket de suporte e classifique sua prioridade.
             Responda apenas com uma das seguintes palavras: BAIXA, MEDIA, ALTA, URGENTE.
 
-            Exemplo 1:
-            - Título: Dúvida sobre fatura
-            - Descrição: Olá, gostaria de entender melhor o valor cobrado este mês.
-            - Resposta: BAIXA
-
-            Exemplo 2:
-            - Título: Não consigo acessar minha conta
-            - Descrição: A senha não funciona e o reset não chega no meu e-mail.
-            - Resposta: MEDIA
-
-            Exemplo 3:
-            - Título: O sistema está fora do ar para todos os usuários!!!
-            - Descrição: Ninguém na empresa consegue trabalhar, o site principal está caído.
-            - Resposta: URGENTE
-
+            Exemplo 1: - Título: Dúvida sobre fatura / Descrição: Gostaria de entender o valor cobrado. -> Resposta: BAIXA
+            Exemplo 2: - Título: Não consigo acessar minha conta / Descrição: A senha não funciona. -> Resposta: MEDIA
+            Exemplo 3: - Título: O sistema está fora do ar!!! / Descrição: Ninguém consegue trabalhar. -> Resposta: URGENTE
             ---
-            Ticket para Análise:
-            - Título: {titulo}
-            - Descrição: {descricao}
-            - Resposta: 
+            Ticket para Análise: - Título: {titulo} / Descrição: {descricao} -> Resposta: 
         ";
-
         
-        var instance = new Google.Protobuf.WellKnownTypes.Value
+        // A estrutura do corpo da requisição para esta API
+        var requestBody = new
         {
-            StructValue = new Google.Protobuf.WellKnownTypes.Struct
+            contents = new[]
             {
-                Fields = { { "prompt", Google.Protobuf.WellKnownTypes.Value.ForString(prompt) } }
+                new { parts = new[] { new { text = prompt } } }
             }
         };
 
-        var request = new PredictRequest
-        {
-            EndpointAsEndpointName = endpointName,
-            Instances = { instance }
-        };
+        var jsonBody = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-        var response = await predictionServiceClient.PredictAsync(request);
-        var predictionResult = response.Predictions[0].StructValue.Fields["content"].StringValue.Trim().ToUpper();
+        var response = await httpClient.PostAsync(requestUrl, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new System.Exception($"Erro na API do Gemini: {response.StatusCode} - {errorContent}");
+        }
+
+        // A estrutura da resposta desta API
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(jsonResponse);
+        var predictionResult = doc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString() ?? "BAIXA";
+        predictionResult = predictionResult.Trim().ToUpper();
 
         return predictionResult switch
         {
