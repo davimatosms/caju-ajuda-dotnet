@@ -70,3 +70,8 @@
     font-size: 18px;
     color: #666;
 }
+
+.clickableRow:hover {
+    cursor: pointer;
+    background-color: #f2f2f2; /* Um leve destaque ao passar o mouse */
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthService from 'AuthService';  
+import AuthService from 'services/AuthService';  
 import styles from './Register.module.css'; 
 
 function Register() {

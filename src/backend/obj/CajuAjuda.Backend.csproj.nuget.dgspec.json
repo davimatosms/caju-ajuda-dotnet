@@ -48,10 +48,6 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
-            "Google.Cloud.AIPlatform.V1": {
-              "target": "Package",
-              "version": "[3.45.0, )"
-            },
             "MailKit": {
               "target": "Package",
               "version": "[4.13.0, )"

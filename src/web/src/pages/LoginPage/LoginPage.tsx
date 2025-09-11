@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthService from '../../AuthService'; // Importando nosso serviço atualizado
+import AuthService from '../../services/AuthService';
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
@@ -18,8 +18,15 @@ function LoginPage() {
 
         try {
             await AuthService.login({ Email: email, Senha: senha });
-            // Se o login for bem-sucedido, redireciona para o dashboard
-            navigate('/');
+            
+            const user = AuthService.getCurrentUser();
+
+            if (user?.role === 'TECNICO' || user?.role === 'ADMIN') {
+                navigate('/tecnico/dashboard');
+            } else {
+                navigate('/');
+            }
+
         } catch (error: any) {
             if (error.response && error.response.status === 401) {
                 setMessage('E-mail ou senha inválidos.');
@@ -30,12 +37,11 @@ function LoginPage() {
             setIsLoading(false);
         }
     };
-
+    
     return (
         <div className={styles.loginContainer}>
             <form className={styles.loginForm} onSubmit={handleSubmit}>
                 <h2>Entrar</h2>
-
                 <div className={styles.inputGroup}>
                     <label htmlFor="email">E-mail</label>
                     <input
@@ -47,7 +53,6 @@ function LoginPage() {
                         disabled={isLoading}
                     />
                 </div>
-
                 <div className={styles.inputGroup}>
                     <label htmlFor="senha">Senha</label>
                     <input
@@ -59,11 +64,9 @@ function LoginPage() {
                         disabled={isLoading}
                     />
                 </div>
-
                 <button type="submit" className={styles.submitButton} disabled={isLoading}>
                     {isLoading ? 'Entrando...' : 'Entrar'}
                 </button>
-
                 {message && (
                     <div className={`${styles.message} ${styles.error}`}>
                         {message}
