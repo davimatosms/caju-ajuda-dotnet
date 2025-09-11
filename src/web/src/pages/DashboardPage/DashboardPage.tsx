@@ -12,17 +12,13 @@ function DashboardPage() {
     useEffect(() => {
         const fetchChamados = async () => {
             try {
-                // A resposta da API agora é um objeto, não um array direto
                 const response: any = await ChamadoService.getMeusChamados();
-                
-                // MUDANÇA AQUI: Extraímos o array da propriedade '$values'
                 if (response && response.$values) {
                     setChamados(response.$values);
                 } else {
-                    // Se não vier no formato esperado, tratamos como lista vazia
-                    setChamados([]); 
+                    // Trata o caso de não haver chamados e a API retornar um array vazio
+                    setChamados(response || []); 
                 }
-
             } catch (err: any) {
                 if (err.response && (err.response.status === 401 || err.response.status === 403)) {
                     navigate('/login');
@@ -47,6 +43,14 @@ function DashboardPage() {
         }
     };
 
+    const handleRowClick = (id: number) => {
+        navigate(`/chamado/${id}`);
+    };
+
+    const handleNovoChamadoClick = () => {
+        navigate('/chamados/novo');
+    };
+
     if (isLoading) {
         return <div className={styles.loading}>Carregando chamados...</div>;
     }
@@ -61,7 +65,7 @@ function DashboardPage() {
                 <h1>Meus Chamados</h1>
                 <button 
                     className={styles.newTicketButton} 
-                    onClick={() => navigate('/chamados/novo')}
+                    onClick={handleNovoChamadoClick}
                 >
                     Abrir Novo Chamado
                 </button>
@@ -82,7 +86,7 @@ function DashboardPage() {
                     </thead>
                     <tbody>
                         {chamados.map(chamado => (
-                            <tr key={chamado.id}>
+                            <tr key={chamado.id} className={styles.clickableRow} onClick={() => handleRowClick(chamado.id)}>
                                 <td>#{chamado.id}</td>
                                 <td>{chamado.titulo}</td>
                                 <td>

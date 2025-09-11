@@ -1,0 +1,17 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../Navbar/Navbar';
+
+function Layout() {
+  return (
+    <div>
+      <Navbar />
+      <main>
+        {/* O Outlet renderiza o componente da rota atual (ex: DashboardPage) */}
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+export default Layout;
