@@ -1,0 +1,171 @@
+.pageContainer {
+    padding: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: #f4f6f8;
+    min-height: 100vh;
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
+
+.chamadoContainer {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    margin: 0;
+    color: #333;
+    font-size: 24px;
+}
+
+.header p {
+    margin: 5px 0 0;
+    color: #888;
+    font-size: 14px;
+}
+
+.statusContainer {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.statusBadge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+}
+
+.statusAberto { background-color: #007bff; }
+.statusAndamento { background-color: #ffc107; color: #333; }
+.statusPendente { background-color: #6c757d; }
+.statusResolvido { background-color: #28a745; }
+.prioridadeUrgente { background-color: #dc3545; }
+
+.contentGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.descricao, .metadata {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.descricao h3, .metadata h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.metadata p {
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.metadata strong {
+    color: #333;
+}
+
+.historicoContainer h2 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.mensagem {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.mensagem p {
+    margin: 0;
+}
+
+.autor {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.data {
+    font-size: 12px;
+    color: #888;
+    margin-top: 8px;
+    text-align: right;
+}
+
+.mensagemCliente {
+    background-color: #e1ffc7;
+    margin-left: auto;
+}
+
+.mensagemTecnico {
+    background-color: #f1f0f0;
+    margin-right: auto;
+}
+
+/* Estilos para o novo formulário de mensagem */
+.addMessageForm {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.messageTextarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.sendMessageButton {
+    align-self: flex-end; /* Alinha o botão à direita */
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sendMessageButton:hover {
+    background-color: #0056b3;
+}
+
+.sendMessageButton:disabled {
+    background-color: #a0cffc;
+    cursor: not-allowed;
+}
