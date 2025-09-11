@@ -29,3 +29,6 @@ appsettings.Development.json
 
 # Other
 *.DS_Store
+
+# Ignorar credenciais do Google Cloud
+src/backend/gcloud-credentials.json
