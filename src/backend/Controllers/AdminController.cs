@@ -2,6 +2,7 @@ using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace CajuAjuda.Backend.Controllers;
 
@@ -26,7 +27,6 @@ public class AdminController : ControllerBase
         return Ok(metrics);
     }
 
-    // --- ENDPOINTS DE TÉCNICOS ---
     [HttpGet("tecnicos")]
     public async Task<IActionResult> GetAllTecnicos()
     {
@@ -34,6 +34,27 @@ public class AdminController : ControllerBase
         return Ok(tecnicos);
     }
     
+    [HttpPost("tecnicos")]
+    public async Task<IActionResult> CreateTecnico([FromBody] TecnicoCreateDto tecnicoDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var novoTecnico = await _adminService.CreateTecnicoAsync(tecnicoDto);
+        
+        var response = new TecnicoResponseDto
+        {
+            Id = novoTecnico.Id,
+            Nome = novoTecnico.Nome,
+            Email = novoTecnico.Email,
+            Enabled = novoTecnico.Enabled
+        };
+        
+        return CreatedAtAction(nameof(GetAllTecnicos), new { id = response.Id }, response);
+    }
+
     [HttpPut("tecnicos/{id}")]
     public async Task<IActionResult> UpdateTecnico(long id, [FromBody] TecnicoUpdateDto tecnicoDto)
     {
@@ -56,15 +77,14 @@ public class AdminController : ControllerBase
         return Ok(new { message = $"Senha do técnico {id} redefinida com sucesso.", temporaryPassword = novaSenha });
     }
 
-    // --- ENDPOINTS NOVOS DE CLIENTES ---
-    [HttpGet("clientes")] // Rota: GET api/admin/clientes
+    [HttpGet("clientes")]
     public async Task<IActionResult> GetAllClientes()
     {
         var clientes = await _adminService.GetAllClientesAsync();
         return Ok(clientes);
     }
 
-    [HttpPatch("clientes/{id}/status")] // Rota: PATCH api/admin/clientes/123/status
+    [HttpPatch("clientes/{id}/status")]
     public async Task<IActionResult> ToggleClienteStatus(long id)
     {
         var novoStatus = await _adminService.ToggleClienteStatusAsync(id);

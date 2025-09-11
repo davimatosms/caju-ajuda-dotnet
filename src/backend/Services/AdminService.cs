@@ -1,68 +1,127 @@
-using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Repositories;
 using CajuAjuda.Backend.Services.Dtos;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CajuAjuda.Backend.Services;
 
 public class AdminService : IAdminService
 {
     private readonly IUsuarioRepository _usuarioRepository;
-    private readonly CajuAjudaDbContext _context;
-    private readonly ILogger<AdminService> _logger;
+    private readonly IDashboardService _dashboardService;
 
-    public AdminService(IUsuarioRepository usuarioRepository, CajuAjudaDbContext context, ILogger<AdminService> logger)
+    public AdminService(IUsuarioRepository usuarioRepository, IDashboardService dashboardService)
     {
         _usuarioRepository = usuarioRepository;
-        _context = context;
-        _logger = logger;
+        _dashboardService = dashboardService;
     }
 
-    // --- MÉTODOS PARA GESTÃO DE TÉCNICOS ---
+    public async Task<Usuario> CreateTecnicoAsync(TecnicoCreateDto tecnicoDto)
+    {
+        var existingUser = await _usuarioRepository.GetByEmailAsync(tecnicoDto.Email);
+        if (existingUser != null)
+        {
+            throw new BusinessRuleException("Este e-mail já está cadastrado.");
+        }
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(tecnicoDto.Senha);
+
+        var novoTecnico = new Usuario
+        {
+            Nome = tecnicoDto.Nome,
+            Email = tecnicoDto.Email,
+            Senha = passwordHash,
+            Role = Role.TECNICO,
+            Enabled = true
+        };
+
+        await _usuarioRepository.AddAsync(novoTecnico);
+        return novoTecnico;
+    }
+
+    public async Task<IEnumerable<ClienteResponseDto>> GetAllClientesAsync()
+    {
+        var clientes = await _usuarioRepository.GetAllByRoleAsync(Role.CLIENTE);
+        return clientes.Select(c => new ClienteResponseDto
+        {
+            Id = c.Id,
+            Nome = c.Nome,
+            Email = c.Email,
+            Enabled = c.Enabled
+        });
+    }
 
     public async Task<IEnumerable<TecnicoResponseDto>> GetAllTecnicosAsync()
     {
-        _logger.LogInformation("Buscando todos os técnicos.");
-        return await _context.Usuarios
-            .Where(u => u.Role == Role.TECNICO)
-            .Select(u => new TecnicoResponseDto
-            {
-                Id = u.Id,
-                Nome = u.Nome,
-                Email = u.Email,
-                Enabled = u.Enabled
-            })
-            .ToListAsync();
+        var tecnicos = await _usuarioRepository.GetAllByRoleAsync(Role.TECNICO);
+        return tecnicos.Select(t => new TecnicoResponseDto
+        {
+            Id = t.Id,
+            Nome = t.Nome,
+            Email = t.Email,
+            Enabled = t.Enabled
+        });
     }
 
-    public async Task<TecnicoResponseDto> UpdateTecnicoAsync(long id, TecnicoUpdateDto tecnicoUpdateDto)
+    public Task<DashboardResponseDto> GetDashboardMetricsAsync()
     {
-        _logger.LogInformation("Tentando atualizar o técnico com ID: {TecnicoId}", id);
-        
+        return _dashboardService.GetDashboardMetricsAsync();
+    }
+
+    public async Task<string> ResetPasswordAsync(long id)
+    {
+        // Esta lógica deve ser mais elaborada em produção (ex: gerar senha mais complexa)
+        var novaSenha = "NovaSenha@123";
+        var usuario = await _usuarioRepository.GetByIdAsync(id);
+        if (usuario == null)
+        {
+            throw new NotFoundException("Usuário não encontrado.");
+        }
+        usuario.Senha = BCrypt.Net.BCrypt.HashPassword(novaSenha);
+        await _usuarioRepository.UpdateAsync(usuario);
+        return novaSenha;
+    }
+
+    public async Task<bool> ToggleClienteStatusAsync(long id)
+    {
+        var cliente = await _usuarioRepository.GetByIdAsync(id);
+        if (cliente == null || cliente.Role != Role.CLIENTE)
+        {
+            throw new NotFoundException("Cliente não encontrado.");
+        }
+        cliente.Enabled = !cliente.Enabled;
+        await _usuarioRepository.UpdateAsync(cliente);
+        return cliente.Enabled;
+    }
+
+    public async Task<bool> ToggleTecnicoStatusAsync(long id)
+    {
         var tecnico = await _usuarioRepository.GetByIdAsync(id);
         if (tecnico == null || tecnico.Role != Role.TECNICO)
         {
-            _logger.LogWarning("Técnico com ID: {TecnicoId} não encontrado para atualização.", id);
+            throw new NotFoundException("Técnico não encontrado.");
+        }
+        tecnico.Enabled = !tecnico.Enabled;
+        await _usuarioRepository.UpdateAsync(tecnico);
+        return tecnico.Enabled;
+    }
+
+    public async Task<TecnicoResponseDto> UpdateTecnicoAsync(long id, TecnicoUpdateDto tecnicoDto)
+    {
+        var tecnico = await _usuarioRepository.GetByIdAsync(id);
+        if (tecnico == null || tecnico.Role != Role.TECNICO)
+        {
             throw new NotFoundException("Técnico não encontrado.");
         }
 
-        var existingUserWithEmail = await _usuarioRepository.GetByEmailAsync(tecnicoUpdateDto.Email);
-        if (existingUserWithEmail != null && existingUserWithEmail.Id != id)
-        {
-            _logger.LogWarning("Tentativa de atualizar técnico {TecnicoId} com e-mail já existente: {Email}", id, tecnicoUpdateDto.Email);
-            throw new BusinessRuleException("O e-mail informado já está em uso por outra conta.");
-        }
-
-        tecnico.Nome = tecnicoUpdateDto.Nome;
-        tecnico.Email = tecnicoUpdateDto.Email;
+        tecnico.Nome = tecnicoDto.Nome;
+        tecnico.Email = tecnicoDto.Email;
 
         await _usuarioRepository.UpdateAsync(tecnico);
-        
-        _logger.LogInformation("Técnico com ID: {TecnicoId} atualizado com sucesso.", id);
-        
+
         return new TecnicoResponseDto
         {
             Id = tecnico.Id,
@@ -70,93 +129,5 @@ public class AdminService : IAdminService
             Email = tecnico.Email,
             Enabled = tecnico.Enabled
         };
-    }
-
-    public async Task<bool> ToggleTecnicoStatusAsync(long id)
-    {
-        _logger.LogInformation("Tentando alterar o status do técnico com ID: {TecnicoId}", id);
-        
-        var tecnico = await _usuarioRepository.GetByIdAsync(id);
-        if (tecnico == null || tecnico.Role != Role.TECNICO)
-        {
-            _logger.LogWarning("Técnico com ID: {TecnicoId} não encontrado para alteração de status.", id);
-            throw new NotFoundException("Técnico não encontrado.");
-        }
-
-        tecnico.Enabled = !tecnico.Enabled;
-        await _usuarioRepository.UpdateAsync(tecnico);
-        
-        _logger.LogInformation("Status do técnico com ID: {TecnicoId} alterado para {Status}", id, tecnico.Enabled);
-        return tecnico.Enabled;
-    }
-
-    public async Task<string> ResetPasswordAsync(long id)
-    {
-        _logger.LogInformation("Tentando redefinir a senha do técnico com ID: {TecnicoId}", id);
-        
-        var tecnico = await _usuarioRepository.GetByIdAsync(id);
-        if (tecnico == null || tecnico.Role != Role.TECNICO)
-        {
-            _logger.LogWarning("Técnico com ID: {TecnicoId} não encontrado para redefinição de senha.", id);
-            throw new NotFoundException("Técnico não encontrado.");
-        }
-
-        var novaSenha = GenerateRandomPassword();
-        tecnico.Senha = BCrypt.Net.BCrypt.HashPassword(novaSenha);
-        
-        await _usuarioRepository.UpdateAsync(tecnico);
-        
-        _logger.LogWarning("Senha do técnico com ID: {TecnicoId} foi redefinida com sucesso. Esta é uma ação de segurança sensível.", id);
-
-        return novaSenha;
-    }
-
-    // --- MÉTODOS PARA GESTÃO DE CLIENTES ---
-
-    public async Task<IEnumerable<ClienteResponseDto>> GetAllClientesAsync()
-    {
-        _logger.LogInformation("Buscando todos os clientes.");
-        return await _context.Usuarios
-            .Where(u => u.Role == Role.CLIENTE)
-            .Select(u => new ClienteResponseDto
-            {
-                Id = u.Id,
-                Nome = u.Nome,
-                Email = u.Email,
-                Enabled = u.Enabled
-            })
-            .ToListAsync();
-    }
-
-    public async Task<bool> ToggleClienteStatusAsync(long id)
-    {
-        _logger.LogInformation("Tentando alterar o status do cliente com ID: {ClienteId}", id);
-        
-        var cliente = await _usuarioRepository.GetByIdAsync(id);
-        if (cliente == null || cliente.Role != Role.CLIENTE)
-        {
-            _logger.LogWarning("Cliente com ID: {ClienteId} não encontrado para alteração de status.", id);
-            throw new NotFoundException("Cliente não encontrado.");
-        }
-
-        cliente.Enabled = !cliente.Enabled;
-        await _usuarioRepository.UpdateAsync(cliente);
-        
-        _logger.LogInformation("Status do cliente com ID: {ClienteId} alterado para {Status}", id, cliente.Enabled);
-        return cliente.Enabled;
-    }
-
-    // --- MÉTODOS PRIVADOS ---
-
-    private static string GenerateRandomPassword(int length = 12)
-    {
-        const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()";
-        var random = new Random();
-        var chars = new char[length];
-        for (int i = 0; i < length; i++)
-        {
-            chars[i] = validChars[random.Next(validChars.Length)];
-        }
-        return new string(chars);
     }
 }
