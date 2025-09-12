@@ -1,6 +1,9 @@
 using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CajuAjuda.Backend.Repositories;
 
@@ -13,20 +16,25 @@ public class UsuarioRepository : IUsuarioRepository
         _context = context;
     }
 
+    public async Task AddAsync(Usuario usuario)
+    {
+        await _context.Usuarios.AddAsync(usuario);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<Usuario?> GetByEmailAsync(string email)
     {
         return await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
     }
-
+    
     public async Task<Usuario?> GetByIdAsync(long id)
     {
         return await _context.Usuarios.FindAsync(id);
     }
 
-    public async Task AddAsync(Usuario usuario)
+    public async Task<Usuario?> GetByVerificationTokenAsync(string token)
     {
-        _context.Usuarios.Add(usuario);
-        await _context.SaveChangesAsync();
+        return await _context.Usuarios.FirstOrDefaultAsync(u => u.VerificationToken == token);
     }
 
     public async Task UpdateAsync(Usuario usuario)
@@ -35,8 +43,12 @@ public class UsuarioRepository : IUsuarioRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Usuario?> GetByVerificationTokenAsync(string token)
+    // NOVO MÉTODO ADICIONADO AQUI
+    public async Task<IEnumerable<Usuario>> GetAllByRoleAsync(Role role)
     {
-        return await _context.Usuarios.FirstOrDefaultAsync(u => u.VerificationToken == token);
+        return await _context.Usuarios
+            .Where(u => u.Role == role)
+            .OrderBy(u => u.Nome)
+            .ToListAsync();
     }
 }
