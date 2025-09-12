@@ -73,7 +73,6 @@ public class AdminService : IAdminService
 
     public async Task<string> ResetPasswordAsync(long id)
     {
-        // Esta lógica deve ser mais elaborada em produção (ex: gerar senha mais complexa)
         var novaSenha = "NovaSenha@123";
         var usuario = await _usuarioRepository.GetByIdAsync(id);
         if (usuario == null)
@@ -109,12 +108,20 @@ public class AdminService : IAdminService
         return tecnico.Enabled;
     }
 
+    
     public async Task<TecnicoResponseDto> UpdateTecnicoAsync(long id, TecnicoUpdateDto tecnicoDto)
     {
         var tecnico = await _usuarioRepository.GetByIdAsync(id);
         if (tecnico == null || tecnico.Role != Role.TECNICO)
         {
             throw new NotFoundException("Técnico não encontrado.");
+        }
+
+        // Verifica se o novo e-mail já está em uso por outro usuário
+        var existingUserWithEmail = await _usuarioRepository.GetByEmailAsync(tecnicoDto.Email);
+        if (existingUserWithEmail != null && existingUserWithEmail.Id != id)
+        {
+            throw new BusinessRuleException("O e-mail informado já está em uso por outra conta.");
         }
 
         tecnico.Nome = tecnicoDto.Nome;

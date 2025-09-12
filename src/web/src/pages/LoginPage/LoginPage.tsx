@@ -21,9 +21,16 @@ function LoginPage() {
             
             const user = AuthService.getCurrentUser();
 
-            if (user?.role === 'TECNICO' || user?.role === 'ADMIN') {
-                navigate('/tecnico/dashboard');
+            // LÓGICA DE REDIRECIONAMENTO CORRIGIDA
+            if (user?.role === 'ADMIN') {
+                // Se for Admin, vai para a página de gerenciar técnicos
+                navigate('/admin/tecnicos');
+            } else if (user?.role === 'TECNICO') {
+                // Se for Técnico, impede o login na web e mostra uma mensagem
+                AuthService.logout(); // Desloga imediatamente
+                setMessage("Técnicos devem usar a aplicação Desktop para acessar o sistema.");
             } else {
+                // Se for Cliente, vai para o dashboard principal
                 navigate('/');
             }
 

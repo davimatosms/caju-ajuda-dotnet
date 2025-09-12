@@ -1,0 +1,82 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modalHeader h3 {
+    margin: 0;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+}
+
+.inputGroup { 
+    margin-bottom: 15px; 
+}
+
+.inputGroup label { 
+    display: block; 
+    margin-bottom: 5px; 
+    font-weight: 500; 
+}
+
+.inputGroup input { 
+    width: 100%; 
+    padding: 8px; 
+    border-radius: 4px; 
+    border: 1px solid #ccc; 
+    box-sizing: border-box; 
+}
+
+.buttonContainer { 
+    margin-top: 20px; 
+    text-align: right; 
+}
+
+.submitButton { 
+    padding: 10px 20px; 
+    background-color: #007bff; 
+    color: white; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+}
+
+.submitButton:disabled { 
+    background-color: #a0cffc; 
+}
+
+.error { 
+    text-align: center; 
+    color: red; 
+    margin-top: 15px; 
+}

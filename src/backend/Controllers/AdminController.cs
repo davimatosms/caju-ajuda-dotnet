@@ -27,6 +27,7 @@ public class AdminController : ControllerBase
         return Ok(metrics);
     }
 
+    // --- ENDPOINTS DE TÉCNICOS ---
     [HttpGet("tecnicos")]
     public async Task<IActionResult> GetAllTecnicos()
     {
@@ -77,6 +78,7 @@ public class AdminController : ControllerBase
         return Ok(new { message = $"Senha do técnico {id} redefinida com sucesso.", temporaryPassword = novaSenha });
     }
 
+    // --- ENDPOINTS DE CLIENTES ---
     [HttpGet("clientes")]
     public async Task<IActionResult> GetAllClientes()
     {
