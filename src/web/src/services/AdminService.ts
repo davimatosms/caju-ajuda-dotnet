@@ -2,17 +2,29 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5205/api/admin';
 
+// Interface para Técnico
 export interface Tecnico {
     id: number;
     nome: string;
     email: string;
     enabled: boolean;
 }
-
 export interface TecnicoCreateData {
     Nome?: string;
     Email?: string;
     Senha?: string;
+}
+export interface TecnicoUpdateData {
+    Nome: string;
+    Email: string;
+}
+
+
+export interface Cliente {
+    id: number;
+    nome: string;
+    email: string;
+    enabled: boolean;
 }
 
 const getAuthHeaders = () => {
@@ -27,6 +39,7 @@ const getAuthHeaders = () => {
     };
 };
 
+// --- Funções de Técnico ---
 const getTecnicos = async (): Promise<any> => {
     const config = getAuthHeaders();
     const response = await axios.get(`${API_URL}/tecnicos`, config);
@@ -39,9 +52,31 @@ const createTecnico = async (data: TecnicoCreateData): Promise<Tecnico> => {
     return response.data;
 };
 
+const toggleTecnicoStatus = async (id: number): Promise<any> => {
+    const config = getAuthHeaders();
+    const response = await axios.patch(`${API_URL}/tecnicos/${id}/status`, null, config);
+    return response.data;
+};
+
+const updateTecnico = async (id: number, data: TecnicoUpdateData): Promise<Tecnico> => {
+    const config = getAuthHeaders();
+    const response = await axios.put(`${API_URL}/tecnicos/${id}`, data, config);
+    return response.data;
+};
+
+
+const getClientes = async (): Promise<any> => {
+    const config = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/clientes`, config);
+    return response.data;
+};
+
 const AdminService = {
     getTecnicos,
     createTecnico,
+    toggleTecnicoStatus,
+    updateTecnico,
+    getClientes, 
 };
 
 export default AdminService;

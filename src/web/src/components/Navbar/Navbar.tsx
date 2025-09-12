@@ -26,9 +26,11 @@ function Navbar() {
       <nav className={styles.navbar}>
         <div className={styles.logo}>Caju Ajuda</div>
         <div className={styles.navLinks}>
-          {/* O link só aparece se o usuário for ADMIN */}
           {userRole === 'ADMIN' && (
-            <Link to="/admin/tecnicos">Gerenciar Técnicos</Link>
+            <>
+              <Link to="/admin/tecnicos">Gerenciar Técnicos</Link>
+              <Link to="/admin/clientes">Gerenciar Clientes</Link>
+            </>
           )}
           <button className={styles.logoutButton} onClick={() => setIsModalOpen(true)}>
             Sair

@@ -7,6 +7,7 @@ import NovoChamadoPage from './pages/NovoChamadoPage/NovoChamadoPage';
 import ChamadoDetailPage from './pages/ChamadoDetailPage/ChamadoDetailPage';
 import Layout from './components/Layout/Layout';
 import GerenciarTecnicosPage from './pages/Admin/GerenciarTecnicosPage/GerenciarTecnicosPage';
+import GerenciarClientesPage from './pages/Admin/GerenciarClientesPage/GerenciarClientesPage';
 
 function App() {
   return (
@@ -25,8 +26,7 @@ function App() {
 
           {/* Rotas do Admin */}
           <Route path="/admin/tecnicos" element={<GerenciarTecnicosPage />} />
-          
-          {/* A rota para o dashboard do técnico/admin foi removida por enquanto */}
+          <Route path="/admin/clientes" element={<GerenciarClientesPage />} />
         </Route>
       </Routes>
     </Router>
