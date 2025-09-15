@@ -1,0 +1,85 @@
+.pageContainer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.searchSection {
+    background-color: #ff8f00;
+    padding: 60px 20px;
+    text-align: center;
+    color: white;
+    margin-bottom: 40px;
+}
+
+.searchSection h1 {
+    margin-top: 0;
+    font-size: 36px;
+}
+
+.searchBox {
+    width: 100%;
+    max-width: 600px;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 5px;
+    border: none;
+}
+
+.contentGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.categoryCard {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.categoryCard h2 {
+    margin-top: 0;
+    font-size: 22px;
+    color: #007bff;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.articleList {
+    list-style: none;
+    padding: 0;
+}
+
+.articleList li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: color 0.2s;
+}
+
+.articleList li a:hover {
+    color: #ff6f00;
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
+
+.searchResultsContainer {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.searchResultsContainer h2 {
+    margin-top: 0;
+}
