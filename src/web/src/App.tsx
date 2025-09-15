@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage/DashboardPage';
 import NovoChamadoPage from './pages/NovoChamadoPage/NovoChamadoPage';
 import ChamadoDetailPage from './pages/ChamadoDetailPage/ChamadoDetailPage';
 import Layout from './components/Layout/Layout';
+import DashboardAdminPage from './pages/Admin/DashboardAdminPage/DashboardAdminPage';
 import GerenciarTecnicosPage from './pages/Admin/GerenciarTecnicosPage/GerenciarTecnicosPage';
 import GerenciarClientesPage from './pages/Admin/GerenciarClientesPage/GerenciarClientesPage';
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/chamado/:id" element={<ChamadoDetailPage />} />
 
           {/* Rotas do Admin */}
+          <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/tecnicos" element={<GerenciarTecnicosPage />} />
           <Route path="/admin/clientes" element={<GerenciarClientesPage />} />
         </Route>

@@ -1,4 +1,21 @@
+using System.Collections.Generic;
+
 namespace CajuAjuda.Backend.Services.Dtos;
+
+// Classe auxiliar para os dados do gráfico de linha
+public class DailyStat
+{
+    public string Dia { get; set; } = string.Empty;
+    public int Criados { get; set; }
+    public int Fechados { get; set; }
+}
+
+
+public class ChartDataPoint
+{
+    public string Name { get; set; } = string.Empty;
+    public int Total { get; set; }
+}
 
 public class DashboardResponseDto
 {
@@ -7,6 +24,11 @@ public class DashboardResponseDto
     public int ChamadosEmAndamento { get; set; }
     public int ChamadosFechados { get; set; }
     public double PercentualResolvidos { get; set; }
-    public Dictionary<string, int> ChamadosPorPrioridade { get; set; } = new();
-    public Dictionary<string, int> ChamadosPorTecnico { get; set; } = new();
+    
+    
+    public List<ChartDataPoint> ChamadosPorPrioridade { get; set; } = new();
+
+    public double TempoMedioPrimeiraRespostaHoras { get; set; }
+    public double TempoMedioResolucaoHoras { get; set; }
+    public List<DailyStat> StatsUltimos7Dias { get; set; } = new();
 }

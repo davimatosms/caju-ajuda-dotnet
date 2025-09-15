@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5205/api/admin';
 
-// Interface para Técnico
+// --- INTERFACES ---
+
 export interface Tecnico {
     id: number;
     nome: string;
@@ -18,14 +19,40 @@ export interface TecnicoUpdateData {
     Nome: string;
     Email: string;
 }
-
-
 export interface Cliente {
     id: number;
     nome: string;
     email: string;
     enabled: boolean;
 }
+
+// Interface auxiliar para o formato do gráfico
+export interface ChartDataPoint {
+    name: string;
+    total: number;
+}
+
+// Interface auxiliar para os dados do gráfico de linha
+export interface DailyStat {
+    dia: string;
+    criados: number;
+    fechados: number;
+}
+
+// Interface principal das métricas, agora atualizada
+export interface DashboardMetrics {
+    totalChamados: number;
+    chamadosAbertos: number;
+    chamadosEmAndamento: number;
+    chamadosFechados: number;
+    percentualResolvidos: number;
+    chamadosPorPrioridade: ChartDataPoint[]; // Agora é um array
+    tempoMedioPrimeiraRespostaHoras: number;
+    tempoMedioResolucaoHoras: number;
+    statsUltimos7Dias: DailyStat[];
+}
+
+// --- FUNÇÃO AUXILIAR ---
 
 const getAuthHeaders = () => {
     const token = JSON.parse(localStorage.getItem('user_token') || 'null');
@@ -39,7 +66,8 @@ const getAuthHeaders = () => {
     };
 };
 
-// --- Funções de Técnico ---
+// --- FUNÇÕES DO SERVIÇO ---
+
 const getTecnicos = async (): Promise<any> => {
     const config = getAuthHeaders();
     const response = await axios.get(`${API_URL}/tecnicos`, config);
@@ -64,10 +92,15 @@ const updateTecnico = async (id: number, data: TecnicoUpdateData): Promise<Tecni
     return response.data;
 };
 
-
 const getClientes = async (): Promise<any> => {
     const config = getAuthHeaders();
     const response = await axios.get(`${API_URL}/clientes`, config);
+    return response.data;
+};
+
+const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
+    const config = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/dashboard`, config);
     return response.data;
 };
 
@@ -76,7 +109,8 @@ const AdminService = {
     createTecnico,
     toggleTecnicoStatus,
     updateTecnico,
-    getClientes, 
+    getClientes,
+    getDashboardMetrics,
 };
 
 export default AdminService;

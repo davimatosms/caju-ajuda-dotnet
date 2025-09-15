@@ -39,7 +39,7 @@ builder.Services.AddScoped<IRespostaProntaService, RespostaProntaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IAIService, AIService>(); // <-- NOVA LINHA ADICIONADA AQUI
+builder.Services.AddScoped<IAIService, AIService>(); 
 
 builder.Services.AddTransient<DataInitializer>();
 

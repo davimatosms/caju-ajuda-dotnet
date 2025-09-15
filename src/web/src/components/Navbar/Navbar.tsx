@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.css';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, NavLink } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 
@@ -21,15 +21,24 @@ function Navbar() {
     navigate('/login');
   };
 
+  // Define o link principal com base no papel do usuário
+  const homeLink = userRole === 'ADMIN' ? '/admin/dashboard' : '/';
+
   return (
     <>
       <nav className={styles.navbar}>
-        <div className={styles.logo}>Caju Ajuda</div>
+        <Link to={homeLink} className={styles.logo}>Caju Ajuda</Link>
         <div className={styles.navLinks}>
           {userRole === 'ADMIN' && (
             <>
-              <Link to="/admin/tecnicos">Gerenciar Técnicos</Link>
-              <Link to="/admin/clientes">Gerenciar Clientes</Link>
+              <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? styles.activeLink : ''}>Dashboard</NavLink>
+              <NavLink to="/admin/tecnicos" className={({ isActive }) => isActive ? styles.activeLink : ''}>Gerenciar Técnicos</NavLink>
+              <NavLink to="/admin/clientes" className={({ isActive }) => isActive ? styles.activeLink : ''}>Gerenciar Clientes</NavLink>
+            </>
+          )}
+           {userRole === 'CLIENTE' && (
+            <>
+               <NavLink to="/" className={({ isActive }) => isActive ? styles.activeLink : ''}>Meus Chamados</NavLink>
             </>
           )}
           <button className={styles.logoutButton} onClick={() => setIsModalOpen(true)}>
