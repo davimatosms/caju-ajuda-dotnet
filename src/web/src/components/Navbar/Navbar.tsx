@@ -22,7 +22,7 @@ function Navbar() {
   };
 
   // Define o link principal com base no papel do usuário
-  const homeLink = userRole === 'ADMIN' ? '/admin/dashboard' : '/';
+  const homeLink = userRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
 
   return (
     <>
@@ -38,7 +38,8 @@ function Navbar() {
           )}
            {userRole === 'CLIENTE' && (
             <>
-               <NavLink to="/" className={({ isActive }) => isActive ? styles.activeLink : ''}>Meus Chamados</NavLink>
+               <NavLink to="/dashboard" className={({ isActive }) => isActive ? styles.activeLink : ''}>Meus Chamados</NavLink>
+               <NavLink to="/perfil" className={({ isActive }) => isActive ? styles.activeLink : ''}>Meu Perfil</NavLink>
             </>
           )}
           <button className={styles.logoutButton} onClick={() => setIsModalOpen(true)}>

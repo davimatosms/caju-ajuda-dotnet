@@ -22,7 +22,8 @@ function NovoChamadoPage() {
             setMessage('Chamado criado com sucesso! Redirecionando para o Dashboard...');
 
             setTimeout(() => {
-                navigate('/'); // Redireciona para o dashboard após 2 segundos
+                // CORREÇÃO AQUI: Redireciona para o dashboard do cliente
+                navigate('/dashboard'); 
             }, 2000);
 
         } catch (error) {
