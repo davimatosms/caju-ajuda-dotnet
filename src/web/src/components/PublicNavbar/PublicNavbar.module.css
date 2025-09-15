@@ -1,0 +1,46 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+.logoImage {
+    height: 35px;
+}
+.logoText {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ff6f00; /* Laranja Caju */
+}
+.navLinks a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    margin-left: 20px;
+    transition: color 0.2s;
+}
+.navLinks a:hover {
+    color: #ff6f00;
+}
+.ctaButton {
+    background-color: #ff8f00; /* Laranja Ação */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    border: none;
+}
+.ctaButton:hover {
+    background-color: #ff6f00;
+}
