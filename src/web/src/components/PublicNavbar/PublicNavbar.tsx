@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './PublicNavbar.module.css';
 import { Link } from 'react-router-dom';
-import logoCaju from '../../assets/logo-caju.png'; 
+import logoCaju from 'assets/logo-caju.png'; 
 
 function PublicNavbar() {
   return (
@@ -11,8 +11,6 @@ function PublicNavbar() {
         <span className={styles.logoText}>Caju Ajuda</span>
       </Link>
       <div className={styles.navLinks}>
-        {/* NOVO LINK PARA A BASE DE CONHECIMENTO */}
-        <Link to="/ajuda">Ajuda</Link>
         <Link to="/login">Entrar</Link>
         <Link to="/register" className={styles.ctaButton}>Criar Conta</Link>
       </div>
