@@ -26,7 +26,7 @@ builder.Services.AddScoped<IChamadoRepository, ChamadoRepository>();
 builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
 builder.Services.AddScoped<IAnexoRepository, AnexoRepository>();
 builder.Services.AddScoped<IRespostaProntaRepository, RespostaProntaRepository>();
-builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
+
 
 // Serviços
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -37,7 +37,6 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IFileStorageService, LocalStorageService>();
 builder.Services.AddScoped<IRespostaProntaService, RespostaProntaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAIService, AIService>(); 
 

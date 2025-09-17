@@ -6,12 +6,12 @@ import Layout from './components/Layout/Layout';
 import PublicNavbar from './components/PublicNavbar/PublicNavbar';
 import Footer from './components/Footer/Footer';
 import AuthLayout from './components/AuthLayout/AuthLayout';
+import AdminHomePage from './pages/Admin/AdminHomePage/AdminHomePage';
 
 // Páginas Públicas
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/Register';
 import LandingPage from './pages/LandingPage/LandingPage';
-import KnowledgeBasePage from './pages/KnowledgeBasePage/KnowledgeBasePage';
 
 // Páginas do Cliente (Privadas)
 import DashboardPage from './pages/DashboardPage/DashboardPage';
@@ -20,6 +20,7 @@ import ChamadoDetailPage from './pages/ChamadoDetailPage/ChamadoDetailPage';
 import MeuPerfilPage from './pages/MeuPerfilPage/MeuPerfilPage';
 
 // Páginas do Admin (Privadas)
+
 import DashboardAdminPage from './pages/Admin/DashboardAdminPage/DashboardAdminPage';
 import GerenciarTecnicosPage from './pages/Admin/GerenciarTecnicosPage/GerenciarTecnicosPage';
 import GerenciarClientesPage from './pages/Admin/GerenciarClientesPage/GerenciarClientesPage';
@@ -41,7 +42,6 @@ function App() {
         {/* Rotas Públicas */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/ajuda" element={<KnowledgeBasePage />} />
         </Route>
 
         {/* Rotas de Login/Registro usam o AuthLayout para centralizar */}
@@ -59,6 +59,7 @@ function App() {
           <Route path="/perfil" element={<MeuPerfilPage />} />
 
           {/* Rotas do Admin */}
+          <Route path="/admin" element={<AdminHomePage />} />
           <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/tecnicos" element={<GerenciarTecnicosPage />} />
           <Route path="/admin/clientes" element={<GerenciarClientesPage />} />

@@ -16,7 +16,7 @@ public class DataInitializer
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<CajuAjudaDbContext>();
-        
+
         // Aplica quaisquer migrações pendentes para garantir que o BD esteja atualizado
         await context.Database.MigrateAsync();
 
@@ -32,7 +32,7 @@ public class DataInitializer
         var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
         var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
         var clienteInativo = new Usuario { Nome = "Carlos Inativo", Email = "carlos.inativo@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = false };
-        
+
         await context.Usuarios.AddRangeAsync(admin, tecnico, cliente1, cliente2, clienteInativo);
         await context.SaveChangesAsync(); // Salva para obter os IDs
 
@@ -92,23 +92,5 @@ public class DataInitializer
             };
             await context.RespostasProntas.AddRangeAsync(respostas);
         }
-        
-        // --- CRIAÇÃO DA KNOWLEDGE BASE ---
-        if (!await context.KbCategorias.AnyAsync())
-        {
-            var catLogin = new KbCategoria { Nome = "Problemas de Login" };
-            var catPagamentos = new KbCategoria { Nome = "Pagamentos e Faturas" };
-
-            await context.KbCategorias.AddRangeAsync(catLogin, catPagamentos);
-            await context.SaveChangesAsync(); // Salva para obter os IDs das categorias
-
-            var art1 = new KbArtigo { Titulo = "Como redefinir minha senha?", Conteudo = "Para redefinir sua senha, clique em 'Esqueci minha senha' na tela de login e siga as instruções enviadas para o seu e-mail.", CategoriaId = catLogin.Id };
-            var art2 = new KbArtigo { Titulo = "Não recebi o e-mail de verificação", Conteudo = "Caso não tenha recebido o e-mail de verificação, por favor, verifique sua caixa de spam ou lixo eletrônico.", CategoriaId = catLogin.Id };
-            var art3 = new KbArtigo { Titulo = "Como emitir a segunda via da fatura?", Conteudo = "Acesse o painel financeiro no menu principal e clique na opção 'Minhas Faturas' para visualizar e imprimir a segunda via.", CategoriaId = catPagamentos.Id };
-
-            await context.KbArtigos.AddRangeAsync(art1, art2, art3);
-        }
-        
-        await context.SaveChangesAsync();
     }
 }

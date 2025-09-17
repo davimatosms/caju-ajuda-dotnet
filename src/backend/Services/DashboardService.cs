@@ -26,21 +26,15 @@ public class DashboardService : IDashboardService
             .ToListAsync();
 
         var chamadosFechados = todosChamados.Where(c => c.Status == StatusChamado.FECHADO).ToList();
-
-        // --- Cálculos das Métricas ---
-
-        var totalChamados = todosChamados.Count;
-        var totalFechados = chamadosFechados.Count;
-        var percentualResolvidos = totalChamados > 0 ? ((double)totalFechados / totalChamados) * 100 : 0;
-
-        // A consulta agora gera uma List<ChartDataPoint>
+        
         var prioridades = todosChamados
             .GroupBy(c => c.Prioridade.ToString())
             .Select(g => new ChartDataPoint { Name = g.Key, Total = g.Count() })
             .ToList();
 
-        // --- Novos Cálculos Avançados ---
-
+        var totalChamados = todosChamados.Count;
+        var totalFechados = chamadosFechados.Count;
+        var percentualResolvidos = totalChamados > 0 ? ((double)totalFechados / totalChamados) * 100 : 0;
         double totalHorasResolucao = 0;
         if (chamadosFechados.Any())
         {
@@ -48,12 +42,10 @@ public class DashboardService : IDashboardService
                 .Where(c => c.DataFechamento.HasValue)
                 .Average(c => (c.DataFechamento.Value - c.DataCriacao).TotalHours);
         }
-
         double totalHorasPrimeiraResposta = 0;
         var chamadosComResposta = todosChamados
             .Where(c => c.Mensagens.Any(m => m.Autor.Role == Role.TECNICO || m.Autor.Role == Role.ADMIN))
             .ToList();
-        
         if (chamadosComResposta.Any())
         {
             totalHorasPrimeiraResposta = chamadosComResposta.Average(c =>
@@ -65,7 +57,6 @@ public class DashboardService : IDashboardService
                 return (primeiraResposta.DataEnvio - c.DataCriacao).TotalHours;
             });
         }
-        
         var statsDiarios = new List<DailyStat>();
         var hoje = DateTime.UtcNow.Date;
         for (int i = 6; i >= 0; i--)
@@ -78,8 +69,7 @@ public class DashboardService : IDashboardService
                 Fechados = chamadosFechados.Count(c => c.DataFechamento.HasValue && c.DataFechamento.Value.Date == dia)
             });
         }
-
-        // --- Montagem do DTO de Resposta ---
+        
         var response = new DashboardResponseDto
         {
             TotalChamados = totalChamados,

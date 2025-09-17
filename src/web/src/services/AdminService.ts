@@ -26,27 +26,22 @@ export interface Cliente {
     enabled: boolean;
 }
 
-// Interface auxiliar para o formato do gráfico
 export interface ChartDataPoint {
     name: string;
     total: number;
 }
-
-// Interface auxiliar para os dados do gráfico de linha
 export interface DailyStat {
     dia: string;
     criados: number;
     fechados: number;
 }
-
-// Interface principal das métricas, agora atualizada
 export interface DashboardMetrics {
     totalChamados: number;
     chamadosAbertos: number;
     chamadosEmAndamento: number;
     chamadosFechados: number;
     percentualResolvidos: number;
-    chamadosPorPrioridade: ChartDataPoint[]; // Agora é um array
+    chamadosPorPrioridade: ChartDataPoint[];
     tempoMedioPrimeiraRespostaHoras: number;
     tempoMedioResolucaoHoras: number;
     statsUltimos7Dias: DailyStat[];
@@ -92,9 +87,21 @@ const updateTecnico = async (id: number, data: TecnicoUpdateData): Promise<Tecni
     return response.data;
 };
 
+const resetPassword = async (id: number): Promise<{ temporaryPassword: string }> => {
+    const config = getAuthHeaders();
+    const response = await axios.post(`${API_URL}/tecnicos/${id}/reset-password`, null, config);
+    return response.data;
+};
+
 const getClientes = async (): Promise<any> => {
     const config = getAuthHeaders();
     const response = await axios.get(`${API_URL}/clientes`, config);
+    return response.data;
+};
+
+const toggleClienteStatus = async (id: number): Promise<any> => {
+    const config = getAuthHeaders();
+    const response = await axios.patch(`${API_URL}/clientes/${id}/status`, null, config);
     return response.data;
 };
 
@@ -109,7 +116,9 @@ const AdminService = {
     createTecnico,
     toggleTecnicoStatus,
     updateTecnico,
+    resetPassword,
     getClientes,
+    toggleClienteStatus,
     getDashboardMetrics,
 };
 

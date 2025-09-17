@@ -10,7 +10,7 @@ public class DailyStat
     public int Fechados { get; set; }
 }
 
-
+// Classe auxiliar para os dados dos gráficos de barra/pizza
 public class ChartDataPoint
 {
     public string Name { get; set; } = string.Empty;
@@ -25,7 +25,7 @@ public class DashboardResponseDto
     public int ChamadosFechados { get; set; }
     public double PercentualResolvidos { get; set; }
     
-    
+    // A propriedade agora é uma Lista do nosso novo tipo
     public List<ChartDataPoint> ChamadosPorPrioridade { get; set; } = new();
 
     public double TempoMedioPrimeiraRespostaHoras { get; set; }

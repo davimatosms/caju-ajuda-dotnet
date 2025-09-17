@@ -38,12 +38,6 @@ function DashboardAdminPage() {
         return <div className={styles.error}>Nenhuma métrica encontrada.</div>;
     }
 
-    // A CORREÇÃO ESTÁ AQUI: Convertendo o objeto em um array que o gráfico entende.
-    const prioridadeData = Object.entries(metrics.chamadosPorPrioridade).map(([key, value]) => ({
-        name: key,
-        Total: value,
-    }));
-
     return (
         <div className={styles.dashboardContainer}>
             <div className={styles.header}>
@@ -88,13 +82,13 @@ function DashboardAdminPage() {
                 <div className={styles.chartContainer}>
                     <h3>Chamados por Prioridade</h3>
                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={prioridadeData}>
+                        <BarChart data={metrics.chamadosPorPrioridade}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis allowDecimals={false} />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="Total" fill="#8884d8" />
+                            <Bar dataKey="total" name="Total" fill="#8884d8" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

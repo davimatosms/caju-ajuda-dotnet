@@ -1,0 +1,54 @@
+.homeContainer {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.welcomeHeader {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.welcomeHeader h1 {
+    margin: 0;
+    font-size: 32px;
+    color: #333;
+}
+
+.welcomeHeader p {
+    font-size: 18px;
+    color: #666;
+}
+
+.navGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.navCard {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.navCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.navCard h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #007bff;
+}
+
+.navCard p {
+    color: #555;
+    line-height: 1.6;
+}

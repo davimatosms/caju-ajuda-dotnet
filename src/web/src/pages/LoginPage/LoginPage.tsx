@@ -20,7 +20,7 @@ function LoginPage() {
             const user = AuthService.getCurrentUser();
 
             if (user?.role === 'ADMIN') {
-                navigate('/admin/dashboard');
+                navigate('/admin');
             } else if (user?.role === 'TECNICO') {
                 AuthService.logout();
                 setMessage("Técnicos devem usar a aplicação Desktop.");

@@ -5,6 +5,7 @@ import styles from './GerenciarTecnicosPage.module.css';
 import AddTecnicoModal from '../AddTecnicoModal/AddTecnicoModal';
 import EditTecnicoModal from '../EditTecnicoModal/EditTecnicoModal';
 import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
+import InfoModal from '../../../components/InfoModal/InfoModal'; 
 
 function GerenciarTecnicosPage() {
     const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
@@ -12,10 +13,15 @@ function GerenciarTecnicosPage() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     
+    // Controles dos modais
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTecnico, setSelectedTecnico] = useState<Tecnico | null>(null);
-    const [confirmAction, setConfirmAction] = useState<{ id: number; nome: string; enabled: boolean } | null>(null);
+    const [confirmToggleAction, setConfirmToggleAction] = useState<{ id: number; nome: string; enabled: boolean } | null>(null);
+    const [resetPasswordAction, setResetPasswordAction] = useState<{ id: number; nome: string } | null>(null);
+    
+    
+    const [infoModalData, setInfoModalData] = useState<{ title: string; message: string; info: string } | null>(null);
 
     const fetchTecnicos = useCallback(async () => {
         try {
@@ -38,14 +44,31 @@ function GerenciarTecnicosPage() {
     }, [fetchTecnicos]);
 
     const handleConfirmToggleStatus = async () => {
-        if (!confirmAction) return;
+        if (!confirmToggleAction) return;
         try {
-            await AdminService.toggleTecnicoStatus(confirmAction.id);
+            await AdminService.toggleTecnicoStatus(confirmToggleAction.id);
             fetchTecnicos();
         } catch (error) {
             alert("Não foi possível alterar o status do técnico.");
         } finally {
-            setConfirmAction(null);
+            setConfirmToggleAction(null);
+        }
+    };
+
+    
+    const handleConfirmResetPassword = async () => {
+        if (!resetPasswordAction) return;
+        try {
+            const response = await AdminService.resetPassword(resetPasswordAction.id);
+            setInfoModalData({
+                title: "Senha Redefinida com Sucesso!",
+                message: `A nova senha temporária para ${resetPasswordAction.nome} é:`,
+                info: response.temporaryPassword
+            });
+        } catch (error) {
+            alert("Não foi possível resetar a senha do técnico.");
+        } finally {
+            setResetPasswordAction(null); // Fecha o modal de confirmação
         }
     };
 
@@ -98,9 +121,15 @@ function GerenciarTecnicosPage() {
                                     </button>
                                     <button 
                                         className={`${styles.actionButton} ${styles.toggleButton}`}
-                                        onClick={() => setConfirmAction({ id: tecnico.id, nome: tecnico.nome, enabled: tecnico.enabled })}
+                                        onClick={() => setConfirmToggleAction({ id: tecnico.id, nome: tecnico.nome, enabled: tecnico.enabled })}
                                     >
                                         {tecnico.enabled ? 'Desativar' : 'Ativar'}
+                                    </button>
+                                    <button
+                                        className={`${styles.actionButton} ${styles.resetButton}`}
+                                        onClick={() => setResetPasswordAction({ id: tecnico.id, nome: tecnico.nome })}
+                                    >
+                                        Resetar Senha
                                     </button>
                                 </td>
                             </tr>
@@ -114,18 +143,37 @@ function GerenciarTecnicosPage() {
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={fetchTecnicos}
             />
+
             <EditTecnicoModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 onSuccess={fetchTecnicos}
                 tecnico={selectedTecnico}
             />
+            
             <ConfirmModal
-                isOpen={!!confirmAction}
-                onClose={() => setConfirmAction(null)}
+                isOpen={!!confirmToggleAction}
+                onClose={() => setConfirmToggleAction(null)}
                 onConfirm={handleConfirmToggleStatus}
                 title="Confirmar Alteração de Status"
-                message={`Você tem certeza que deseja ${confirmAction?.enabled ? 'desativar' : 'ativar'} o técnico ${confirmAction?.nome}?`}
+                message={`Você tem certeza que deseja ${confirmToggleAction?.enabled ? 'desativar' : 'ativar'} o técnico ${confirmToggleAction?.nome}?`}
+            />
+
+            <ConfirmModal
+                isOpen={!!resetPasswordAction}
+                onClose={() => setResetPasswordAction(null)}
+                onConfirm={handleConfirmResetPassword}
+                title="Confirmar Reset de Senha"
+                message={`Você tem certeza que deseja resetar a senha do técnico ${resetPasswordAction?.nome}? Esta ação não pode ser desfeita.`}
+            />
+
+            
+            <InfoModal
+                isOpen={!!infoModalData}
+                onClose={() => setInfoModalData(null)}
+                title={infoModalData?.title || ''}
+                message={infoModalData?.message || ''}
+                info={infoModalData?.info || ''}
             />
         </>
     );

@@ -73,7 +73,6 @@
     color: #666;
 }
 
-
 .actionsCell {
     display: flex;
     gap: 10px;
@@ -88,10 +87,14 @@
     color: white;
 }
 
-.toggleButton {
-    background-color: #ffc107; 
-}
-
 .editButton {
     background-color: #17a2b8; /* Azul claro */
+}
+
+.toggleButton {
+    background-color: #ffc107; /* Amarelo */
+}
+
+.resetButton {
+    background-color: #6c757d; /* Cinza */
 }

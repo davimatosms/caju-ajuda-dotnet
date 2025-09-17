@@ -18,8 +18,7 @@ public class CajuAjudaDbContext : DbContext
     public virtual DbSet<Mensagem> Mensagens { get; set; }
     public virtual DbSet<Anexo> Anexos { get; set; }
     public virtual DbSet<RespostaPronta> RespostasProntas { get; set; }
-    public virtual DbSet<KbCategoria> KbCategorias { get; set; }
-    public virtual DbSet<KbArtigo> KbArtigos { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
