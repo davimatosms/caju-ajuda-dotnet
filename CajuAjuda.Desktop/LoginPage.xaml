@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CajuAjuda.Desktop.LoginPage"
+             Title="Caju Ajuda - Login"
+             BackgroundColor="#F5F5F5">
+
+    <Grid>
+        <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+
+            <Label Text="Bem-vindo ao Caju Ajuda"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   TextColor="#333"/>
+
+            <Frame BackgroundColor="White" Padding="20" CornerRadius="10" HasShadow="True">
+                <VerticalStackLayout Spacing="15">
+                    <Entry Placeholder="E-mail"
+                           Keyboard="Email"
+                           PlaceholderColor="#999"
+                           TextColor="#333"/>
+
+                    <Entry Placeholder="Senha"
+                           IsPassword="True"
+                           PlaceholderColor="#999"
+                           TextColor="#333"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Button Text="Entrar"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    CornerRadius="8"/>
+
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>
