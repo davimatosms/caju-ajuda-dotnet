@@ -1,24 +1,45 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// CajuAjuda.Desktop/MauiProgram.cs
 
-namespace CajuAjuda.Desktop;
+using CajuAjuda.Desktop.Services;
+using CajuAjuda.Desktop.ViewModels;
+using CajuAjuda.Desktop.Views;
+using Microsoft.Extensions.Logging;
 
-public static class MauiProgram
+namespace CajuAjuda.Desktop
 {
-	public static MauiApp CreateMauiApp()
-	{
-		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
-			.ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                });
 
 #if DEBUG
-		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
-	}
+            // Registrando Serviços
+            builder.Services.AddSingleton<AuthService>();
+            builder.Services.AddSingleton<AuthService>();
+            builder.Services.AddSingleton<ChamadoService>();
+
+            // Registrando Views (Páginas)
+            builder.Services.AddSingleton<LoginPage>();
+            builder.Services.AddTransient<MainPage>(); // Transient é melhor para páginas secundárias
+
+            // Registrando ViewModels
+            builder.Services.AddSingleton<LoginViewModel>();
+            builder.Services.AddTransient<MainViewModel>();
+
+
+
+            return builder.Build();
+        }
+    }
 }

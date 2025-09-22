@@ -1,0 +1,54 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
+             x:DataType="viewModels:LoginViewModel"
+             x:Class="CajuAjuda.Desktop.Views.LoginPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Gray100}">
+
+    <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*">
+
+        <ActivityIndicator Grid.RowSpan="3" Grid.ColumnSpan="3"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Color="{StaticResource Primary}"/>
+
+        <Border Grid.Row="1" Grid.Column="0"
+                StrokeShape="RoundRectangle 10"
+                StrokeThickness="0"
+                Padding="20"
+                Margin="20"
+                BackgroundColor="White"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                WidthRequest="400">
+
+            <VerticalStackLayout Spacing="15">
+                <Label 
+                    Text="Bem-vindo ao Caju Ajuda"
+                    SemanticProperties.HeadingLevel="Level1"
+                    FontSize="24"
+                    HorizontalOptions="Center" />
+
+                <Entry 
+                    Placeholder="E-mail"
+                    Text="{Binding Email, Mode=TwoWay}"
+                    Keyboard="Email"/>
+
+                <Entry 
+                    Placeholder="Senha"
+                    IsPassword="True"
+                    Text="{Binding Senha, Mode=TwoWay}"/>
+
+                <Button 
+                    Text="Entrar"
+                    Command="{Binding LoginCommand}"
+                    IsEnabled="{Binding CanLogin}"
+                    HorizontalOptions="FillAndExpand"/>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>
