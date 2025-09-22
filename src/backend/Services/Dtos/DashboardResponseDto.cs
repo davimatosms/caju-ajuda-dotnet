@@ -25,7 +25,7 @@ public class DashboardResponseDto
     public int ChamadosFechados { get; set; }
     public double PercentualResolvidos { get; set; }
     
-    // A propriedade agora é uma Lista do nosso novo tipo
+    
     public List<ChartDataPoint> ChamadosPorPrioridade { get; set; } = new();
 
     public double TempoMedioPrimeiraRespostaHoras { get; set; }

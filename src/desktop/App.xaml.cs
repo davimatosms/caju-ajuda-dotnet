@@ -1,11 +1,15 @@
-﻿namespace CajuAjuda.Desktop;
+﻿
 
-public partial class App : Application
+namespace CajuAjuda.Desktop
 {
-	public App()
-	{
-		InitializeComponent();
+    public partial class App : Application
+    {
+        public App()
+        {
+            InitializeComponent();
 
-		MainPage = new AppShell();
-	}
+            
+            MainPage = new AppShell();
+        }
+    }
 }
