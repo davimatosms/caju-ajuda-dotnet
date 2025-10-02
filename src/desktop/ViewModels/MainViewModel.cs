@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CajuAjuda.Desktop.Models;
 using CajuAjuda.Desktop.Services;
 using Microsoft.Maui.Controls;
-using CajuAjuda.Desktop.Views; 
+using CajuAjuda.Desktop.Views;
 
 namespace CajuAjuda.Desktop.ViewModels
 {
@@ -58,6 +58,17 @@ namespace CajuAjuda.Desktop.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        [RelayCommand]
+        private async Task GoToDetailsAsync(Chamado chamado)
+        {
+            // Se o chamado for nulo (ocorre ao desmarcar o item), não faz nada.
+            if (chamado == null)
+                return;
+
+            // Navega para a página de detalhes, passando o ID do chamado como um parâmetro de query
+            await Shell.Current.GoToAsync($"{nameof(DetalheChamadoPage)}?ChamadoId={chamado.Id}");
         }
 
         [RelayCommand]

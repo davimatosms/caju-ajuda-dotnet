@@ -15,14 +15,20 @@
         <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"
                            Grid.Row="1" HorizontalOptions="Center" VerticalOptions="Center" />
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Chamados}" IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+        <CollectionView Grid.Row="1" 
+                        ItemsSource="{Binding Chamados}" 
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        SelectionMode="Single"
+                        SelectionChangedCommand="{Binding GoToDetailsCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Chamado">
                     <Border StrokeShape="RoundRectangle 5" StrokeThickness="1" Margin="10" Padding="15">
                         <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto">
                             <Label Grid.Row="0" Grid.Column="0" Text="{Binding Titulo}" FontSize="18" FontAttributes="Bold" />
                             <Label Grid.Row="0" Grid.Column="1" Text="{Binding Status}" />
-                            <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding ClienteNome}" FontSize="12" TextColor="Gray" />
+                            <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding NomeCliente}" FontSize="12" TextColor="Gray" />
                             <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DataCriacao, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" />
                         </Grid>
                     </Border>

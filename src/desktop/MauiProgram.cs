@@ -26,17 +26,17 @@ namespace CajuAjuda.Desktop
 
             // Registrando Serviços
             builder.Services.AddSingleton<AuthService>();
-            builder.Services.AddSingleton<AuthService>();
             builder.Services.AddSingleton<ChamadoService>();
 
             // Registrando Views (Páginas)
             builder.Services.AddSingleton<LoginPage>();
-            builder.Services.AddTransient<MainPage>(); // Transient é melhor para páginas secundárias
+            builder.Services.AddTransient<MainPage>();
+            builder.Services.AddTransient<DetalheChamadoPage>();
 
             // Registrando ViewModels
             builder.Services.AddSingleton<LoginViewModel>();
             builder.Services.AddTransient<MainViewModel>();
-
+            builder.Services.AddTransient<DetalheChamadoViewModel>();
 
 
             return builder.Build();

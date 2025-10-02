@@ -1,8 +1,8 @@
-﻿
+﻿// CajuAjuda.Desktop/Converters/InvertedBoolConverter.cs
 
 using System;
-using System.Globalization; 
-using Microsoft.Maui.Controls; 
+using System.Globalization;
+using Microsoft.Maui.Controls;
 
 namespace CajuAjuda.Desktop.Converters
 {
@@ -10,20 +10,16 @@ namespace CajuAjuda.Desktop.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return value;
+            if (value is not bool boolValue)
+                return false;
+            return !boolValue;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return value;
+            if (value is not bool boolValue)
+                return false;
+            return !boolValue;
         }
     }
 }
