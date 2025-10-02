@@ -1,3 +1,5 @@
+// CajuAjuda.Backend/Program.cs
+
 using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Hubs;
 using CajuAjuda.Backend.Middlewares;
@@ -8,8 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using System.Text.Json.Serialization;
-
+using System.Text.Json.Serialization; // Garanta que este using está presente
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +39,7 @@ builder.Services.AddScoped<IFileStorageService, LocalStorageService>();
 builder.Services.AddScoped<IRespostaProntaService, RespostaProntaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IAIService, AIService>(); 
+builder.Services.AddScoped<IAIService, AIService>();
 
 builder.Services.AddTransient<DataInitializer>();
 
@@ -64,12 +65,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve; 
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+    
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -117,7 +122,7 @@ app.UseHttpsRedirection();
 app.UseCors(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod()
-    .WithOrigins("http://localhost:3000") 
+    .WithOrigins("http://localhost:3000")
     .AllowCredentials());
 
 app.UseAuthentication();

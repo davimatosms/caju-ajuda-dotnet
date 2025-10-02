@@ -1,93 +1,101 @@
+// CajuAjuda.Backend/Controllers/ChamadosController.cs
+
+using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
-namespace CajuAjuda.Backend.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class ChamadosController : ControllerBase
+namespace CajuAjuda.Backend.Controllers
 {
-    private readonly IChamadoService _chamadoService;
-    private readonly IMensagemService _mensagemService;
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class ChamadosController : ControllerBase
+    {
+        private readonly IChamadoService _chamadoService;
+        private readonly IMensagemService _mensagemService;
 
-    public ChamadosController(IChamadoService chamadoService, IMensagemService mensagemService)
-    {
-        _chamadoService = chamadoService;
-        _mensagemService = mensagemService;
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "CLIENTE")]
-    public async Task<IActionResult> CreateChamado([FromBody] ChamadoCreateDto chamadoDto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
-        var novoChamado = await _chamadoService.CreateAsync(chamadoDto, userEmail);
-        return CreatedAtAction(null, new { id = novoChamado.Id }, novoChamado);
-    }
-
-    [HttpGet("meus")]
-    [Authorize(Roles = "CLIENTE")]
-    public async Task<IActionResult> GetMeusChamados()
-    {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
-        var chamados = await _chamadoService.GetChamadosByClienteEmailAsync(userEmail);
-        return Ok(chamados);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetChamadoById(long id)
-    {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        var userRole = User.FindFirstValue(ClaimTypes.Role);
-        if (userEmail == null || userRole == null) return Unauthorized();
-        var chamado = await _chamadoService.GetChamadoByIdAsync(id, userEmail, userRole);
-        return Ok(chamado);
-    }
-
-    [HttpPost("{id}/mensagens")]
-    [Authorize(Roles = "CLIENTE")]
-    public async Task<IActionResult> AddMensagemCliente(long id, [FromBody] MensagemCreateDto mensagemDto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        var userRole = User.FindFirstValue(ClaimTypes.Role);
-        if (userEmail == null || userRole == null) return Unauthorized();
-        var novaMensagem = await _mensagemService.AddMensagemAsync(id, mensagemDto, userEmail, userRole);
-        return Ok(novaMensagem);
-    }
-
-    [HttpPost("{id}/anexos")]
-    [Authorize(Roles = "CLIENTE")]
-    public async Task<IActionResult> UploadAnexo(long id, IFormFile file)
-    {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
-        if (file == null || file.Length == 0) return BadRequest(new { message = "Nenhum arquivo foi enviado." });
-        var anexo = await _chamadoService.AddAnexoAsync(id, file, userEmail);
-        return Ok(anexo);
-    }
-    
-    [HttpPost("{id}/avaliar")]
-    [Authorize(Roles = "CLIENTE")]
-    public async Task<IActionResult> AvaliarChamado(long id, [FromBody] AvaliacaoDto avaliacaoDto)
-    {
-        if (!ModelState.IsValid)
+        public ChamadosController(IChamadoService chamadoService, IMensagemService mensagemService)
         {
-            return BadRequest(ModelState);
+            _chamadoService = chamadoService;
+            _mensagemService = mensagemService;
         }
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null)
+
+        [HttpGet]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> GetAllChamados([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] StatusChamado? status = null, [FromQuery] PrioridadeChamado? prioridade = null)
         {
-            return Unauthorized();
+            var chamadosPaginados = await _chamadoService.GetAllChamadosAsync(pageNumber, pageSize, status, prioridade);
+            return Ok(chamadosPaginados);
         }
-        await _chamadoService.AvaliarChamadoAsync(id, avaliacaoDto, userEmail);
-        return Ok(new { message = "Avaliação registrada com sucesso." });
+
+        [HttpPost]
+        [Authorize(Roles = "CLIENTE")]
+        public async Task<IActionResult> CreateChamado([FromBody] ChamadoCreateDto chamadoDto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+            var novoChamado = await _chamadoService.CreateAsync(chamadoDto, userEmail);
+            return CreatedAtAction(null, new { id = novoChamado.Id }, novoChamado);
+        }
+
+        [HttpGet("meus")]
+        [Authorize(Roles = "CLIENTE")]
+        public async Task<IActionResult> GetMeusChamados()
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+            var chamados = await _chamadoService.GetChamadosByClienteEmailAsync(userEmail);
+            return Ok(chamados);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetChamadoById(long id)
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userEmail == null || userRole == null) return Unauthorized();
+            var chamado = await _chamadoService.GetChamadoByIdAsync(id, userEmail, userRole);
+            return Ok(chamado);
+        }
+
+        [HttpPost("{id}/mensagens")]
+        [Authorize(Roles = "TECNICO, ADMIN, CLIENTE")]
+        public async Task<IActionResult> AddMensagem(long id, [FromBody] MensagemCreateDto mensagemDto)
+        {
+            // VVVVVV CLIQUE NA MARGEM CINZA À ESQUERDA DESTA LINHA PARA ADICIONAR O BREAKPOINT VVVVVV
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (userEmail == null || userRole == null) return Unauthorized();
+
+            var novaMensagem = await _mensagemService.AddMensagemAsync(id, mensagemDto, userEmail, userRole);
+            return Ok(novaMensagem);
+        }
+
+        [HttpPost("{id}/avaliar")]
+        [Authorize(Roles = "CLIENTE")]
+        public async Task<IActionResult> AvaliarChamado(long id, [FromBody] AvaliacaoDto avaliacaoDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null)
+            {
+                return Unauthorized();
+            }
+
+            await _chamadoService.AvaliarChamadoAsync(id, avaliacaoDto, userEmail);
+            return Ok(new { message = "Avaliação registrada com sucesso." });
+        }
     }
 }
