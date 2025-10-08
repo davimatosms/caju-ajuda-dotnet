@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChamadoService from '../../services/ChamadoService';
 import styles from './NovoChamadoPage.module.css';
+import { Button } from '../../components/UI';
 
 function NovoChamadoPage() {
     const navigate = useNavigate();
@@ -64,9 +65,9 @@ function NovoChamadoPage() {
                         />
                     </div>
 
-                    <button type="submit" className={styles.submitButton} disabled={isLoading}>
+                    <Button type="submit" className={styles.submitButton} disabled={isLoading}>
                         {isLoading ? 'Enviando...' : 'Enviar Chamado'}
-                    </button>
+                    </Button>
 
                     {message && (
                         <div className={`${styles.message} ${isError ? styles.error : styles.success}`}>

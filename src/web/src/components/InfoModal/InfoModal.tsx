@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './InfoModal.module.css';
+import { Button } from '../UI';
 
 interface InfoModalProps {
   isOpen: boolean;
@@ -20,9 +21,9 @@ function InfoModal({ isOpen, onClose, title, message, info }: InfoModalProps) {
         <h3>{title}</h3>
         <p>{message}</p>
         <div className={styles.infoBox}>{info}</div>
-        <button className={styles.closeButton} onClick={onClose}>
+        <Button className={styles.closeButton} onClick={onClose}>
           Fechar
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import styles from './Register.module.css';
+import { Button } from '../../components/UI';
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -75,9 +76,9 @@ function RegisterPage() {
                     disabled={isLoading}
                 />
             </div>
-            <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            <Button type="submit" className={styles.submitButton} disabled={isLoading}>
                 {isLoading ? 'Aguarde...' : 'Criar Conta'}
-            </button>
+            </Button>
             {message && (
                 <div className={`${styles.message} ${isError ? styles.error : styles.success}`}>
                     {message}

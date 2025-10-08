@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import styles from './LoginPage.module.css';
+import { Button } from '../../components/UI';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -64,9 +65,9 @@ function LoginPage() {
                     disabled={isLoading}
                 />
             </div>
-            <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            <Button type="submit" className={styles.submitButton} disabled={isLoading}>
                 {isLoading ? 'Entrando...' : 'Entrar'}
-            </button>
+            </Button>
             {message && (
                 <div className={`${styles.message} ${styles.error}`}>{message}</div>
             )}
