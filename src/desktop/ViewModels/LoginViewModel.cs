@@ -1,12 +1,7 @@
-﻿// CajuAjuda.Desktop/ViewModels/LoginViewModel.cs
-
-using CajuAjuda.Desktop.Models;
-using CajuAjuda.Desktop.Services;
-using CajuAjuda.Desktop.Views; // Adicione para ter acesso a MainPage
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input; // <<-- ESTE USING ESTAVA FALTANDO
-using Microsoft.Maui.Controls;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
+using CajuAjuda.Desktop.Services;
 
 namespace CajuAjuda.Desktop.ViewModels
 {
@@ -15,17 +10,15 @@ namespace CajuAjuda.Desktop.ViewModels
         private readonly AuthService _authService;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CanLogin))]
-        private string _email;
+        [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
+        private string _email = string.Empty;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CanLogin))]
-        private string _senha;
+        [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
+        private string _senha = string.Empty;
 
         [ObservableProperty]
         private bool _isBusy;
-
-        public bool CanLogin => !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Senha) && !IsBusy;
 
         public LoginViewModel(AuthService authService)
         {
@@ -35,30 +28,46 @@ namespace CajuAjuda.Desktop.ViewModels
         [RelayCommand(CanExecute = nameof(CanLogin))]
         private async Task LoginAsync()
         {
+            if (IsBusy) return;
+
             IsBusy = true;
             try
             {
-                var loginRequest = new LoginRequest { Email = this.Email, Senha = this.Senha };
-                var response = await _authService.LoginAsync(loginRequest);
+                var loginResponse = await _authService.LoginAsync(Email, Senha);
 
-                if (!string.IsNullOrWhiteSpace(response.Token))
+                if (loginResponse is not null && !string.IsNullOrWhiteSpace(loginResponse.Token))
                 {
-                    await SecureStorage.Default.SetAsync("jwt_token", response.Token);
-                    await Shell.Current.GoToAsync($"{nameof(MainPage)}");
+                    await SecureStorage.Default.SetAsync("auth_token", loginResponse.Token);
+
+                    // ======================================================
+                    //               A CORREÇÃO PRINCIPAL ESTÁ AQUI
+                    // ======================================================
+                    // Substitui a página de Login (que é a página atual)
+                    // pela estrutura principal do aplicativo (o AppShell).
+                    Application.Current.MainPage = new AppShell();
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlert("Erro de Login", "A API não retornou um token.", "Tentar Novamente");
+#pragma warning disable CA1416
+                    await Shell.Current.DisplayAlert("Erro", "Email ou senha inválidos.", "OK");
+#pragma warning restore CA1416
                 }
             }
             catch (System.Exception ex)
             {
-                await Shell.Current.DisplayAlert("Erro de Login", ex.Message, "Tentar Novamente");
+#pragma warning disable CA1416
+                await Shell.Current.DisplayAlert("Erro", $"Falha na comunicação: {ex.Message}", "OK");
+#pragma warning restore CA1416
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        private bool CanLogin()
+        {
+            return !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Senha) && !IsBusy;
         }
     }
 }

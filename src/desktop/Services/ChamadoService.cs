@@ -53,9 +53,47 @@ namespace CajuAjuda.Desktop.Services
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            // A API retorna um objeto de paginação, nós pegamos a lista de 'items' dentro dele
-            var pagedResult = JsonSerializer.Deserialize<PagedList<Chamado>>(content, _serializerOptions);
-            return pagedResult?.Items ?? new List<Chamado>();
+            // A API pode retornar vários formatos: um objeto paginado com 'Items',
+            // um objeto com '$values' (serialização EF), ou um array direto.
+            try
+            {
+                // Tenta desserializar como { Items: [...] }
+                var pagedResult = JsonSerializer.Deserialize<PagedList<Chamado>>(content, _serializerOptions);
+                if (pagedResult?.Items != null && pagedResult.Items.Count > 0)
+                    return pagedResult.Items;
+
+                // Tenta detectar { $values: [...] }
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (doc.RootElement.TryGetProperty("Items", out var itemsElem) && itemsElem.ValueKind == JsonValueKind.Array)
+                    {
+                        var itemsJson = itemsElem.GetRawText();
+                        var items = JsonSerializer.Deserialize<List<Chamado>>(itemsJson, _serializerOptions);
+                        return items ?? new List<Chamado>();
+                    }
+
+                    if (doc.RootElement.TryGetProperty("$values", out var valuesElem) && valuesElem.ValueKind == JsonValueKind.Array)
+                    {
+                        var valuesJson = valuesElem.GetRawText();
+                        var items = JsonSerializer.Deserialize<List<Chamado>>(valuesJson, _serializerOptions);
+                        return items ?? new List<Chamado>();
+                    }
+                }
+
+                // Caso seja um array direto
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    var items = JsonSerializer.Deserialize<List<Chamado>>(content, _serializerOptions);
+                    return items ?? new List<Chamado>();
+                }
+            }
+            catch
+            {
+                // Em caso de falha na normalização, cai para retorno vazio
+            }
+
+            return new List<Chamado>();
         }
 
         public async Task<ChamadoDetalhes?> GetChamadoByIdAsync(int chamadoId)
