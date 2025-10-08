@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './ConfirmModal.module.css';
+import { Button } from '../UI';
 
 // Definimos as propriedades que o modal irá receber
 interface ConfirmModalProps {
@@ -21,12 +22,12 @@ function ConfirmModal({ isOpen, onClose, onConfirm, title, message }: ConfirmMod
         <h3>{title}</h3>
         <p>{message}</p>
         <div className={styles.buttonContainer}>
-          <button className={styles.cancelButton} onClick={onClose}>
+          <Button className={styles.cancelButton} onClick={onClose}>
             Cancelar
-          </button>
-          <button className={styles.confirmButton} onClick={onConfirm}>
+          </Button>
+          <Button className={styles.confirmButton} onClick={onConfirm}>
             Confirmar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -12,15 +12,18 @@ public partial class DetalheChamadoPage : ContentPage
         BindingContext = viewModel;
     }
 
-    // Este mÈtodo È chamado automaticamente pelo MAUI sempre que a p·gina È exibida.
-    protected override void OnNavigatedTo(NavigatedToEventArgs args)
+    // Carrega os detalhes quando a p√°gina aparece ‚Äî compat√≠vel com Shell e navega√ß√£o direta.
+    protected override void OnAppearing()
     {
-        base.OnNavigatedTo(args);
+        base.OnAppearing();
 
-        // ForÁamos o ViewModel a carregar os dados
         if (BindingContext is DetalheChamadoViewModel viewModel)
         {
-            viewModel.LoadDetalhesCommand.Execute(null);
+            // S√≥ executa se o ChamadoId j√° estiver definido (QueryProperty via Shell)
+            if (viewModel.ChamadoId != 0)
+            {
+                viewModel.LoadDetalhesCommand.Execute(null);
+            }
         }
     }
 }

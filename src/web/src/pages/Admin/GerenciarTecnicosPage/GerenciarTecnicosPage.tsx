@@ -6,6 +6,7 @@ import AddTecnicoModal from '../AddTecnicoModal/AddTecnicoModal';
 import EditTecnicoModal from '../EditTecnicoModal/EditTecnicoModal';
 import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
 import InfoModal from '../../../components/InfoModal/InfoModal'; 
+import { Button } from '../../../components/UI';
 
 function GerenciarTecnicosPage() {
     const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
@@ -89,9 +90,9 @@ function GerenciarTecnicosPage() {
             <div className={styles.pageContainer}>
                 <div className={styles.header}>
                     <h1>Gerenciar Técnicos</h1>
-                    <button className={styles.addButton} onClick={() => setIsAddModalOpen(true)}>
+                    <Button className={styles.addButton} onClick={() => setIsAddModalOpen(true)}>
                         Adicionar Novo Técnico
-                    </button>
+                    </Button>
                 </div>
                 <table className={styles.tecnicosTable}>
                     <thead>
@@ -113,24 +114,15 @@ function GerenciarTecnicosPage() {
                                     </span>
                                 </td>
                                 <td className={styles.actionsCell}>
-                                    <button 
-                                        className={`${styles.actionButton} ${styles.editButton}`}
-                                        onClick={() => handleEditClick(tecnico)}
-                                    >
+                                    <Button className={`${styles.actionButton} ${styles.editButton}`} onClick={() => handleEditClick(tecnico)}>
                                         Editar
-                                    </button>
-                                    <button 
-                                        className={`${styles.actionButton} ${styles.toggleButton}`}
-                                        onClick={() => setConfirmToggleAction({ id: tecnico.id, nome: tecnico.nome, enabled: tecnico.enabled })}
-                                    >
+                                    </Button>
+                                    <Button className={`${styles.actionButton} ${styles.toggleButton}`} onClick={() => setConfirmToggleAction({ id: tecnico.id, nome: tecnico.nome, enabled: tecnico.enabled })}>
                                         {tecnico.enabled ? 'Desativar' : 'Ativar'}
-                                    </button>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.resetButton}`}
-                                        onClick={() => setResetPasswordAction({ id: tecnico.id, nome: tecnico.nome })}
-                                    >
+                                    </Button>
+                                    <Button className={`${styles.actionButton} ${styles.resetButton}`} onClick={() => setResetPasswordAction({ id: tecnico.id, nome: tecnico.nome })}>
                                         Resetar Senha
-                                    </button>
+                                    </Button>
                                 </td>
                             </tr>
                         ))}

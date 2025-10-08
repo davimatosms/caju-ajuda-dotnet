@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ChamadoService, { ChamadoDetail, Mensagem } from '../../services/ChamadoService';
 import styles from './ChamadoDetailPage.module.css';
+import { Button } from '../../components/UI';
 
 function ChamadoDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -124,9 +125,9 @@ function ChamadoDetailPage() {
                         className={styles.messageTextarea}
                         disabled={isSending}
                     />
-                    <button type="submit" className={styles.sendMessageButton} disabled={isSending}>
+                    <Button type="submit" className={styles.sendMessageButton} disabled={isSending}>
                         {isSending ? 'Enviando...' : 'Enviar Mensagem'}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

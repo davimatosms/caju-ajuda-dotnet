@@ -3,6 +3,7 @@ import styles from './Navbar.module.css';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
+import { Button } from '../UI';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -42,9 +43,9 @@ function Navbar() {
                <NavLink to="/perfil" className={({ isActive }) => isActive ? styles.activeLink : ''}>Meu Perfil</NavLink>
             </>
           )}
-          <button className={styles.logoutButton} onClick={() => setIsModalOpen(true)}>
+          <Button className={styles.logoutButton} onClick={() => setIsModalOpen(true)}>
             Sair
-          </button>
+          </Button>
         </div>
       </nav>
 

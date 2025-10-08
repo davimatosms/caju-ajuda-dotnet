@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PerfilService from 'services/PerfilService';
 import styles from './MeuPerfilPage.module.css'; 
+import { Button } from '../../components/UI';
 
 function MeuPerfilPage() {
     const navigate = useNavigate();
@@ -86,9 +87,9 @@ function MeuPerfilPage() {
                 </div>
                 {error && <p style={{color: 'red'}}>{error}</p>}
                 {success && <p style={{color: 'green'}}>{success}</p>}
-                <button type="submit" className={styles.submitButton} disabled={isLoading}>
+                <Button type="submit" className={styles.submitButton} disabled={isLoading}>
                     {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
+                </Button>
             </form>
 
             <form onSubmit={handleUpdateSenha} className={styles.formSection}>
@@ -103,9 +104,9 @@ function MeuPerfilPage() {
                 </div>
                 {errorSenha && <p style={{color: 'red'}}>{errorSenha}</p>}
                 {successSenha && <p style={{color: 'green'}}>{successSenha}</p>}
-                <button type="submit" className={styles.submitButton} disabled={isSavingSenha}>
+                <Button type="submit" className={styles.submitButton} disabled={isSavingSenha}>
                     {isSavingSenha ? 'Alterando...' : 'Alterar Senha'}
-                </button>
+                </Button>
             </form>
         </div>
     );

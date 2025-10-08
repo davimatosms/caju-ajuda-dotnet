@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './LandingPage.module.css';
 import { Link } from 'react-router-dom';
+import { Button } from '../../components/UI';
 
 function LandingPage() {
   return (
@@ -8,7 +9,9 @@ function LandingPage() {
       <section className={styles.heroSection}>
         <h1>O suporte técnico que <span className={styles.highlight}>resolve</span>.</h1>
         <p>Simplifique a abertura de chamados, acelere a resolução de problemas e otimize a produtividade da sua equipe com a ajuda da nossa IA.</p>
-        <Link to="/register" className={styles.ctaButton}>Comece Agora de Graça</Link>
+        <Link to="/register">
+          <Button className={styles.ctaButton}>Comece Agora de Graça</Button>
+        </Link>
       </section>
 
       {/* SEÇÃO DE FUNCIONALIDADES (NOVA) */}

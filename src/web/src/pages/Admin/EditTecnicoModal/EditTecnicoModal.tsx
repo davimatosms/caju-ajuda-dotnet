@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminService, { Tecnico } from 'services/AdminService';
 import styles from './EditTecnicoModal.module.css';
+import { Button } from '../../../components/UI';
 
 interface EditTecnicoModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ function EditTecnicoModal({ isOpen, onClose, onSuccess, tecnico }: EditTecnicoMo
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3>Editar Técnico</h3>
-          <button onClick={onClose} className={styles.closeButton}>&times;</button>
+          <Button onClick={onClose} className={styles.closeButton}>&times;</Button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
@@ -58,9 +59,9 @@ function EditTecnicoModal({ isOpen, onClose, onSuccess, tecnico }: EditTecnicoMo
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.buttonContainer}>
-            <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            <Button type="submit" className={styles.submitButton} disabled={isLoading}>
               {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

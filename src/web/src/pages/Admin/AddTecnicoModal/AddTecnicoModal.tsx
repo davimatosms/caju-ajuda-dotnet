@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminService from '../../../services/AdminService';
 import styles from './AddTecnicoModal.module.css';
+import { Button } from '../../../components/UI';
 
 interface AddTecnicoModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ function AddTecnicoModal({ isOpen, onClose, onSuccess }: AddTecnicoModalProps) {
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3>Adicionar Novo Técnico</h3>
-          <button onClick={onClose} className={styles.closeButton}>&times;</button>
+          <Button onClick={onClose} className={styles.closeButton}>&times;</Button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
@@ -54,9 +55,9 @@ function AddTecnicoModal({ isOpen, onClose, onSuccess }: AddTecnicoModalProps) {
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.buttonContainer}>
-            <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            <Button type="submit" className={styles.submitButton} disabled={isLoading}>
               {isLoading ? 'Criando...' : 'Criar Técnico'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

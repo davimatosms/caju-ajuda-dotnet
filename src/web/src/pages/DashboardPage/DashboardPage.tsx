@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ChamadoService, { Chamado } from '../../services/ChamadoService';
 import styles from './DashboardPage.module.css';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/UI';
 
 function DashboardPage() {
     const [chamados, setChamados] = useState<Chamado[]>([]);
@@ -63,12 +64,9 @@ function DashboardPage() {
         <div className={styles.dashboardContainer}>
             <div className={styles.header}>
                 <h1>Meus Chamados</h1>
-                <button 
-                    className={styles.newTicketButton} 
-                    onClick={handleNovoChamadoClick}
-                >
+                <Button className={styles.newTicketButton} onClick={handleNovoChamadoClick}>
                     Abrir Novo Chamado
-                </button>
+                </Button>
             </div>
 
             {chamados.length === 0 ? (
