@@ -1,5 +1,5 @@
-﻿// CajuAjuda.Desktop/Services/ChamadoService.cs
-
+﻿using CajuAjuda.Desktop.Models;
+using CajuAjuda.Desktop.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -7,80 +7,125 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CajuAjuda.Desktop.Models;
 
 namespace CajuAjuda.Desktop.Services
 {
     public class ChamadoService
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "https://localhost:7113";
+        private readonly JsonSerializerOptions _serializerOptions;
 
-        public ChamadoService()
+        public ChamadoService(HttpClient httpClient)
         {
-            // Bypass de SSL para ambiente de desenvolvimento
-            var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (m, c, ch, e) => true };
-            _httpClient = new HttpClient(handler) { BaseAddress = new Uri(BaseUrl) };
+            _httpClient = httpClient;
+            _serializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
         }
 
+        private async Task PrepareAuthenticatedClient()
+        {
+            if (_httpClient.DefaultRequestHeaders.Authorization == null)
+            {
+#pragma warning disable CA1416
+                var token = await SecureStorage.GetAsync("auth_token");
+#pragma warning restore CA1416
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+                else
+                {
+                    throw new Exception("Token de autenticação não encontrado.");
+                }
+            }
+        }
+
+        // ======================================================
+        //          NOVO MÉTODO ADICIONADO E COMPLETO
+        // ======================================================
         public async Task<List<Chamado>> GetChamadosAsync()
         {
-            var token = await SecureStorage.Default.GetAsync("jwt_token");
-            if (string.IsNullOrWhiteSpace(token)) throw new Exception("Usuário não autenticado.");
+            await PrepareAuthenticatedClient();
+            var response = await _httpClient.GetAsync("api/Chamados");
+            response.EnsureSuccessStatusCode();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _httpClient.GetAsync("/api/Chamados");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var pagedResponse = await response.Content.ReadFromJsonAsync<PagedList<Chamado>>();
-                return pagedResponse?.Items ?? new List<Chamado>();
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception(errorContent ?? "Erro ao buscar os chamados.");
-            }
+            var content = await response.Content.ReadAsStringAsync();
+            // A API retorna um objeto de paginação, nós pegamos a lista de 'items' dentro dele
+            var pagedResult = JsonSerializer.Deserialize<PagedList<Chamado>>(content, _serializerOptions);
+            return pagedResult?.Items ?? new List<Chamado>();
         }
 
-        public async Task<ChamadoDetail?> GetChamadoByIdAsync(int chamadoId)
+        public async Task<ChamadoDetalhes?> GetChamadoByIdAsync(int chamadoId)
         {
-            var token = await SecureStorage.Default.GetAsync("jwt_token");
-            if (string.IsNullOrWhiteSpace(token)) throw new Exception("Usuário não autenticado.");
+            await PrepareAuthenticatedClient();
+            var response = await _httpClient.GetAsync($"api/Chamados/{chamadoId}");
+            response.EnsureSuccessStatusCode();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var content = await response.Content.ReadAsStringAsync();
+            var chamado = JsonSerializer.Deserialize<ChamadoDetalhes>(content, _serializerOptions);
 
-            var response = await _httpClient.GetAsync($"/api/Chamados/{chamadoId}");
-
-            if (response.IsSuccessStatusCode)
+            if (chamado != null)
             {
-                return await response.Content.ReadFromJsonAsync<ChamadoDetail>();
+                // Normaliza formatos: a API pode retornar "mensagens" como um array direto
+                // ou como um objeto contendo "$values" (serialização EF). Tentamos
+                // consertar ambos os casos para garantir que Mensagens nunca fique nulo.
+                if (chamado.Mensagens == null || chamado.Mensagens.Count == 0)
+                {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(content);
+                        if (doc.RootElement.TryGetProperty("mensagens", out var mensagensElem))
+                        {
+                            if (mensagensElem.ValueKind == JsonValueKind.Object && mensagensElem.TryGetProperty("$values", out var valuesElem) && valuesElem.ValueKind == JsonValueKind.Array)
+                            {
+                                var msgsJson = valuesElem.GetRawText();
+                                var msgs = JsonSerializer.Deserialize<List<Mensagem>>(msgsJson, _serializerOptions);
+                                chamado.Mensagens = msgs ?? new List<Mensagem>();
+                            }
+                            else if (mensagensElem.ValueKind == JsonValueKind.Array)
+                            {
+                                var msgsJson = mensagensElem.GetRawText();
+                                var msgs = JsonSerializer.Deserialize<List<Mensagem>>(msgsJson, _serializerOptions);
+                                chamado.Mensagens = msgs ?? new List<Mensagem>();
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Se falhar o parse, mantemos a lista vazia já inicializada no model.
+                    }
+                }
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception(errorContent ?? $"Erro ao buscar o chamado ID {chamadoId}.");
-            }
+
+            return chamado;
         }
 
         public async Task<Mensagem?> EnviarMensagemAsync(int chamadoId, MensagemCreateRequest request)
         {
-            var token = await SecureStorage.Default.GetAsync("jwt_token");
-            if (string.IsNullOrWhiteSpace(token)) throw new Exception("Usuário não autenticado.");
+            await PrepareAuthenticatedClient();
+            var response = await _httpClient.PostAsJsonAsync($"api/Chamados/{chamadoId}/mensagens", request);
+            response.EnsureSuccessStatusCode();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await _httpClient.PostAsJsonAsync($"/api/Chamados/{chamadoId}/mensagens", request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<Mensagem>();
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception(errorContent ?? "Erro ao enviar a mensagem.");
-            }
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<Mensagem>(content, _serializerOptions);
         }
+
+        public async Task UpdateStatusAsync(int chamadoId, StatusChamado novoStatus)
+        {
+            await PrepareAuthenticatedClient();
+            var requestUrl = $"api/Chamados/{chamadoId}/status";
+            var updateStatusDto = new { Status = novoStatus };
+            var response = await _httpClient.PutAsJsonAsync(requestUrl, updateStatusDto);
+            response.EnsureSuccessStatusCode();
+        }
+    }
+
+    // Classe auxiliar para deserializar a resposta paginada da API
+    public class PagedList<T>
+    {
+        public List<T> Items { get; set; } = new();
     }
 }
