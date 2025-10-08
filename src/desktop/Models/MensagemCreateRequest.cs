@@ -1,6 +1,4 @@
-﻿// CajuAjuda.Desktop/Models/MensagemCreateRequest.cs
-
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace CajuAjuda.Desktop.Models
 {

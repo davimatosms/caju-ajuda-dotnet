@@ -1,6 +1,4 @@
-﻿// CajuAjuda.Desktop/AppShell.xaml.cs
-
-using CajuAjuda.Desktop.Views;
+﻿using CajuAjuda.Desktop.Views;
 
 namespace CajuAjuda.Desktop
 {
@@ -10,8 +8,9 @@ namespace CajuAjuda.Desktop
         {
             InitializeComponent();
 
-            Routing.RegisterRoute(nameof(MainPage), typeof(MainPage));
+            // Apenas registramos as rotas para navegação interna
             Routing.RegisterRoute(nameof(DetalheChamadoPage), typeof(DetalheChamadoPage));
+            Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
         }
     }
 }

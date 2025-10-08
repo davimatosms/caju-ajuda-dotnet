@@ -1,12 +1,10 @@
-﻿// CajuAjuda.Desktop/Models/ChamadoDetail.cs
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace CajuAjuda.Desktop.Models
 {
-    public class ChamadoDetail
+    public class ChamadoDetalhes
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
@@ -20,9 +18,6 @@ namespace CajuAjuda.Desktop.Models
         [JsonPropertyName("nomeCliente")]
         public string NomeCliente { get; set; } = string.Empty;
 
-        [JsonPropertyName("nomeTecnicoResponsavel")]
-        public string? NomeTecnicoResponsavel { get; set; }
-
         [JsonPropertyName("status")]
         public string Status { get; set; } = string.Empty;
 
@@ -33,6 +28,6 @@ namespace CajuAjuda.Desktop.Models
         public DateTime DataCriacao { get; set; }
 
         [JsonPropertyName("mensagens")]
-        public List<Mensagem> Mensagens { get; set; } = new List<Mensagem>();
+        public List<Mensagem> Mensagens { get; set; } = new();
     }
 }

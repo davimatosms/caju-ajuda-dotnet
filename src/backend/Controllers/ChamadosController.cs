@@ -63,11 +63,24 @@ namespace CajuAjuda.Backend.Controllers
             return Ok(chamado);
         }
 
+        public class UpdateStatusDto
+        {
+            public StatusChamado Status { get; set; }
+        }
+
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> UpdateChamadoStatus(long id, [FromBody] UpdateStatusDto updateStatusDto)
+        {
+            
+            await _chamadoService.UpdateChamadoStatusAsync(id, updateStatusDto.Status); 
+            return NoContent();
+        }
+
         [HttpPost("{id}/mensagens")]
         [Authorize(Roles = "TECNICO, ADMIN, CLIENTE")]
         public async Task<IActionResult> AddMensagem(long id, [FromBody] MensagemCreateDto mensagemDto)
         {
-            // VVVVVV CLIQUE NA MARGEM CINZA À ESQUERDA DESTA LINHA PARA ADICIONAR O BREAKPOINT VVVVVV
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var userEmail = User.FindFirstValue(ClaimTypes.Email);

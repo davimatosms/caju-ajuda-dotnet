@@ -5,6 +5,9 @@ import AuthService from '../../services/AuthService';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import { Button } from '../UI';
 
+// Use the SVG from the public folder to avoid bundler parsing issues with embedded <style> blocks
+const logoCaju = '/assets/caju-logo.svg';
+
 function Navbar() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,7 +31,9 @@ function Navbar() {
   return (
     <>
       <nav className={styles.navbar}>
-        <Link to={homeLink} className={styles.logo}>Caju Ajuda</Link>
+        <Link to={homeLink} className={styles.logo}>
+          <img src={logoCaju} alt="Caju Ajuda" className={styles.logoImageSmall} />
+        </Link>
         <div className={styles.navLinks}>
           {userRole === 'ADMIN' && (
             <>

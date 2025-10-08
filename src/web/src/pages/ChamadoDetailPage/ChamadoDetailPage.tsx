@@ -45,11 +45,12 @@ function ChamadoDetailPage() {
         setIsSending(true);
         try {
             const mensagemEnviada = await ChamadoService.addMensagem(Number(id), { Texto: novaMensagem });
-            
+
             // Atualiza o estado local para exibir a nova mensagem instantaneamente
             setChamado(chamadoAnterior => {
                 if (!chamadoAnterior) return null;
-                const novasMensagens = [...chamadoAnterior.mensagens.$values, mensagemEnviada];
+                const existentes = chamadoAnterior.mensagens?.$values ?? [];
+                const novasMensagens = [...existentes, mensagemEnviada];
                 return { ...chamadoAnterior, mensagens: { $values: novasMensagens } };
             });
 
@@ -107,7 +108,7 @@ function ChamadoDetailPage() {
 
                 <div className={styles.historicoContainer}>
                     <h2>Histórico da Conversa</h2>
-                    {chamado.mensagens.$values.map(msg => (
+                    {(chamado.mensagens?.$values ?? []).map(msg => (
                         <div key={msg.id} className={`${styles.mensagem} ${msg.autorNome === chamado.nomeCliente ? styles.mensagemCliente : styles.mensagemTecnico}`}>
                             <p className={styles.autor}>{msg.autorNome}</p>
                             <p>{msg.texto}</p>
