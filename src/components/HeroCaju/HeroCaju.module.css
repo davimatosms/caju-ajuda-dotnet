@@ -1,0 +1,16 @@
+.wrap{ position: absolute; right: 0; bottom: 0; pointer-events: none; z-index:1; }
+
+.heroCaju{ display:block; height:auto; max-width:60vw; transform: translate(18%, 6%); }
+
+.heroCaju.large{ max-width:60vw; }
+.heroCaju.medium{ max-width:42vw; }
+.heroCaju.small{ max-width:32vw; }
+
+@media (max-width: 900px){
+  .wrap{ right: -20px; }
+  .heroCaju{ max-width:45vw; transform: translate(20%, 8%); }
+}
+
+@media (max-width: 600px){
+  .wrap{ display:none; }
+}

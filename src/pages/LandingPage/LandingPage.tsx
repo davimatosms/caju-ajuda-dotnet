@@ -3,6 +3,7 @@ import styles from './LandingPage.module.css';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/UI';
 import PageLayout from '../../components/PageLayout/PageLayout';
+import HeroCaju from '../../components/HeroCaju/HeroCaju';
 
 function LandingPage() {
   const hero = (
@@ -12,6 +13,7 @@ function LandingPage() {
       <Link to="/register">
         <Button className={styles.ctaButton}>Comece Agora de Graça</Button>
       </Link>
+      <HeroCaju />
     </section>
   );
 
