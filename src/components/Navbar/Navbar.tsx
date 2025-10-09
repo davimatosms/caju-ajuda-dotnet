@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.css';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
@@ -26,6 +26,14 @@ function Navbar() {
   // Define o link principal com base no papel do usuário
   const homeLink = userRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
   const [mobileOpen, setMobileOpen] = useState(false);
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // dynamic import of hook
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const useFocusTrap = require('../../hooks/useFocusTrap').default;
+
+  useFocusTrap(menuRef, mobileOpen, () => setMobileOpen(false));
 
   return (
     <>
@@ -33,7 +41,7 @@ function Navbar() {
         <Link to={homeLink} className={styles.logo} aria-label="Caju Ajuda">
           Caju Ajuda
         </Link>
-        <button className={styles.hamburger} aria-label="Abrir menu" onClick={() => setMobileOpen(true)}>
+        <button ref={hamburgerRef} className={styles.hamburger} aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="mobile-menu" onClick={() => setMobileOpen(true)}>
           <span />
           <span />
           <span />
@@ -57,7 +65,7 @@ function Navbar() {
           </Button>
         </div>
         {mobileOpen && (
-          <div className={styles.mobileMenu} role="dialog" aria-modal="true">
+          <div ref={menuRef} id="mobile-menu" className={styles.mobileMenu} role="dialog" aria-modal="true" aria-label="Menu Principal">
             <button className={styles.mobileClose} aria-label="Fechar menu" onClick={() => setMobileOpen(false)}>×</button>
             <div className={styles.mobileLinks}>
               {userRole === 'ADMIN' && (
