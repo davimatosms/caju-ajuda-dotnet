@@ -1,13 +1,11 @@
 import React from 'react';
 import styles from './Footer.module.css';
-import HeroCaju from '../HeroCaju/HeroCaju';
+// Hero artwork removed to keep app logo-free; decorative artwork archived.
 
 function Footer() {
   return (
     <footer className={styles.footer}>
-      <div style={{marginBottom:12}}>
-        <HeroCaju size="small" decorative />
-      </div>
+      {/* decorative hero removed */}
       <p>&copy; {new Date().getFullYear()} Caju Ajuda. Todos os direitos reservados.</p>
     </footer>
   );

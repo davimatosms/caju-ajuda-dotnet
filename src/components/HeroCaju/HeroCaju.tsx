@@ -1,5 +1,4 @@
-import React from 'react';
-import styles from './HeroCaju.module.css';
+// Hero artwork removed; keep component as a noop to avoid requiring image assets
 
 type Props = {
   className?: string;
@@ -8,11 +7,6 @@ type Props = {
 };
 
 export default function HeroCaju({ className = '', size = 'large', decorative = true }: Props) {
-  const imgClass = `${styles.heroCaju} ${styles[size]} ${className}`.trim();
-  return (
-    <picture className={styles.wrap}>
-      <source srcSet="/assets/caju-hero.webp" type="image/webp" />
-      <img src="/assets/caju-hero.png" alt={decorative ? '' : 'Caju Ajuda'} aria-hidden={decorative} className={imgClass} loading="eager" width={600} height={380} />
-    </picture>
-  );
+  // Hero artwork removed: component intentionally renders nothing to avoid external asset dependencies.
+  return null;
 }

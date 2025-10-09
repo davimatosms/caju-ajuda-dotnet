@@ -4,6 +4,7 @@ import AuthService from '../../services/AuthService';
 import styles from './Register.module.css';
 import { Button } from '../../components/UI';
 import PageLayout from '../../components/PageLayout/PageLayout';
+import CajuLogoInline from '../../components/UI/CajuLogoInline';
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -43,7 +44,7 @@ function RegisterPage() {
     return (
         <PageLayout variant="centered">
             <div className="pageLogoWrap logoWrap">
-                <img src="/assets/caju-logo.png" alt="Caju Ajuda" className="pageLogo" />
+                <CajuLogoInline width={160} height={56} />
             </div>
             <form className={styles.registerForm} onSubmit={handleSubmit}>
             <h2>Criar Conta</h2>

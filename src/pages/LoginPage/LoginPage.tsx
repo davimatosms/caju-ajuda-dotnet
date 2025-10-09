@@ -4,6 +4,7 @@ import AuthService from '../../services/AuthService';
 import styles from './LoginPage.module.css';
 import { Button } from '../../components/UI';
 import PageLayout from '../../components/PageLayout/PageLayout';
+import CajuLogoInline from '../../components/UI/CajuLogoInline';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -44,7 +45,7 @@ function LoginPage() {
     return (
         <PageLayout>
             <div className="pageLogoWrap logoWrap">
-                <img src="/assets/caju-logo.png" alt="Caju Ajuda" className="pageLogo" />
+                <CajuLogoInline width={160} height={56} />
             </div>
             <form className={styles.loginForm} onSubmit={handleSubmit}>
                 <h2>Entrar</h2>
