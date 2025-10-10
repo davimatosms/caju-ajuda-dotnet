@@ -2,6 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
 using CajuAjuda.Desktop.Services;
+using System;
+using System.Diagnostics; // Adicionar esta referência
 
 namespace CajuAjuda.Desktop.ViewModels
 {
@@ -29,35 +31,27 @@ namespace CajuAjuda.Desktop.ViewModels
         private async Task LoginAsync()
         {
             if (IsBusy) return;
-
             IsBusy = true;
             try
             {
                 var loginResponse = await _authService.LoginAsync(Email, Senha);
-
-                if (loginResponse is not null && !string.IsNullOrWhiteSpace(loginResponse.Token))
+                if (loginResponse != null && !string.IsNullOrWhiteSpace(loginResponse.Token))
                 {
                     await SecureStorage.Default.SetAsync("auth_token", loginResponse.Token);
 
-                    // ======================================================
-                    //               A CORREÇÃO PRINCIPAL ESTÁ AQUI
-                    // ======================================================
-                    // Substitui a página de Login (que é a página atual)
-                    // pela estrutura principal do aplicativo (o AppShell).
-                    Application.Current.MainPage = new AppShell();
+                    // LINHA DE DEBUG: Vamos ver se o token foi salvo e qual é o seu valor.
+                    Debug.WriteLine($"[LoginViewModel] Token foi SALVO com sucesso. Valor: {loginResponse.Token.Substring(0, 20)}...");
+
+                    Application.Current.MainPage = MauiProgram.Services.GetService<AppShell>();
                 }
                 else
                 {
-#pragma warning disable CA1416
-                    await Shell.Current.DisplayAlert("Erro", "Email ou senha inválidos.", "OK");
-#pragma warning restore CA1416
+                    await Application.Current.MainPage.DisplayAlert("Erro", "Email ou senha inválidos.", "OK");
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Erro", $"Falha na comunicação: {ex.Message}", "OK");
-#pragma warning restore CA1416
+                await Application.Current.MainPage.DisplayAlert("Erro", $"Falha na comunicação: {ex.Message}", "OK");
             }
             finally
             {
@@ -65,9 +59,6 @@ namespace CajuAjuda.Desktop.ViewModels
             }
         }
 
-        private bool CanLogin()
-        {
-            return !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Senha) && !IsBusy;
-        }
+        private bool CanLogin() => !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Senha) && !IsBusy;
     }
 }
