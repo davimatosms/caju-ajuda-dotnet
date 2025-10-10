@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CajuAjuda.Backend.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum StatusChamado
 {
     ABERTO,
@@ -10,7 +12,8 @@ public enum StatusChamado
     AGUARDANDO_CLIENTE,
     FECHADO,
     CANCELADO,
-    MESCLADO 
+    RESOLVIDO,
+    MESCLADO
 }
 
 public enum PrioridadeChamado

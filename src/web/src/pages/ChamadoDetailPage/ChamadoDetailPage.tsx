@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ChamadoService, { ChamadoDetail, Mensagem } from '../../services/ChamadoService';
+import ChamadoService, { ChamadoDetail } from '../../services/ChamadoService';
 import styles from './ChamadoDetailPage.module.css';
 import { Button } from '../../components/UI';
+import PageLayout from '../../components/PageLayout/PageLayout';
 
 function ChamadoDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -45,11 +46,12 @@ function ChamadoDetailPage() {
         setIsSending(true);
         try {
             const mensagemEnviada = await ChamadoService.addMensagem(Number(id), { Texto: novaMensagem });
-            
+
             // Atualiza o estado local para exibir a nova mensagem instantaneamente
             setChamado(chamadoAnterior => {
                 if (!chamadoAnterior) return null;
-                const novasMensagens = [...chamadoAnterior.mensagens.$values, mensagemEnviada];
+                const existentes = chamadoAnterior.mensagens?.$values ?? [];
+                const novasMensagens = [...existentes, mensagemEnviada];
                 return { ...chamadoAnterior, mensagens: { $values: novasMensagens } };
             });
 
@@ -63,7 +65,12 @@ function ChamadoDetailPage() {
     };
 
     const getStatusClass = (status: string) => {
-        return styles.statusAberto; // Placeholder
+        // map status to classes; default to aberto
+        if (!status) return styles.statusAberto;
+        const normalized = status.toLowerCase();
+        if (normalized.includes('fechado') || normalized.includes('resolvido')) return styles.statusFechado || styles.statusAberto;
+        if (normalized.includes('andamento') || normalized.includes('em')) return styles.statusEmAndamento || styles.statusAberto;
+        return styles.statusAberto;
     };
     
     if (isLoading) {
@@ -79,14 +86,14 @@ function ChamadoDetailPage() {
     }
 
     return (
-        <div className={styles.pageContainer}>
+        <PageLayout>
             <div className={styles.chamadoContainer}>
                 {/* ... (código do header e contentGrid continua igual) ... */}
                 <div className={styles.header}>
                     <h1>{chamado.titulo}</h1>
                     <p>Aberto em: {new Date(chamado.dataCriacao).toLocaleString('pt-BR')}</p>
                     <div className={styles.statusContainer}>
-                        <span className={`${styles.statusBadge} ${styles.statusAberto}`}>{chamado.status}</span>
+                        <span className={`${styles.statusBadge} ${getStatusClass(chamado.status)}`}>{chamado.status}</span>
                         <span className={`${styles.statusBadge} ${styles.prioridadeUrgente}`}>{chamado.prioridade}</span>
                     </div>
                 </div>
@@ -107,7 +114,7 @@ function ChamadoDetailPage() {
 
                 <div className={styles.historicoContainer}>
                     <h2>Histórico da Conversa</h2>
-                    {chamado.mensagens.$values.map(msg => (
+                    {(chamado.mensagens?.$values ?? []).map(msg => (
                         <div key={msg.id} className={`${styles.mensagem} ${msg.autorNome === chamado.nomeCliente ? styles.mensagemCliente : styles.mensagemTecnico}`}>
                             <p className={styles.autor}>{msg.autorNome}</p>
                             <p>{msg.texto}</p>
@@ -130,7 +137,7 @@ function ChamadoDetailPage() {
                     </Button>
                 </form>
             </div>
-        </div>
+        </PageLayout>
     );
 }
 

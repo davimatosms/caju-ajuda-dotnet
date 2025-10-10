@@ -3,6 +3,7 @@ import ChamadoService, { Chamado } from '../../services/ChamadoService';
 import styles from './DashboardPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/UI';
+import PageLayout from '../../components/PageLayout/PageLayout';
 
 function DashboardPage() {
     const [chamados, setChamados] = useState<Chamado[]>([]);
@@ -61,9 +62,9 @@ function DashboardPage() {
     }
 
     return (
-        <div className={styles.dashboardContainer}>
+        <PageLayout title="Meus Chamados">
             <div className={styles.header}>
-                <h1>Meus Chamados</h1>
+                <h1 className={styles.hiddenTitle}>Meus Chamados</h1>
                 <Button className={styles.newTicketButton} onClick={handleNovoChamadoClick}>
                     Abrir Novo Chamado
                 </Button>
@@ -99,7 +100,7 @@ function DashboardPage() {
                     </tbody>
                 </table>
             )}
-        </div>
+        </PageLayout>
     );
 }
 

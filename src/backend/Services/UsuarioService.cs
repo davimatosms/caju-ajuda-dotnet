@@ -22,11 +22,29 @@ public class UsuarioService : IUsuarioService
     {
         var user = await _usuarioRepository.GetByEmailAsync(loginDto.Email);
 
-        if (user == null || !user.Enabled || !BCrypt.Net.BCrypt.Verify(loginDto.Senha, user.Senha))
+        if (user == null)
         {
+            // Log: usuário não encontrado
+            Console.WriteLine($"[AUTH] Usuário não encontrado: {loginDto.Email}");
             return null;
         }
 
+        if (!user.Enabled)
+        {
+            // Log: conta não habilitada
+            Console.WriteLine($"[AUTH] Conta desabilitada: {loginDto.Email}");
+            return null;
+        }
+
+        var senhaCorreta = BCrypt.Net.BCrypt.Verify(loginDto.Senha, user.Senha);
+        if (!senhaCorreta)
+        {
+            // Log: senha incorreta
+            Console.WriteLine($"[AUTH] Senha incorreta para: {loginDto.Email}");
+            return null;
+        }
+
+        Console.WriteLine($"[AUTH] Login bem-sucedido: {loginDto.Email}");
         return user;
     }
 

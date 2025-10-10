@@ -2,18 +2,24 @@ import React from 'react';
 import styles from './LandingPage.module.css';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/UI';
+import HeroCaju from '../../components/HeroCaju/HeroCaju';
+import PageLayout from '../../components/PageLayout/PageLayout';
+
 
 function LandingPage() {
-  return (
-    <div>
-      <section className={styles.heroSection}>
-        <h1>O suporte técnico que <span className={styles.highlight}>resolve</span>.</h1>
-        <p>Simplifique a abertura de chamados, acelere a resolução de problemas e otimize a produtividade da sua equipe com a ajuda da nossa IA.</p>
-        <Link to="/register">
-          <Button className={styles.ctaButton}>Comece Agora de Graça</Button>
-        </Link>
-      </section>
+  const hero = (
+    <section className={styles.heroSection}>
+      <h1>O suporte técnico que <span className={styles.highlight}>resolve</span>.</h1>
+      <p>Simplifique a abertura de chamados, acelere a resolução de problemas e otimize a produtividade da sua equipe com a ajuda da nossa IA.</p>
+      <Link to="/register">
+        <Button className={styles.ctaButton}>Comece Agora de Graça</Button>
+      </Link>
+      <HeroCaju />
+    </section>
+  );
 
+  return (
+    <PageLayout hero={hero}>
       {/* SEÇÃO DE FUNCIONALIDADES (NOVA) */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Funcionalidades Principais</h2>
@@ -51,7 +57,7 @@ function LandingPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PageLayout>
   );
 }
 

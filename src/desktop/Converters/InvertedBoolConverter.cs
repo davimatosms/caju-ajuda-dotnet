@@ -8,14 +8,16 @@ namespace CajuAjuda.Desktop.Converters
 {
     public class InvertedBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        // Adicionado '?' aos tipos de objeto para compatibilidade
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
         {
             if (value is not bool boolValue)
                 return false;
             return !boolValue;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        // Adicionado '?' aos tipos de objeto para compatibilidade
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo? culture)
         {
             if (value is not bool boolValue)
                 return false;

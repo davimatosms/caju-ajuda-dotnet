@@ -1,5 +1,7 @@
 ﻿using CajuAjuda.Desktop.Models;
 using CajuAjuda.Desktop.Models.Enums;
+using CajuAjuda.Desktop.Views;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -9,7 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CajuAjuda.Desktop.Services
-{
+{       
     public class ChamadoService
     {
         private readonly HttpClient _httpClient;
@@ -34,7 +36,8 @@ namespace CajuAjuda.Desktop.Services
 
                 if (!string.IsNullOrEmpty(token))
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    _httpClient.DefaultRequestHeaders.Authorization = 
+                        new AuthenticationHeaderValue("Bearer", token);
                 }
                 else
                 {
@@ -43,57 +46,83 @@ namespace CajuAjuda.Desktop.Services
             }
         }
 
-        // ======================================================
-        //          NOVO MÉTODO ADICIONADO E COMPLETO
-        // ======================================================
         public async Task<List<Chamado>> GetChamadosAsync()
         {
-            await PrepareAuthenticatedClient();
-            var response = await _httpClient.GetAsync("api/Chamados");
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            // A API pode retornar vários formatos: um objeto paginado com 'Items',
-            // um objeto com '$values' (serialização EF), ou um array direto.
             try
             {
-                // Tenta desserializar como { Items: [...] }
-                var pagedResult = JsonSerializer.Deserialize<PagedList<Chamado>>(content, _serializerOptions);
-                if (pagedResult?.Items != null && pagedResult.Items.Count > 0)
-                    return pagedResult.Items;
+                await PrepareAuthenticatedClient();
+                var response = await _httpClient.GetAsync("api/Chamados");
 
-                // Tenta detectar { $values: [...] }
-                using var doc = JsonDocument.Parse(content);
-                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                // Se 401, redireciona para login (já tratado no handler)
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    if (doc.RootElement.TryGetProperty("Items", out var itemsElem) && itemsElem.ValueKind == JsonValueKind.Array)
+                    SecureStorage.Default.Remove("auth_token");
+                    
+                    MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        var itemsJson = itemsElem.GetRawText();
-                        var items = JsonSerializer.Deserialize<List<Chamado>>(itemsJson, _serializerOptions);
-                        return items ?? new List<Chamado>();
+                        var loginPage = MauiProgram.Services?.GetService<LoginPage>();
+                        if (loginPage != null && Application.Current != null)
+                        {
+                            Application.Current.MainPage = loginPage;
+                        }
+                    });
+                    
+                    throw new HttpRequestException(
+                        "Sessão expirada. Faça login novamente.", 
+                        null, 
+                        System.Net.HttpStatusCode.Unauthorized);
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                // Tenta deserializar diferentes formatos
+                try
+                {
+                    var pagedResult = JsonSerializer.Deserialize<PagedList<Chamado>>(
+                        content, _serializerOptions);
+                    if (pagedResult?.Items != null && pagedResult.Items.Count > 0)
+                        return pagedResult.Items;
+
+                    using var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                    {
+                        if (doc.RootElement.TryGetProperty("Items", out var itemsElem) && 
+                            itemsElem.ValueKind == JsonValueKind.Array)
+                        {
+                            var items = JsonSerializer.Deserialize<List<Chamado>>(
+                                itemsElem.GetRawText(), _serializerOptions);
+                            return items ?? new List<Chamado>();
+                        }
+
+                        if (doc.RootElement.TryGetProperty("$values", out var valuesElem) && 
+                            valuesElem.ValueKind == JsonValueKind.Array)
+                        {
+                            var items = JsonSerializer.Deserialize<List<Chamado>>(
+                                valuesElem.GetRawText(), _serializerOptions);
+                            return items ?? new List<Chamado>();
+                        }
                     }
 
-                    if (doc.RootElement.TryGetProperty("$values", out var valuesElem) && valuesElem.ValueKind == JsonValueKind.Array)
+                    if (doc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        var valuesJson = valuesElem.GetRawText();
-                        var items = JsonSerializer.Deserialize<List<Chamado>>(valuesJson, _serializerOptions);
+                        var items = JsonSerializer.Deserialize<List<Chamado>>(
+                            content, _serializerOptions);
                         return items ?? new List<Chamado>();
                     }
                 }
-
-                // Caso seja um array direto
-                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                catch
                 {
-                    var items = JsonSerializer.Deserialize<List<Chamado>>(content, _serializerOptions);
-                    return items ?? new List<Chamado>();
+                    // Falha na deserialização
                 }
+
+                return new List<Chamado>();
             }
-            catch
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                // Em caso de falha na normalização, cai para retorno vazio
+                throw;
             }
-
-            return new List<Chamado>();
         }
 
         public async Task<ChamadoDetalhes?> GetChamadoByIdAsync(int chamadoId)
@@ -103,38 +132,35 @@ namespace CajuAjuda.Desktop.Services
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            var chamado = JsonSerializer.Deserialize<ChamadoDetalhes>(content, _serializerOptions);
+            var chamado = JsonSerializer.Deserialize<ChamadoDetalhes>(
+                content, _serializerOptions);
 
-            if (chamado != null)
+            if (chamado != null && (chamado.Mensagens == null || chamado.Mensagens.Count == 0))
             {
-                // Normaliza formatos: a API pode retornar "mensagens" como um array direto
-                // ou como um objeto contendo "$values" (serialização EF). Tentamos
-                // consertar ambos os casos para garantir que Mensagens nunca fique nulo.
-                if (chamado.Mensagens == null || chamado.Mensagens.Count == 0)
+                try
                 {
-                    try
+                    using var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("mensagens", out var mensagensElem))
                     {
-                        using var doc = JsonDocument.Parse(content);
-                        if (doc.RootElement.TryGetProperty("mensagens", out var mensagensElem))
+                        if (mensagensElem.ValueKind == JsonValueKind.Object && 
+                            mensagensElem.TryGetProperty("$values", out var valuesElem) && 
+                            valuesElem.ValueKind == JsonValueKind.Array)
                         {
-                            if (mensagensElem.ValueKind == JsonValueKind.Object && mensagensElem.TryGetProperty("$values", out var valuesElem) && valuesElem.ValueKind == JsonValueKind.Array)
-                            {
-                                var msgsJson = valuesElem.GetRawText();
-                                var msgs = JsonSerializer.Deserialize<List<Mensagem>>(msgsJson, _serializerOptions);
-                                chamado.Mensagens = msgs ?? new List<Mensagem>();
-                            }
-                            else if (mensagensElem.ValueKind == JsonValueKind.Array)
-                            {
-                                var msgsJson = mensagensElem.GetRawText();
-                                var msgs = JsonSerializer.Deserialize<List<Mensagem>>(msgsJson, _serializerOptions);
-                                chamado.Mensagens = msgs ?? new List<Mensagem>();
-                            }
+                            var msgs = JsonSerializer.Deserialize<List<Mensagem>>(
+                                valuesElem.GetRawText(), _serializerOptions);
+                            chamado.Mensagens = msgs ?? new List<Mensagem>();
+                        }
+                        else if (mensagensElem.ValueKind == JsonValueKind.Array)
+                        {
+                            var msgs = JsonSerializer.Deserialize<List<Mensagem>>(
+                                mensagensElem.GetRawText(), _serializerOptions);
+                            chamado.Mensagens = msgs ?? new List<Mensagem>();
                         }
                     }
-                    catch
-                    {
-                        // Se falhar o parse, mantemos a lista vazia já inicializada no model.
-                    }
+                }
+                catch
+                {
+                    // Mantém lista vazia
                 }
             }
 
@@ -144,7 +170,8 @@ namespace CajuAjuda.Desktop.Services
         public async Task<Mensagem?> EnviarMensagemAsync(int chamadoId, MensagemCreateRequest request)
         {
             await PrepareAuthenticatedClient();
-            var response = await _httpClient.PostAsJsonAsync($"api/Chamados/{chamadoId}/mensagens", request);
+            var response = await _httpClient.PostAsJsonAsync(
+                $"api/Chamados/{chamadoId}/mensagens", request);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -161,7 +188,6 @@ namespace CajuAjuda.Desktop.Services
         }
     }
 
-    // Classe auxiliar para deserializar a resposta paginada da API
     public class PagedList<T>
     {
         public List<T> Items { get; set; } = new();

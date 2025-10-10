@@ -19,7 +19,8 @@ public class TokenService : ITokenService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
+        // CORREÇÃO APLICADA AQUI: Trocado de ASCII para UTF8
+        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
 
         var claims = new List<Claim>
         {
@@ -31,7 +32,7 @@ public class TokenService : ITokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(8), // Token válido por 8 horas
+            Expires = DateTime.UtcNow.AddHours(8),
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"],
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

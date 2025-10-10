@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PerfilService from 'services/PerfilService';
 import styles from './MeuPerfilPage.module.css'; 
 import { Button } from '../../components/UI';
 
 function MeuPerfilPage() {
-    const navigate = useNavigate();
-   
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(true);

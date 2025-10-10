@@ -57,13 +57,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <MauiXaml Update="Views\DetalheChamadoPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -74,5 +67,20 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>
+
+	<ItemGroup>
+	  <!-- Mapeia o arquivo físico com hífen para um nome de saída válido -->
+	  <MauiImage Update="Resources\Images\caju-logo.svg">
+	    <Link>Resources\Images\caju_logo.svg</Link>
+	  </MauiImage>
+	</ItemGroup>
+
+	<ItemGroup>
+  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+  <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
+  <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+  <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+</ItemGroup>
 
 </Project>

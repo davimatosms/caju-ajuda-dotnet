@@ -45,7 +45,6 @@
                 <Button 
                     Text="Entrar"
                     Command="{Binding LoginCommand}"
-                    IsEnabled="{Binding CanLogin}"
                     HorizontalOptions="FillAndExpand"/>
             </VerticalStackLayout>
         </Border>
