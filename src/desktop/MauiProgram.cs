@@ -2,13 +2,14 @@
 using CajuAjuda.Desktop.ViewModels;
 using CajuAjuda.Desktop.Views;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Net.Http;
 
 namespace CajuAjuda.Desktop
 {
     public static class MauiProgram
     {
-        // Adicionamos uma propriedade estática para acessar os serviços
-    public static IServiceProvider Services { get; private set; } = default!;
+        public static IServiceProvider? Services { get; private set; }
 
         public static MauiApp CreateMauiApp()
         {
@@ -25,30 +26,26 @@ namespace CajuAjuda.Desktop
             builder.Logging.AddDebug();
 #endif
 
+#pragma warning disable CA1416
             string baseAddress = DeviceInfo.Platform == DevicePlatform.Android
                                ? "http://10.0.2.2:5205"
                                : "http://localhost:5205";
+#pragma warning restore CA1416
 
-            builder.Services.AddSingleton(new HttpClient
-            {
-                BaseAddress = new Uri(baseAddress)
-            });
+            builder.Services.AddTransient<AuthenticationMessageHandler>();
 
-            builder.Services.AddSingleton<AuthService>();
-            builder.Services.AddSingleton<ChamadoService>();
+            builder.Services.AddHttpClient<AuthService>(client => client.BaseAddress = new Uri(baseAddress));
+            builder.Services.AddHttpClient<ChamadoService>(client => client.BaseAddress = new Uri(baseAddress))
+                .AddHttpMessageHandler<AuthenticationMessageHandler>();
 
-            // Adicionamos o AppShell como Singleton também
             builder.Services.AddSingleton<AppShell>();
-
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<MainViewModel>();
             builder.Services.AddTransient<DetalheChamadoViewModel>();
-
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<MainPage>();
             builder.Services.AddTransient<DetalheChamadoPage>();
 
-            // Construímos o app e guardamos o provedor de serviços
             var app = builder.Build();
             Services = app.Services;
             return app;
