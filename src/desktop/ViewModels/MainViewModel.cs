@@ -12,12 +12,10 @@ namespace CajuAjuda.Desktop.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly ChamadoService _chamadoService;
+        // A dependência do AuthService foi removida, não é mais necessária aqui.
 
-        [ObservableProperty]
-        private bool _isBusy;
-
-        [ObservableProperty]
-        private ObservableCollection<Chamado> _chamados = new();
+        [ObservableProperty] private bool _isBusy;
+        [ObservableProperty] private ObservableCollection<Chamado> _chamados = new();
 
         public MainViewModel(ChamadoService chamadoService)
         {
@@ -43,39 +41,48 @@ namespace CajuAjuda.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Erro", $"Não foi possível carregar os chamados: {ex.Message}", "OK");
-#pragma warning restore CA1416
+                await DisplaySafeAlert("Erro", $"Não foi possível carregar os chamados: {ex.Message}");
             }
-            finally
-            {
-                IsBusy = false;
-            }
+            finally { IsBusy = false; }
         }
 
         [RelayCommand]
         private async Task GoToDetailsAsync(Chamado chamado)
         {
             if (chamado == null) return;
-
-#pragma warning disable CA1416
             await Shell.Current.GoToAsync($"{nameof(DetalheChamadoPage)}?ChamadoId={chamado.Id}");
-#pragma warning restore CA1416
         }
 
         [RelayCommand]
         private async Task LogoutAsync()
         {
-#pragma warning disable CA1416
-            bool confirm = await Shell.Current.DisplayAlert("Confirmar Logout", "Você tem certeza que deseja sair?", "Sim", "Não");
+            bool confirm = await DisplaySafeAlert("Confirmar Logout", "Você tem certeza?", "Sim", "Não");
             if (confirm)
             {
                 SecureStorage.Default.Remove("auth_token");
-
-                // O "//" reinicia a pilha de navegação, mostrando a LoginPage como a única página.
+                // A chamada para _authService.ClearAuthToken() foi REMOVIDA.
                 await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
             }
+        }
+
+        private async Task<bool> DisplaySafeAlert(string title, string message, string accept, string cancel)
+        {
+            if (Application.Current?.MainPage != null)
+            {
+#pragma warning disable CA1416
+                return await Application.Current.MainPage.DisplayAlert(title, message, accept, cancel);
 #pragma warning restore CA1416
+            }
+            return false;
+        }
+        private async Task DisplaySafeAlert(string title, string message)
+        {
+            if (Application.Current?.MainPage != null)
+            {
+#pragma warning disable CA1416
+                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
+#pragma warning restore CA1416
+            }
         }
     }
 }

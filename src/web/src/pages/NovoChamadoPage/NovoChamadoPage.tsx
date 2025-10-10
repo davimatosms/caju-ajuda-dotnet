@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ChamadoService from '../../services/ChamadoService';
 import styles from './NovoChamadoPage.module.css';
 import { Button } from '../../components/UI';
+import PageLayout from '../../components/PageLayout/PageLayout';
 
 function NovoChamadoPage() {
     const navigate = useNavigate();
@@ -36,10 +37,9 @@ function NovoChamadoPage() {
     };
 
     return (
-        <div className={styles.pageContainer}>
-            <div className={styles.formContainer}>
-                <form onSubmit={handleSubmit}>
-                    <h2>Abrir Novo Chamado</h2>
+        <PageLayout variant="centered">
+            <form onSubmit={handleSubmit}>
+                <h2>Abrir Novo Chamado</h2>
 
                     <div className={styles.inputGroup}>
                         <label htmlFor="titulo">Título</label>
@@ -74,9 +74,8 @@ function NovoChamadoPage() {
                             {message}
                         </div>
                     )}
-                </form>
-            </div>
-        </div>
+            </form>
+        </PageLayout>
     );
 }
 

@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import styles from './Register.module.css';
 import { Button } from '../../components/UI';
+import PageLayout from '../../components/PageLayout/PageLayout';
+import CajuLogoInline from '../../components/UI/CajuLogoInline';
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -40,7 +42,11 @@ function RegisterPage() {
     };
 
     return (
-        <form className={styles.registerForm} onSubmit={handleSubmit}>
+        <PageLayout variant="centered">
+            <div className="pageLogoWrap logoWrap">
+                <CajuLogoInline width={160} height={56} />
+            </div>
+            <form className={styles.registerForm} onSubmit={handleSubmit}>
             <h2>Criar Conta</h2>
             <div className={styles.inputGroup}>
                 <label htmlFor="nome">Nome Completo</label>
@@ -85,7 +91,8 @@ function RegisterPage() {
                 </div>
             )}
             <Link to="/" className={styles.backLink}>&larr; Voltar para a página inicial</Link>
-        </form>
+            </form>
+        </PageLayout>
     );
 }
 

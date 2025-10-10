@@ -1,5 +1,3 @@
-// CajuAjuda.Backend/Program.cs
-
 using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Hubs;
 using CajuAjuda.Backend.Middlewares;
@@ -10,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using System.Text.Json.Serialization; // Garanta que este using está presente
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +26,6 @@ builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
 builder.Services.AddScoped<IAnexoRepository, AnexoRepository>();
 builder.Services.AddScoped<IRespostaProntaRepository, RespostaProntaRepository>();
 
-
 // Serviços
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -42,7 +39,6 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAIService, AIService>();
 
 builder.Services.AddTransient<DataInitializer>();
-
 builder.Services.AddSignalR();
 builder.Services.AddCors();
 
@@ -53,6 +49,19 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("--------------------------------------------------");
+            Console.WriteLine("--- FALHA NA AUTENTICAÇÃO DO TOKEN JWT ---");
+            Console.WriteLine($"Tipo de Falha: {context.Exception.GetType().Name}");
+            Console.WriteLine($"Mensagem: {context.Exception.Message}");
+            Console.WriteLine("--------------------------------------------------");
+            return Task.CompletedTask;
+        }
+    };
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -65,40 +74,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-
-    
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer"
-    });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { Name = "Authorization", In = ParameterLocation.Header, Type = SecuritySchemeType.Http, Scheme = "Bearer" });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() } });
 });
 
 var app = builder.Build();
@@ -117,13 +103,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionHandler>();
 
-app.UseHttpsRedirection();
-
-app.UseCors(policy => policy
-    .AllowAnyHeader()
-    .AllowAnyMethod()
-    .WithOrigins("http://localhost:3000")
-    .AllowCredentials());
+app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();

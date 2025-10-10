@@ -9,7 +9,8 @@
 
     <Shell.TitleView>
         <Grid Padding="10">
-            <Image Source="Resources/Images/caju-logo.svg" HeightRequest="36" Aspect="AspectFit" />
+            <!-- Logo image removed; use plain app title to avoid runtime asset dependency -->
+            <Label Text="Caju Ajuda" VerticalOptions="Center" HorizontalOptions="Start" FontSize="18" />
         </Grid>
     </Shell.TitleView>
 

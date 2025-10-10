@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.css';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import { Button } from '../UI';
 
-// Use the SVG from the public folder to avoid bundler parsing issues with embedded <style> blocks
-const logoCaju = '/assets/caju-logo.svg';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -27,13 +25,27 @@ function Navbar() {
 
   // Define o link principal com base no papel do usuário
   const homeLink = userRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // dynamic import of hook
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const useFocusTrap = require('../../hooks/useFocusTrap').default;
+
+  useFocusTrap(menuRef, mobileOpen, () => setMobileOpen(false));
 
   return (
     <>
       <nav className={styles.navbar}>
-        <Link to={homeLink} className={styles.logo}>
-          <img src={logoCaju} alt="Caju Ajuda" className={styles.logoImageSmall} />
+        <Link to={homeLink} className={styles.logo} aria-label="Caju Ajuda">
+          Caju Ajuda
         </Link>
+        <button ref={hamburgerRef} className={styles.hamburger} aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="mobile-menu" onClick={() => setMobileOpen(true)}>
+          <span />
+          <span />
+          <span />
+        </button>
         <div className={styles.navLinks}>
           {userRole === 'ADMIN' && (
             <>
@@ -52,6 +64,27 @@ function Navbar() {
             Sair
           </Button>
         </div>
+        {mobileOpen && (
+          <div ref={menuRef} id="mobile-menu" className={styles.mobileMenu} role="dialog" aria-modal="true" aria-label="Menu Principal">
+            <button className={styles.mobileClose} aria-label="Fechar menu" onClick={() => setMobileOpen(false)}>×</button>
+            <div className={styles.mobileLinks}>
+              {userRole === 'ADMIN' && (
+                <>
+                  <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                  <Link to="/admin/tecnicos" onClick={() => setMobileOpen(false)}>Gerenciar Técnicos</Link>
+                  <Link to="/admin/clientes" onClick={() => setMobileOpen(false)}>Gerenciar Clientes</Link>
+                </>
+              )}
+              {userRole === 'CLIENTE' && (
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)}>Meus Chamados</Link>
+                  <Link to="/perfil" onClick={() => setMobileOpen(false)}>Meu Perfil</Link>
+                </>
+              )}
+              <button className={styles.logoutButton} onClick={() => { setIsModalOpen(true); setMobileOpen(false); }}>Sair</button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <ConfirmModal
