@@ -1,5 +1,3 @@
-// CajuAjuda.Backend/Controllers/ChamadosController.cs
-
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
@@ -7,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using CajuAjuda.Backend.Exceptions;
 
 namespace CajuAjuda.Backend.Controllers
 {
@@ -30,6 +29,26 @@ namespace CajuAjuda.Backend.Controllers
         {
             var chamadosPaginados = await _chamadoService.GetAllChamadosAsync(pageNumber, pageSize, status, prioridade);
             return Ok(chamadosPaginados);
+        }
+
+      
+        [HttpGet("atribuidos")]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> GetMeusChamadosAtribuidos()
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+
+            var chamados = await _chamadoService.GetChamadosAtribuidosAsync(userEmail);
+            return Ok(chamados);
+        }
+
+        [HttpGet("disponiveis")]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> GetChamadosDisponiveis()
+        {
+            var chamados = await _chamadoService.GetChamadosDisponiveisAsync();
+            return Ok(chamados);
         }
 
         [HttpPost]
@@ -72,9 +91,30 @@ namespace CajuAjuda.Backend.Controllers
         [Authorize(Roles = "TECNICO, ADMIN")]
         public async Task<IActionResult> UpdateChamadoStatus(long id, [FromBody] UpdateStatusDto updateStatusDto)
         {
-            
-            await _chamadoService.UpdateChamadoStatusAsync(id, updateStatusDto.Status); 
+            await _chamadoService.UpdateChamadoStatusAsync(id, updateStatusDto.Status);
             return NoContent();
+        }
+
+        [HttpPatch("{id}/assign")]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> AssignChamado(long id)
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+
+            try
+            {
+                await _chamadoService.AssignChamadoAsync(id, userEmail);
+                return NoContent();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BusinessRuleException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("{id}/mensagens")]
@@ -82,12 +122,9 @@ namespace CajuAjuda.Backend.Controllers
         public async Task<IActionResult> AddMensagem(long id, [FromBody] MensagemCreateDto mensagemDto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
-
             if (userEmail == null || userRole == null) return Unauthorized();
-
             var novaMensagem = await _mensagemService.AddMensagemAsync(id, mensagemDto, userEmail, userRole);
             return Ok(novaMensagem);
         }
@@ -96,17 +133,9 @@ namespace CajuAjuda.Backend.Controllers
         [Authorize(Roles = "CLIENTE")]
         public async Task<IActionResult> AvaliarChamado(long id, [FromBody] AvaliacaoDto avaliacaoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (userEmail == null)
-            {
-                return Unauthorized();
-            }
-
+            if (userEmail == null) return Unauthorized();
             await _chamadoService.AvaliarChamadoAsync(id, avaliacaoDto, userEmail);
             return Ok(new { message = "Avaliação registrada com sucesso." });
         }
