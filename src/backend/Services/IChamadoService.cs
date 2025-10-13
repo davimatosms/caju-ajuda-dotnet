@@ -1,5 +1,3 @@
-// CajuAjuda.Backend/Services/IChamadoService.cs
-
 using CajuAjuda.Backend.Helpers;
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Services.Dtos;
@@ -11,6 +9,7 @@ namespace CajuAjuda.Backend.Services
 {
     public interface IChamadoService
     {
+        
         Task<Chamado> CreateAsync(ChamadoCreateDto chamadoDto, string clienteEmail);
         Task<IEnumerable<ChamadoListResponseDto>> GetChamadosByClienteEmailAsync(string clienteEmail);
         Task<PagedList<ChamadoResponseDto>> GetAllChamadosAsync(int pageNumber, int pageSize, StatusChamado? status, PrioridadeChamado? prioridade);
@@ -20,5 +19,7 @@ namespace CajuAjuda.Backend.Services
         Task AssignChamadoAsync(long chamadoId, string tecnicoEmail);
         Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail);
         Task MergeChamadosAsync(long chamadoDuplicadoId, long chamadoPrincipalId, string tecnicoEmail);
+        Task<IEnumerable<ChamadoResponseDto>> GetChamadosAtribuidosAsync(string tecnicoEmail);
+        Task<IEnumerable<ChamadoResponseDto>> GetChamadosDisponiveisAsync();
     }
 }

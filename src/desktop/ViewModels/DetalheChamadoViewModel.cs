@@ -18,9 +18,9 @@ namespace CajuAjuda.Desktop.ViewModels
         private int _chamadoId;
 
         [ObservableProperty]
-        // CORREÇÃO FINAL: Usando strings em vez de nameof para compatibilidade com o gerador de código.
-        [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
-        [NotifyCanExecuteChangedFor("UpdateStatusCommand")]
+        [NotifyCanExecuteChangedFor(nameof(EnviarMensagemCommand))]
+        [NotifyCanExecuteChangedFor(nameof(UpdateStatusCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AssignToSelfCommand))]
         private bool _isBusy;
 
         [ObservableProperty] private string _titulo = "Carregando...";
@@ -32,14 +32,16 @@ namespace CajuAjuda.Desktop.ViewModels
         [ObservableProperty] private ObservableCollection<Mensagem> _mensagens;
 
         [ObservableProperty]
-        // CORREÇÃO FINAL: Usando strings em vez de nameof.
-        [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
+        [NotifyCanExecuteChangedFor(nameof(EnviarMensagemCommand))]
         private string _novaMensagem;
 
         public ObservableCollection<StatusChamado> StatusOptions { get; }
 
         [ObservableProperty]
         private StatusChamado _selectedStatus;
+
+        [ObservableProperty]
+        private bool _showAssignButton;
 
         public DetalheChamadoViewModel(ChamadoService chamadoService)
         {
@@ -66,6 +68,8 @@ namespace CajuAjuda.Desktop.ViewModels
                     Prioridade = chamadoDetalhado.Prioridade;
                     DataCriacao = chamadoDetalhado.DataCriacao.ToString("g");
 
+                    ShowAssignButton = string.IsNullOrEmpty(chamadoDetalhado.NomeTecnicoResponsavel);
+
                     if (Enum.TryParse(chamadoDetalhado.Status, true, out StatusChamado statusAtual))
                     {
                         SelectedStatus = statusAtual;
@@ -81,9 +85,7 @@ namespace CajuAjuda.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Erro", $"Não foi possível carregar os detalhes: {ex.Message}", "OK");
-#pragma warning restore CA1416
+                await DisplaySafeAlert("Erro", $"Não foi possível carregar os detalhes: {ex.Message}");
             }
             finally { IsBusy = false; }
         }
@@ -91,6 +93,8 @@ namespace CajuAjuda.Desktop.ViewModels
         [RelayCommand(CanExecute = nameof(CanEnviarMensagem))]
         private async Task EnviarMensagemAsync()
         {
+            if (string.IsNullOrWhiteSpace(NovaMensagem)) return;
+
             var textoMensagem = NovaMensagem;
             var request = new MensagemCreateRequest { Texto = textoMensagem };
             NovaMensagem = string.Empty;
@@ -111,34 +115,64 @@ namespace CajuAjuda.Desktop.ViewModels
             catch (Exception ex)
             {
                 Mensagens.Remove(mensagemTemporaria);
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Erro", $"Não foi possível enviar a mensagem: {ex.Message}", "OK");
-#pragma warning restore CA1416
+                await DisplaySafeAlert("Erro", $"Não foi possível enviar a mensagem: {ex.Message}");
             }
         }
 
-        [RelayCommand(CanExecute = nameof(CanUpdateStatus))]
+        [RelayCommand(CanExecute = nameof(CanProcessAction))]
         private async Task UpdateStatusAsync()
         {
+            if (IsBusy) return;
             IsBusy = true;
             try
             {
                 await _chamadoService.UpdateStatusAsync(ChamadoId, SelectedStatus);
                 Status = SelectedStatus.ToString();
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Sucesso!", "O status foi atualizado.", "OK");
-#pragma warning restore CA1416
+                await DisplaySafeAlert("Sucesso!", "O status foi atualizado.");
             }
             catch (Exception ex)
             {
-#pragma warning disable CA1416
-                await Shell.Current.DisplayAlert("Erro", $"Não foi possível atualizar o status: {ex.Message}", "OK");
-#pragma warning restore CA1416
+                await DisplaySafeAlert("Erro", $"Não foi possível atualizar o status: {ex.Message}");
             }
             finally { IsBusy = false; }
         }
 
+        [RelayCommand(CanExecute = nameof(CanProcessAction))]
+        private async Task AssignToSelfAsync()
+        {
+            if (IsBusy || ChamadoId == 0) return;
+
+            IsBusy = true;
+            try
+            {
+                await _chamadoService.AssignTicketAsync(ChamadoId);
+
+                ShowAssignButton = false;
+                await LoadDetalhesAsync();
+
+                await DisplaySafeAlert("Sucesso", "Chamado atribuído a você.");
+            }
+            catch (Exception ex)
+            {
+                await DisplaySafeAlert("Erro", $"Não foi possível assumir o chamado: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         private bool CanEnviarMensagem() => !string.IsNullOrWhiteSpace(NovaMensagem) && !IsBusy;
-        private bool CanUpdateStatus() => !IsBusy;
+        private bool CanProcessAction() => !IsBusy;
+
+        private async Task DisplaySafeAlert(string title, string message)
+        {
+            if (Application.Current?.MainPage != null)
+            {
+#pragma warning disable CA1416
+                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
+#pragma warning restore CA1416
+            }
+        }
     }
 }

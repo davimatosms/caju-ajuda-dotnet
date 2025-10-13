@@ -1,5 +1,3 @@
-// CajuAjuda.Backend/Services/ChamadoService.cs
-
 using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Helpers;
@@ -54,8 +52,6 @@ namespace CajuAjuda.Backend.Services
 
         public async Task<Chamado> CreateAsync(ChamadoCreateDto chamadoDto, string clienteEmail)
         {
-            _logger.LogInformation("Tentativa de criação de chamado pelo cliente: {ClienteEmail}", clienteEmail);
-
             var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
             if (cliente == null || cliente.Role != Role.CLIENTE)
             {
@@ -75,24 +71,15 @@ namespace CajuAjuda.Backend.Services
             };
             await _chamadoRepository.AddAsync(novoChamado);
 
-            _logger.LogInformation("Chamado {ChamadoId} criado com sucesso para o cliente {ClienteId} com prioridade {Prioridade}", novoChamado.Id, cliente.Id, novoChamado.Prioridade);
-
-            await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new
-            {
-                id = novoChamado.Id,
-                titulo = novoChamado.Titulo,
-                clienteNome = cliente.Nome
-            });
+            await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new { id = novoChamado.Id, titulo = novoChamado.Titulo, clienteNome = cliente.Nome });
             return novoChamado;
         }
 
         public async Task<IEnumerable<ChamadoListResponseDto>> GetChamadosByClienteEmailAsync(string clienteEmail)
         {
             var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
-            if (cliente == null)
-            {
-                throw new NotFoundException("Cliente não encontrado.");
-            }
+            if (cliente == null) throw new NotFoundException("Cliente não encontrado.");
+
             var chamados = await _chamadoRepository.GetByClienteIdAsync(cliente.Id);
             return chamados.Select(c => new ChamadoListResponseDto
             {
@@ -124,27 +111,18 @@ namespace CajuAjuda.Backend.Services
         public async Task<ChamadoDetailResponseDto?> GetChamadoByIdAsync(long chamadoId, string userEmail, string userRole)
         {
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null)
-            {
-                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
-            }
+            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
 
             if (userRole != "TECNICO" && userRole != "ADMIN" && chamado.Cliente.Email != userEmail)
             {
                 throw new UnauthorizedAccessException("Você não tem permissão para visualizar este chamado.");
             }
 
-            if (userRole == "CLIENTE")
-            {
-                await _mensagemRepository.MarkMessagesAsReadByClienteAsync(chamadoId);
-            }
+            if (userRole == "CLIENTE") await _mensagemRepository.MarkMessagesAsReadByClienteAsync(chamadoId);
 
-            var mensagensParaMostrar = chamado.Mensagens.AsQueryable();
-
-            if (userRole == "CLIENTE")
-            {
-                mensagensParaMostrar = mensagensParaMostrar.Where(m => !m.IsNotaInterna);
-            }
+            var mensagensParaMostrar = (userRole == "CLIENTE")
+                ? chamado.Mensagens.Where(m => !m.IsNotaInterna)
+                : chamado.Mensagens;
 
             return new ChamadoDetailResponseDto
             {
@@ -173,16 +151,11 @@ namespace CajuAjuda.Backend.Services
 
         public async Task UpdateChamadoStatusAsync(long chamadoId, StatusChamado novoStatus)
         {
-            _logger.LogInformation("Tentando atualizar o status do chamado ID: {ChamadoId} para {NovoStatus}", chamadoId, novoStatus);
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null)
-            {
-                _logger.LogWarning("Tentativa de atualizar status de um chamado não existente. ID: {ChamadoId}", chamadoId);
-                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
-            }
+            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+
             if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
             {
-                _logger.LogWarning("Tentativa de alterar status de um chamado já finalizado. ID: {ChamadoId}", chamadoId);
                 throw new BusinessRuleException("Não é possível alterar o status de um chamado que já foi fechado ou cancelado.");
             }
             chamado.Status = novoStatus;
@@ -191,20 +164,14 @@ namespace CajuAjuda.Backend.Services
                 chamado.DataFechamento = DateTime.UtcNow;
             }
             await _chamadoRepository.UpdateAsync(chamado);
-            _logger.LogInformation("Status do chamado ID: {ChamadoId} atualizado com sucesso.", chamadoId);
         }
 
         public async Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail)
         {
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null)
-            {
-                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
-            }
-            if (chamado.Cliente.Email != userEmail)
-            {
-                throw new UnauthorizedAccessException("Você não tem permissão para adicionar anexos a este chamado.");
-            }
+            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+            if (chamado.Cliente.Email != userEmail) throw new UnauthorizedAccessException("Você não tem permissão para adicionar anexos a este chamado.");
+
             var uniqueFileName = await _fileStorageService.SaveFileAsync(file);
             var anexo = new Anexo
             {
@@ -220,16 +187,10 @@ namespace CajuAjuda.Backend.Services
         public async Task AssignChamadoAsync(long chamadoId, string tecnicoEmail)
         {
             var tecnico = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
-            if (tecnico == null || tecnico.Role == Role.CLIENTE)
-            {
-                throw new BusinessRuleException("Utilizador técnico não encontrado ou inválido.");
-            }
+            if (tecnico == null || tecnico.Role == Role.CLIENTE) throw new BusinessRuleException("Utilizador técnico não encontrado ou inválido.");
 
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null)
-            {
-                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
-            }
+            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
 
             if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
             {
@@ -237,39 +198,24 @@ namespace CajuAjuda.Backend.Services
             }
 
             chamado.TecnicoResponsavelId = tecnico.Id;
-
             if (chamado.Status == StatusChamado.ABERTO)
             {
                 chamado.Status = StatusChamado.EM_ANDAMENTO;
             }
-
             await _chamadoRepository.UpdateAsync(chamado);
         }
 
         public async Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail)
         {
             var cliente = await _usuarioRepository.GetByEmailAsync(clienteEmail);
-            if (cliente == null)
-            {
-                throw new NotFoundException("Utilizador cliente não encontrado.");
-            }
+            if (cliente == null) throw new NotFoundException("Utilizador cliente não encontrado.");
+
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null)
-            {
-                throw new NotFoundException("Chamado não encontrado.");
-            }
-            if (chamado.ClienteId != cliente.Id)
-            {
-                throw new UnauthorizedAccessException("Você não tem permissão para avaliar este chamado.");
-            }
-            if (chamado.Status != StatusChamado.FECHADO)
-            {
-                throw new BusinessRuleException("Só é possível avaliar chamados que já foram fechados.");
-            }
-            if (chamado.NotaAvaliacao.HasValue)
-            {
-                throw new BusinessRuleException("Este chamado já foi avaliado anteriormente.");
-            }
+            if (chamado == null) throw new NotFoundException("Chamado não encontrado.");
+            if (chamado.ClienteId != cliente.Id) throw new UnauthorizedAccessException("Você não tem permissão para avaliar este chamado.");
+            if (chamado.Status != StatusChamado.FECHADO) throw new BusinessRuleException("Só é possível avaliar chamados que já foram fechados.");
+            if (chamado.NotaAvaliacao.HasValue) throw new BusinessRuleException("Este chamado já foi avaliado anteriormente.");
+
             chamado.NotaAvaliacao = avaliacaoDto.Nota;
             chamado.ComentarioAvaliacao = avaliacaoDto.Comentario;
             await _chamadoRepository.UpdateAsync(chamado);
@@ -277,10 +223,7 @@ namespace CajuAjuda.Backend.Services
 
         public async Task MergeChamadosAsync(long chamadoDuplicadoId, long chamadoPrincipalId, string tecnicoEmail)
         {
-            if (chamadoDuplicadoId == chamadoPrincipalId)
-            {
-                throw new BusinessRuleException("Não é possível mesclar um chamado nele mesmo.");
-            }
+            if (chamadoDuplicadoId == chamadoPrincipalId) throw new BusinessRuleException("Não é possível mesclar um chamado nele mesmo.");
 
             var tecnico = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
             if (tecnico == null) throw new NotFoundException("Técnico não encontrado.");
@@ -288,18 +231,10 @@ namespace CajuAjuda.Backend.Services
             var chamadoDuplicado = await _context.Chamados.Include(c => c.Mensagens).Include(c => c.Anexos).FirstOrDefaultAsync(c => c.Id == chamadoDuplicadoId);
             var chamadoPrincipal = await _chamadoRepository.GetByIdAsync(chamadoPrincipalId);
 
-            if (chamadoDuplicado == null || chamadoPrincipal == null)
-            {
-                throw new NotFoundException("Um ou ambos os chamados não foram encontrados.");
-            }
-
-            if (chamadoDuplicado.ClienteId != chamadoPrincipal.ClienteId)
-            {
-                throw new BusinessRuleException("Só é possível mesclar chamados do mesmo cliente.");
-            }
+            if (chamadoDuplicado == null || chamadoPrincipal == null) throw new NotFoundException("Um ou ambos os chamados não foram encontrados.");
+            if (chamadoDuplicado.ClienteId != chamadoPrincipal.ClienteId) throw new BusinessRuleException("Só é possível mesclar chamados do mesmo cliente.");
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 var notaDeMerge = new Mensagem
@@ -315,7 +250,6 @@ namespace CajuAjuda.Backend.Services
                 {
                     mensagem.ChamadoId = chamadoPrincipal.Id;
                 }
-
                 foreach (var anexo in chamadoDuplicado.Anexos.ToList())
                 {
                     anexo.ChamadoId = chamadoPrincipal.Id;
@@ -326,7 +260,6 @@ namespace CajuAjuda.Backend.Services
                 chamadoDuplicado.ChamadoPrincipalId = chamadoPrincipal.Id;
 
                 await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
             }
             catch (Exception ex)
@@ -335,6 +268,44 @@ namespace CajuAjuda.Backend.Services
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<ChamadoResponseDto>> GetChamadosAtribuidosAsync(string tecnicoEmail)
+        {
+            var tecnico = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
+            if (tecnico == null)
+            {
+                throw new NotFoundException("Técnico não encontrado.");
+            }
+
+            var chamados = await _chamadoRepository.GetByTecnicoIdAsync(tecnico.Id);
+
+            return chamados.Select(c => new ChamadoResponseDto
+            {
+                Id = c.Id,
+                Titulo = c.Titulo,
+                NomeCliente = c.Cliente.Nome,
+                NomeTecnicoResponsavel = c.TecnicoResponsavel?.Nome,
+                Status = c.Status,
+                Prioridade = c.Prioridade,
+                DataCriacao = c.DataCriacao
+            });
+        }
+
+        public async Task<IEnumerable<ChamadoResponseDto>> GetChamadosDisponiveisAsync()
+        {
+            var chamados = await _chamadoRepository.GetNaoAtribuidosAsync();
+
+            return chamados.Select(c => new ChamadoResponseDto
+            {
+                Id = c.Id,
+                Titulo = c.Titulo,
+                NomeCliente = c.Cliente.Nome,
+                NomeTecnicoResponsavel = null,
+                Status = c.Status,
+                Prioridade = c.Prioridade,
+                DataCriacao = c.DataCriacao
+            });
         }
     }
 }
