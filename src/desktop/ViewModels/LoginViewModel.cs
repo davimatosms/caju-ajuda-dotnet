@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
 using CajuAjuda.Desktop.Services;
 using System;
-using System.Diagnostics; // Adicionar esta referência
 
 namespace CajuAjuda.Desktop.ViewModels
 {
@@ -13,14 +12,14 @@ namespace CajuAjuda.Desktop.ViewModels
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-        private string _email = string.Empty;
+        private string email = string.Empty;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-        private string _senha = string.Empty;
+        private string senha = string.Empty;
 
         [ObservableProperty]
-        private bool _isBusy;
+        private bool isBusy;
 
         public LoginViewModel(AuthService authService)
         {
@@ -38,20 +37,22 @@ namespace CajuAjuda.Desktop.ViewModels
                 if (loginResponse != null && !string.IsNullOrWhiteSpace(loginResponse.Token))
                 {
                     await SecureStorage.Default.SetAsync("auth_token", loginResponse.Token);
-
-                    // LINHA DE DEBUG: Vamos ver se o token foi salvo e qual é o seu valor.
-                    Debug.WriteLine($"[LoginViewModel] Token foi SALVO com sucesso. Valor: {loginResponse.Token.Substring(0, 20)}...");
-
-                    Application.Current.MainPage = MauiProgram.Services.GetService<AppShell>();
+                    if (MauiProgram.Services != null)
+                    {
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            Application.Current.MainPage = MauiProgram.Services.GetService<AppShell>();
+                        });
+                    }
                 }
                 else
                 {
-                    await Application.Current.MainPage.DisplayAlert("Erro", "Email ou senha inválidos.", "OK");
+                    await DisplaySafeAlert("Erro", "Email ou senha inválidos.");
                 }
             }
             catch (Exception ex)
             {
-                await Application.Current.MainPage.DisplayAlert("Erro", $"Falha na comunicação: {ex.Message}", "OK");
+                await DisplaySafeAlert("Erro", $"Falha na comunicação: {ex.Message}");
             }
             finally
             {
@@ -60,5 +61,13 @@ namespace CajuAjuda.Desktop.ViewModels
         }
 
         private bool CanLogin() => !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Senha) && !IsBusy;
+
+        private async Task DisplaySafeAlert(string title, string message)
+        {
+            if (Application.Current?.MainPage != null)
+            {
+                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
+            }
+        }
     }
 }
