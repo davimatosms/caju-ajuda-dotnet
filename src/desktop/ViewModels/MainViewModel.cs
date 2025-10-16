@@ -12,6 +12,7 @@ namespace CajuAjuda.Desktop.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly ChamadoService _chamadoService;
+        
 
         [ObservableProperty]
         private bool _isBusy;

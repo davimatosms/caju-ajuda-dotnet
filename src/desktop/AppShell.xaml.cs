@@ -9,10 +9,10 @@ namespace CajuAjuda.Desktop
         {
             InitializeComponent();
 
-            // Apenas registramos as rotas para navegação interna.
-            // A lógica de verificação de token foi removida daqui.
-            Routing.RegisterRoute(nameof(DetalheChamadoPage), typeof(DetalheChamadoPage));
+            // Registra todas as páginas que podem ser navegadas a partir do Shell
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
+            Routing.RegisterRoute(nameof(DetalheChamadoPage), typeof(DetalheChamadoPage));
+            Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage)); // Nova rota do Perfil
         }
     }
 }

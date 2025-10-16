@@ -1,3 +1,4 @@
+using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Services;
 using CajuAjuda.Backend.Services.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -5,51 +6,60 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace CajuAjuda.Backend.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-[Authorize] // Apenas usuários logados podem acessar
-public class PerfilController : ControllerBase
+namespace CajuAjuda.Backend.Controllers
 {
-    private readonly IUsuarioService _usuarioService;
-
-    public PerfilController(IUsuarioService usuarioService)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class PerfilController : ControllerBase
     {
-        _usuarioService = usuarioService;
-    }
+        private readonly IUsuarioService _usuarioService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetMeuPerfil()
-    {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
+        public PerfilController(IUsuarioService usuarioService)
+        {
+            _usuarioService = usuarioService;
+        }
 
-        var perfil = await _usuarioService.GetPerfilAsync(userEmail);
-        return Ok(perfil);
-    }
+        [HttpGet]
+        public async Task<IActionResult> GetPerfil()
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
 
-    [HttpPut]
-    public async Task<IActionResult> UpdateMeuPerfil([FromBody] PerfilUpdateDto perfilDto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
+            var perfil = await _usuarioService.GetPerfilAsync(userEmail);
+            return Ok(perfil);
+        }
 
-        await _usuarioService.UpdatePerfilAsync(userEmail, perfilDto);
-        return NoContent(); // Sucesso, sem conteúdo para retornar
-    }
+        [HttpPut]
+        public async Task<IActionResult> UpdatePerfil([FromBody] PerfilUpdateDto perfilDto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-    [HttpPatch("senha")]
-    public async Task<IActionResult> UpdateMinhaSenha([FromBody] SenhaUpdateDto senhaDto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
 
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) return Unauthorized();
+            // CORREÇÃO APLICADA AQUI: O nome do método foi corrigido.
+            await _usuarioService.UpdatePerfilAsync(userEmail, perfilDto);
+            return NoContent();
+        }
 
-        await _usuarioService.UpdateSenhaAsync(userEmail, senhaDto);
-        return NoContent();
+        [HttpPatch("update-senha")]
+        public async Task<IActionResult> UpdateMinhaSenha([FromBody] SenhaUpdateDto senhaDto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+
+            try
+            {
+                await _usuarioService.UpdateSenhaAsync(userEmail, senhaDto);
+                return NoContent();
+            }
+            catch (BusinessRuleException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -1,24 +1,10 @@
-using CajuAjuda.Desktop.ViewModels;
+namespace CajuAjuda.Desktop.Views;
 
-// Certifique-se de que n„o h· 'using CommunityToolkit.Maui.Views;' aqui.
-namespace CajuAjuda.Desktop.Views
+public partial class MainPage : ContentPage
 {
-    public partial class MainPage : ContentPage
+    // O construtor agora n√£o recebe mais o ViewModel
+    public MainPage()
     {
-        public MainPage(MainViewModel viewModel)
-        {
-            InitializeComponent();
-            BindingContext = viewModel;
-        }
-
-        protected override void OnAppearing()
-        {
-            base.OnAppearing();
-
-            if (BindingContext is MainViewModel viewModel && viewModel.LoadDataCommand.CanExecute(null))
-            {
-                viewModel.LoadDataCommand.Execute(null);
-            }
-        }
+        InitializeComponent();
     }
 }

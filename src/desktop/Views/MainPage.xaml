@@ -1,72 +1,20 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CajuAjuda.Desktop.Views.MainPage"
-             xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
-             xmlns:models="clr-namespace:CajuAjuda.Desktop.Models"
-             x:DataType="viewModels:MainViewModel"
              Title="Dashboard">
+    <VerticalStackLayout 
+        Spacing="25" 
+        Padding="30" 
+        VerticalOptions="Center">
 
-    <Grid RowDefinitions="Auto, *">
+        <Label 
+            Text="Dashboard TemporÃ¡rio"
+            FontSize="32"
+            HorizontalOptions="Center" />
+        <Label 
+            Text="O projeto compilou!"
+            FontSize="18"
+            HorizontalOptions="Center" />
 
-        <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"
-                           Grid.RowSpan="2" HorizontalOptions="Center" VerticalOptions="Center" 
-                           ZIndex="10"/>
-
-        <HorizontalStackLayout Grid.Row="0" Padding="20" Spacing="20" HorizontalOptions="End">
-            <Button Text="Recarregar Chamados" Command="{Binding LoadDataCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
-            <Button Text="Sair (Logout)" Command="{Binding LogoutCommand}" />
-        </HorizontalStackLayout>
-
-        <TabView Grid.Row="1" IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-            <TabViewItem Header="Meus Chamados">
-                <CollectionView ItemsSource="{Binding MeusChamados}"
-                                SelectionMode="Single"
-                                SelectionChangedCommand="{Binding GoToDetailsCommand}"
-                                SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Chamado">
-                            <Border StrokeShape="RoundRectangle 5" StrokeThickness="1" Margin="10" Padding="15">
-                                <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding Titulo}" FontSize="18" FontAttributes="Bold" />
-                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding Status}" />
-                                    <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding NomeCliente}" FontSize="12" TextColor="Gray" />
-                                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DataCriacao, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                    <CollectionView.EmptyView>
-                        <StackLayout Padding="20" VerticalOptions="Center">
-                            <Label Text="Nenhum chamado atribuído a você." HorizontalOptions="Center" />
-                        </StackLayout>
-                    </CollectionView.EmptyView>
-                </CollectionView>
-            </TabViewItem>
-
-            <TabViewItem Header="Chamados Disponíveis">
-                <CollectionView ItemsSource="{Binding ChamadosDisponiveis}"
-                                SelectionMode="Single"
-                                SelectionChangedCommand="{Binding GoToDetailsCommand}"
-                                SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Chamado">
-                            <Border StrokeShape="RoundRectangle 5" StrokeThickness="1" Margin="10" Padding="15">
-                                <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding Titulo}" FontSize="18" FontAttributes="Bold" />
-                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding Status}" />
-                                    <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding NomeCliente}" FontSize="12" TextColor="Gray" />
-                                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DataCriacao, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                    <CollectionView.EmptyView>
-                        <StackLayout Padding="20" VerticalOptions="Center">
-                            <Label Text="Nenhum chamado disponível no momento." HorizontalOptions="Center" />
-                        </StackLayout>
-                    </CollectionView.EmptyView>
-                </CollectionView>
-            </TabViewItem>
-        </TabView>
-    </Grid>
+    </VerticalStackLayout>
 </ContentPage>

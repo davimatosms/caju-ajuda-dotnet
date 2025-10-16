@@ -18,9 +18,8 @@ namespace CajuAjuda.Desktop.ViewModels
         private int _chamadoId;
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EnviarMensagemCommand))]
-        [NotifyCanExecuteChangedFor(nameof(UpdateStatusCommand))]
-        [NotifyCanExecuteChangedFor(nameof(AssignToSelfCommand))]
+        [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
+        [NotifyCanExecuteChangedFor("UpdateStatusCommand")]
         private bool _isBusy;
 
         [ObservableProperty] private string _titulo = "Carregando...";
@@ -32,7 +31,7 @@ namespace CajuAjuda.Desktop.ViewModels
         [ObservableProperty] private ObservableCollection<Mensagem> _mensagens;
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EnviarMensagemCommand))]
+        [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
         private string _novaMensagem;
 
         public ObservableCollection<StatusChamado> StatusOptions { get; }
