@@ -8,7 +8,7 @@
         VerticalOptions="Center">
 
         <Label 
-            Text="Dashboard Temporário"
+            Text="Dashboard TemporÃ¡rio"
             FontSize="32"
             HorizontalOptions="Center" />
         <Label 

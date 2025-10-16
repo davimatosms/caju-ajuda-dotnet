@@ -18,6 +18,12 @@ namespace CajuAjuda.Desktop.Models
         [JsonPropertyName("nomeCliente")]
         public string NomeCliente { get; set; } = string.Empty;
 
+        // ======================================================
+        //          NOVA PROPRIEDADE ADICIONADA AQUI
+        // ======================================================
+        [JsonPropertyName("nomeTecnicoResponsavel")]
+        public string? NomeTecnicoResponsavel { get; set; } // Adicionado '?' para permitir que seja nulo
+
         [JsonPropertyName("status")]
         public string Status { get; set; } = string.Empty;
 

@@ -14,42 +14,65 @@ namespace CajuAjuda.Desktop.ViewModels
         private readonly ChamadoService _chamadoService;
         
 
-        [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private ObservableCollection<Chamado> _chamados = new();
+        [ObservableProperty]
+        private bool _isBusy;
+
+        // Duas coleções separadas para as abas da interface
+        public ObservableCollection<Chamado> MeusChamados { get; } = new();
+        public ObservableCollection<Chamado> ChamadosDisponiveis { get; } = new();
 
         public MainViewModel(ChamadoService chamadoService)
         {
             _chamadoService = chamadoService;
         }
 
+        // Comando único para carregar todos os dados necessários para o dashboard
         [RelayCommand]
-        private async Task LoadChamadosAsync()
+        private async Task LoadDataAsync()
         {
             if (IsBusy) return;
+
             IsBusy = true;
             try
             {
-                var chamadosList = await _chamadoService.GetChamadosAsync();
-                MainThread.BeginInvokeOnMainThread(() =>
+                // Limpa as listas antes de carregar os novos dados
+                MeusChamados.Clear();
+                ChamadosDisponiveis.Clear();
+
+                // Inicia as duas chamadas à API em paralelo para economizar tempo
+                var meusChamadosTask = _chamadoService.GetMeusChamadosAsync();
+                var disponiveisTask = _chamadoService.GetChamadosDisponiveisAsync();
+
+                // Espera ambas as chamadas terminarem
+                await Task.WhenAll(meusChamadosTask, disponiveisTask);
+
+                // Popula a lista de "Meus Chamados"
+                foreach (var chamado in meusChamadosTask.Result)
                 {
-                    Chamados.Clear();
-                    foreach (var chamado in chamadosList)
-                    {
-                        Chamados.Add(chamado);
-                    }
-                });
+                    MeusChamados.Add(chamado);
+                }
+
+                // Popula a lista de "Chamados Disponíveis"
+                foreach (var chamado in disponiveisTask.Result)
+                {
+                    ChamadosDisponiveis.Add(chamado);
+                }
             }
             catch (Exception ex)
             {
                 await DisplaySafeAlert("Erro", $"Não foi possível carregar os chamados: {ex.Message}");
             }
-            finally { IsBusy = false; }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         [RelayCommand]
         private async Task GoToDetailsAsync(Chamado chamado)
         {
             if (chamado == null) return;
+
             await Shell.Current.GoToAsync($"{nameof(DetalheChamadoPage)}?ChamadoId={chamado.Id}");
         }
 
@@ -60,7 +83,6 @@ namespace CajuAjuda.Desktop.ViewModels
             if (confirm)
             {
                 SecureStorage.Default.Remove("auth_token");
-                // A chamada para _authService.ClearAuthToken() foi REMOVIDA.
                 await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
             }
         }
