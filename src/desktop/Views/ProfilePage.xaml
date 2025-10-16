@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CajuAjuda.Desktop.Views.ProfilePage"
+             xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
+             x:DataType="viewModels:ProfileViewModel"
+             Title="Meu Perfil">
+
+    <Grid RowDefinitions="Auto, *" Padding="20">
+
+        <VerticalStackLayout Spacing="15" VerticalOptions="Start">
+
+            <Label Text="Alterar Senha" 
+                   FontSize="24" 
+                   FontAttributes="Bold" />
+
+            <Entry Placeholder="Senha Atual"
+                   Text="{Binding SenhaAtual, Mode=TwoWay}"
+                   IsPassword="True" />
+
+            <Entry Placeholder="Nova Senha"
+                   Text="{Binding NovaSenha, Mode=TwoWay}"
+                   IsPassword="True" />
+
+            <Entry Placeholder="Confirmar Nova Senha"
+                   Text="{Binding ConfirmarNovaSenha, Mode=TwoWay}"
+                   IsPassword="True" />
+
+            <Button Text="Salvar Alterações"
+                    Command="{Binding SavePasswordCommand}"
+                    HorizontalOptions="Fill"
+                    Margin="0,20,0,0" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                               IsVisible="{Binding IsBusy}"
+                               HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+
+    </Grid>
+</ContentPage>

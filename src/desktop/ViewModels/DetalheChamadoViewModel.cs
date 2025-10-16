@@ -18,7 +18,6 @@ namespace CajuAjuda.Desktop.ViewModels
         private int _chamadoId;
 
         [ObservableProperty]
-        // CORREÇÃO FINAL: Usando strings em vez de nameof para compatibilidade com o gerador de código.
         [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
         [NotifyCanExecuteChangedFor("UpdateStatusCommand")]
         private bool _isBusy;
@@ -32,7 +31,6 @@ namespace CajuAjuda.Desktop.ViewModels
         [ObservableProperty] private ObservableCollection<Mensagem> _mensagens;
 
         [ObservableProperty]
-        // CORREÇÃO FINAL: Usando strings em vez de nameof.
         [NotifyCanExecuteChangedFor("EnviarMensagemCommand")]
         private string _novaMensagem;
 

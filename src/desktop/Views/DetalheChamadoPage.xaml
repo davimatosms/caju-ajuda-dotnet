@@ -1,86 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CajuAjuda.Desktop.Views.DetalheChamadoPage"
              xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
-             xmlns:models="clr-namespace:CajuAjuda.Desktop.Models"
              x:DataType="viewModels:DetalheChamadoViewModel"
              Title="{Binding Titulo}">
 
-    <Grid RowDefinitions="*, Auto">
-        <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"
-                           Grid.RowSpan="2" HorizontalOptions="Center" VerticalOptions="Center" />
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="20">
 
-        <ScrollView Grid.Row="0" IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-            <VerticalStackLayout Padding="20" Spacing="15">
+            <Frame Padding="15" CornerRadius="10" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Detalhes do Chamado" FontSize="20" FontAttributes="Bold" />
 
-                <Border StrokeShape="RoundRectangle 5" Padding="15">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="{Binding Titulo}" FontSize="24" FontAttributes="Bold" />
-                        <Label Text="{Binding NomeCliente}" FontSize="16" />
-                        <HorizontalStackLayout Spacing="10">
-                            <Label Text="{Binding Status}" />
-                            <Label Text="•" />
-                            <Label Text="{Binding Prioridade}" />
-                        </HorizontalStackLayout>
-                        <Label Text="{Binding DataCriacao, StringFormat='Criado em: {0}'}" FontSize="12" TextColor="Gray"/>
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Título: " FontAttributes="Bold" />
+                                <Span Text="{Binding Titulo}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
 
-                        <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Status: " FontAttributes="Bold" />
+                                <Span Text="{Binding Status}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </Frame>
 
-                        <Label Text="Descrição" FontAttributes="Bold" FontSize="18" />
-                        <Label Text="{Binding Descricao}" />
-                    </VerticalStackLayout>
-                </Border>
+        </VerticalStackLayout>
+    </ScrollView>
 
-                <Border StrokeShape="RoundRectangle 5" Padding="15" Margin="0,10,0,0">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Gerenciar Chamado" FontAttributes="Bold" FontSize="18"/>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <Picker Grid.Column="0"
-                                    Title="Selecione um novo status"
-                                    ItemsSource="{Binding StatusOptions}"
-                                    SelectedItem="{Binding SelectedStatus}" />
-                            <Button Grid.Column="1"
-                                    Text="Atualizar Status"
-                                    Command="{Binding UpdateStatusCommand}"
-                                    HorizontalOptions="Fill"/>
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
-
-                <Label Text="Histórico de Mensagens" FontSize="20" FontAttributes="Bold" Margin="0,20,0,0"/>
-                <CollectionView ItemsSource="{Binding Mensagens}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Mensagem">
-                            <Border StrokeShape="RoundRectangle 5" Padding="10" Margin="0,5">
-                                <VerticalStackLayout>
-                                    <HorizontalStackLayout>
-                                        <Label Text="{Binding AutorNome}" FontAttributes="Bold"/>
-                                        <Label Text="{Binding DataEnvio, StringFormat=' - {0:dd/MM/yyyy HH:mm}'}" FontSize="10" TextColor="Gray"/>
-                                    </HorizontalStackLayout>
-                                    <Label Text="{Binding Texto}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-            </VerticalStackLayout>
-        </ScrollView>
-
-        <Border Grid.Row="1" StrokeShape="RoundRectangle 0" Padding="10" 
-                BackgroundColor="{StaticResource Gray100}"
-                IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
-                <Editor Grid.Column="0" 
-                        Placeholder="Digite sua resposta..." 
-                        Text="{Binding NovaMensagem}"
-                        AutoSize="TextChanges"
-                        MaximumHeightRequest="150"/>
-                <Button Grid.Column="1" 
-                        Text="Enviar Mensagem" 
-                        Command="{Binding EnviarMensagemCommand}"
-                        VerticalOptions="End"/>
-            </Grid>
-        </Border>
-    </Grid>
 </ContentPage>

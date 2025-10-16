@@ -12,7 +12,7 @@ namespace CajuAjuda.Desktop.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly ChamadoService _chamadoService;
-        // A dependência do AuthService foi removida, não é mais necessária aqui.
+        
 
         [ObservableProperty] private bool _isBusy;
         [ObservableProperty] private ObservableCollection<Chamado> _chamados = new();
