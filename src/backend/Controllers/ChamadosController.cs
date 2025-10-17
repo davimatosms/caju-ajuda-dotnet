@@ -31,14 +31,12 @@ namespace CajuAjuda.Backend.Controllers
             return Ok(chamadosPaginados);
         }
 
-      
         [HttpGet("atribuidos")]
         [Authorize(Roles = "TECNICO, ADMIN")]
         public async Task<IActionResult> GetMeusChamadosAtribuidos()
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
             if (userEmail == null) return Unauthorized();
-
             var chamados = await _chamadoService.GetChamadosAtribuidosAsync(userEmail);
             return Ok(chamados);
         }
@@ -95,6 +93,30 @@ namespace CajuAjuda.Backend.Controllers
             return NoContent();
         }
 
+        // NOVO: Rota POST para atribuir chamado (compatível com Desktop)
+        [HttpPost("{id}/atribuir")]
+        [Authorize(Roles = "TECNICO, ADMIN")]
+        public async Task<IActionResult> AtribuirChamado(long id)
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null) return Unauthorized();
+
+            try
+            {
+                await _chamadoService.AssignChamadoAsync(id, userEmail);
+                return Ok(new { message = "Chamado atribuído com sucesso!" });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BusinessRuleException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // MANTÉM a rota PATCH também (para compatibilidade)
         [HttpPatch("{id}/assign")]
         [Authorize(Roles = "TECNICO, ADMIN")]
         public async Task<IActionResult> AssignChamado(long id)

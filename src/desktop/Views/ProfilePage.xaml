@@ -1,41 +1,123 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CajuAjuda.Desktop.Views.ProfilePage"
              xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
+             x:Class="CajuAjuda.Desktop.Views.ProfilePage"
              x:DataType="viewModels:ProfileViewModel"
-             Title="Meu Perfil">
+             Title="Meu Perfil"
+             BackgroundColor="{StaticResource PageBackground}">
 
-    <Grid RowDefinitions="Auto, *" Padding="20">
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="20">
 
-        <VerticalStackLayout Spacing="15" VerticalOptions="Start">
+            <Border BackgroundColor="{StaticResource CardBackground}"
+                    Padding="30"
+                    StrokeThickness="1"
+                    Stroke="{StaticResource Gray200}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15"/>
+                </Border.StrokeShape>
 
-            <Label Text="Alterar Senha" 
-                   FontSize="24" 
-                   FontAttributes="Bold" />
+                <VerticalStackLayout Spacing="20">
+                    <Border WidthRequest="100"
+                            HeightRequest="100"
+                            BackgroundColor="{StaticResource Primary}"
+                            HorizontalOptions="Center"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="50"/>
+                        </Border.StrokeShape>
+                        <Label Text="T"
+                               FontSize="48"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
 
-            <Entry Placeholder="Senha Atual"
-                   Text="{Binding SenhaAtual, Mode=TwoWay}"
-                   IsPassword="True" />
+                    <Label Text="Tecnico de Suporte"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource Gray900}"/>
 
-            <Entry Placeholder="Nova Senha"
-                   Text="{Binding NovaSenha, Mode=TwoWay}"
-                   IsPassword="True" />
+                    <Label Text="Bem-vindo ao seu perfil"
+                           FontSize="15"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource Gray600}"/>
+                </VerticalStackLayout>
+            </Border>
 
-            <Entry Placeholder="Confirmar Nova Senha"
-                   Text="{Binding ConfirmarNovaSenha, Mode=TwoWay}"
-                   IsPassword="True" />
+            <Border BackgroundColor="{StaticResource CardBackground}"
+                    Padding="30"
+                    StrokeThickness="1"
+                    Stroke="{StaticResource Gray200}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15"/>
+                </Border.StrokeShape>
 
-            <Button Text="Salvar Alterações"
-                    Command="{Binding SavePasswordCommand}"
-                    HorizontalOptions="Fill"
-                    Margin="0,20,0,0" />
+                <VerticalStackLayout Spacing="20">
+                    <Label Text="Alterar Senha"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Gray900}"/>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" 
-                               IsVisible="{Binding IsBusy}"
-                               HorizontalOptions="Center" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Senha Atual"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray700}"/>
+                        <Entry Placeholder="Digite sua senha atual"
+                               Text="{Binding SenhaAtual}"
+                               IsPassword="True"
+                               FontSize="15"
+                               BackgroundColor="{StaticResource Gray50}"
+                               HeightRequest="50"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Nova Senha"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray700}"/>
+                        <Entry Placeholder="Digite sua nova senha"
+                               Text="{Binding NovaSenha}"
+                               IsPassword="True"
+                               FontSize="15"
+                               BackgroundColor="{StaticResource Gray50}"
+                               HeightRequest="50"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Confirmar Nova Senha"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray700}"/>
+                        <Entry Placeholder="Confirme sua nova senha"
+                               Text="{Binding ConfirmarNovaSenha}"
+                               IsPassword="True"
+                               FontSize="15"
+                               BackgroundColor="{StaticResource Gray50}"
+                               HeightRequest="50"/>
+                    </VerticalStackLayout>
+
+                    <Button Text="Salvar Alteracoes"
+                            Command="{Binding SavePasswordCommand}"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            HeightRequest="55"
+                            CornerRadius="8"
+                            Margin="0,10,0,0"/>
+
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                       IsVisible="{Binding IsBusy}"
+                                       Color="{StaticResource Primary}"
+                                       HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
 
         </VerticalStackLayout>
-
-    </Grid>
+    </ScrollView>
 </ContentPage>

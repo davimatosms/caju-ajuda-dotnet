@@ -1,4 +1,5 @@
-﻿<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:CajuAjuda.Desktop"
              xmlns:converters="clr-namespace:CajuAjuda.Desktop.Converters"
@@ -7,11 +8,19 @@
         <ResourceDictionary>
 
             <ResourceDictionary.MergedDictionaries>
+                <!-- Paleta de cores -->
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <!-- Estilos adicionais -->
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Conversores -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:PriorityColorConverter x:Key="PriorityColorConverter" />
+            <converters:TabColorConverter x:Key="TabColorConverter" />
+            <converters:TabTextColorConverter x:Key="TabTextColorConverter" />
+            <converters:IntToBoolConverter x:Key="IntToBoolConverter" />
+            <converters:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
 
         </ResourceDictionary>
     </Application.Resources>

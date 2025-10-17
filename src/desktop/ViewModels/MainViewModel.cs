@@ -4,7 +4,10 @@ using CajuAjuda.Desktop.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace CajuAjuda.Desktop.ViewModels
@@ -12,55 +15,88 @@ namespace CajuAjuda.Desktop.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly ChamadoService _chamadoService;
-        
 
         [ObservableProperty]
         private bool _isBusy;
 
-        // Duas coleções separadas para as abas da interface
+        [ObservableProperty]
+        private int _selectedTab = 0;
+
+        // Três coleções separadas para as abas da interface
         public ObservableCollection<Chamado> MeusChamados { get; } = new();
         public ObservableCollection<Chamado> ChamadosDisponiveis { get; } = new();
+        public ObservableCollection<Chamado> ChamadosFechados { get; } = new();
 
         public MainViewModel(ChamadoService chamadoService)
         {
             _chamadoService = chamadoService;
         }
 
-        // Comando único para carregar todos os dados necessários para o dashboard
+        [RelayCommand]
+        private void SelectTab(int tabIndex)
+        {
+            SelectedTab = tabIndex;
+        }
+
+        /// <summary>
+        /// Carrega todos os dados do dashboard (Meus Chamados, Disponíveis e Fechados)
+        /// </summary>
         [RelayCommand]
         private async Task LoadDataAsync()
         {
             if (IsBusy) return;
-
             IsBusy = true;
+
             try
             {
                 // Limpa as listas antes de carregar os novos dados
                 MeusChamados.Clear();
                 ChamadosDisponiveis.Clear();
+                ChamadosFechados.Clear();
 
-                // Inicia as duas chamadas à API em paralelo para economizar tempo
-                var meusChamadosTask = _chamadoService.GetMeusChamadosAsync();
-                var disponiveisTask = _chamadoService.GetChamadosDisponiveisAsync();
-
-                // Espera ambas as chamadas terminarem
-                await Task.WhenAll(meusChamadosTask, disponiveisTask);
-
-                // Popula a lista de "Meus Chamados"
-                foreach (var chamado in meusChamadosTask.Result)
+                // Carrega os chamados do técnico (em andamento)
+                var meusChamados = await _chamadoService.GetMeusChamadosAsync();
+                if (meusChamados != null)
                 {
-                    MeusChamados.Add(chamado);
+                    foreach (var chamado in meusChamados)
+                    {
+                        // Filtra apenas os que estão em andamento
+                        if (chamado.Status != "FECHADO" && chamado.Status != "RESOLVIDO" && chamado.Status != "CANCELADO")
+                        {
+                            MeusChamados.Add(chamado);
+                        }
+                        else
+                        {
+                            ChamadosFechados.Add(chamado);
+                        }
+                    }
                 }
 
-                // Popula a lista de "Chamados Disponíveis"
-                foreach (var chamado in disponiveisTask.Result)
+                // Carrega os chamados disponíveis (sem técnico atribuído)
+                var disponiveis = await _chamadoService.GetChamadosDisponiveisAsync();
+                if (disponiveis != null)
                 {
-                    ChamadosDisponiveis.Add(chamado);
+                    foreach (var chamado in disponiveis)
+                    {
+                        ChamadosDisponiveis.Add(chamado);
+                    }
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                // Erro de conexão ou autenticação
+                if (httpEx.Message.Contains("401") || httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    await Shell.Current.DisplayAlert("Não autenticado", "Você precisa fazer login primeiro.", "OK");
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Erro de conexão", $"Não foi possível conectar ao servidor: {httpEx.Message}", "OK");
                 }
             }
             catch (Exception ex)
             {
-                await DisplaySafeAlert("Erro", $"Não foi possível carregar os chamados: {ex.Message}");
+                await Shell.Current.DisplayAlert("Erro", $"Erro ao carregar chamados: {ex.Message}", "OK");
             }
             finally
             {
@@ -68,42 +104,82 @@ namespace CajuAjuda.Desktop.ViewModels
             }
         }
 
+        /// <summary>
+        /// Abre a página de detalhes de um chamado específico
+        /// </summary>
         [RelayCommand]
-        private async Task GoToDetailsAsync(Chamado chamado)
+        private async Task OpenChamadoAsync(Chamado chamado)
         {
             if (chamado == null) return;
 
-            await Shell.Current.GoToAsync($"{nameof(DetalheChamadoPage)}?ChamadoId={chamado.Id}");
+            try
+            {
+                var parameters = new Dictionary<string, object>
+                {
+                    { "ChamadoId", chamado.Id }
+                };
+
+                await Shell.Current.GoToAsync(nameof(DetalheChamadoPage), parameters);
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Erro", $"Erro ao abrir chamado: {ex.Message}", "OK");
+            }
         }
 
+        /// <summary>
+        /// Atribui um chamado disponível ao técnico logado
+        /// </summary>
         [RelayCommand]
-        private async Task LogoutAsync()
+        private async Task AtribuirChamadoAsync(Chamado chamado)
         {
-            bool confirm = await DisplaySafeAlert("Confirmar Logout", "Você tem certeza?", "Sim", "Não");
-            if (confirm)
-            {
-                SecureStorage.Default.Remove("auth_token");
-                await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
-            }
-        }
+            if (chamado == null || IsBusy) return;
 
-        private async Task<bool> DisplaySafeAlert(string title, string message, string accept, string cancel)
-        {
-            if (Application.Current?.MainPage != null)
+            try
             {
-#pragma warning disable CA1416
-                return await Application.Current.MainPage.DisplayAlert(title, message, accept, cancel);
-#pragma warning restore CA1416
+                bool confirm = await Shell.Current.DisplayAlert(
+                    "Assumir Chamado",
+                    $"Deseja assumir o chamado '{chamado.Titulo}'?",
+                    "Sim",
+                    "Não");
+
+                if (!confirm) return;
+
+                IsBusy = true;
+
+                // Chama o serviço para atribuir o chamado no backend
+                await _chamadoService.AtribuirChamadoAsync(chamado.Id);
+
+                // Remove da lista de disponíveis
+                ChamadosDisponiveis.Remove(chamado);
+
+                // Atualiza o status e adiciona aos meus chamados
+                chamado.Status = "EM_ANDAMENTO";
+                MeusChamados.Add(chamado);
+
+                await Shell.Current.DisplayAlert("Sucesso", "Chamado atribuído com sucesso!", "OK");
+
+                // Muda automaticamente para a aba de "Em Andamento"
+                SelectedTab = 1;
             }
-            return false;
-        }
-        private async Task DisplaySafeAlert(string title, string message)
-        {
-            if (Application.Current?.MainPage != null)
+            catch (HttpRequestException httpEx)
             {
-#pragma warning disable CA1416
-                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
-#pragma warning restore CA1416
+                if (httpEx.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    await Shell.Current.DisplayAlert("Erro", "Este chamado já foi atribuído a outro técnico.", "OK");
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Erro", $"Erro ao atribuir chamado: {httpEx.Message}", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Erro", $"Erro ao atribuir chamado: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
     }
