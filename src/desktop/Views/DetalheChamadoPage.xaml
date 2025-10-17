@@ -1,39 +1,220 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CajuAjuda.Desktop.Views.DetalheChamadoPage"
              xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
+             xmlns:models="clr-namespace:CajuAjuda.Desktop.Models"
+             x:Class="CajuAjuda.Desktop.Views.DetalheChamadoPage"
              x:DataType="viewModels:DetalheChamadoViewModel"
-             Title="{Binding Titulo}">
+             Title="Detalhes do Chamado"
+             BackgroundColor="{StaticResource PageBackground}">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="15" Padding="20">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Atualizar" Command="{Binding LoadDetalhesCommand}"/>
+    </ContentPage.ToolbarItems>
 
-            <Frame Padding="15" CornerRadius="10" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Detalhes do Chamado" FontSize="20" FontAttributes="Bold" />
+    <Grid>
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Color="{StaticResource Primary}"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           WidthRequest="60"
+                           HeightRequest="60"/>
 
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Título: " FontAttributes="Bold" />
-                                <Span Text="{Binding Titulo}" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
+        <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+            <VerticalStackLayout Padding="20" Spacing="15">
 
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Status: " FontAttributes="Bold" />
-                                <Span Text="{Binding Status}" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </VerticalStackLayout>
-            </Frame>
+                <Border BackgroundColor="{StaticResource CardBackground}"
+                        Padding="20"
+                        StrokeThickness="1"
+                        Stroke="{StaticResource Gray200}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Informacoes do Chamado"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}"/>
 
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Titulo"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Gray600}"/>
+                            <Label Text="{Binding Titulo}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource Gray900}"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Descricao"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Gray600}"/>
+                            <Label Text="{Binding Descricao}"
+                                   FontSize="15"
+                                   TextColor="{StaticResource Gray700}"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Cliente"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Gray600}"/>
+                            <Label Text="{Binding NomeCliente}"
+                                   FontSize="15"
+                                   TextColor="{StaticResource Gray700}"/>
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Spacing="10">
+                            <Border Padding="10,6"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6"/>
+                                </Border.StrokeShape>
+                                <Label Text="{Binding Status}"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="White"/>
+                            </Border>
+
+                            <Border Padding="10,6"
+                                    BackgroundColor="{StaticResource Tertiary}"
+                                    StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6"/>
+                                </Border.StrokeShape>
+                                <Label Text="{Binding Prioridade}"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="White"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border BackgroundColor="{StaticResource CardBackground}"
+                        Padding="20"
+                        StrokeThickness="1"
+                        Stroke="{StaticResource Gray200}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Atualizar Status"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}"/>
+
+                        <Picker Title="Selecione o novo status"
+                                ItemsSource="{Binding StatusDisponiveis}"
+                                SelectedItem="{Binding NovoStatus}"
+                                FontSize="15"
+                                BackgroundColor="{StaticResource Gray50}"/>
+
+                        <Button Text="Atualizar Status"
+                                Command="{Binding UpdateStatusCommand}"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="15"
+                                HeightRequest="50"
+                                CornerRadius="8"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border BackgroundColor="{StaticResource CardBackground}"
+                        Padding="20"
+                        StrokeThickness="1"
+                        Stroke="{StaticResource Gray200}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Mensagens"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}"/>
+
+                        <Border BackgroundColor="{StaticResource Gray50}"
+                                Padding="12"
+                                StrokeThickness="0"
+                                HeightRequest="350">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+
+                            <CollectionView ItemsSource="{Binding Mensagens}">
+                                <CollectionView.EmptyView>
+                                    <VerticalStackLayout VerticalOptions="Center" 
+                                                         HorizontalOptions="Center">
+                                        <Label Text="Nenhuma mensagem ainda"
+                                               TextColor="{StaticResource Gray500}"
+                                               FontSize="15"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Envie a primeira mensagem abaixo"
+                                               TextColor="{StaticResource Gray400}"
+                                               FontSize="13"
+                                               HorizontalOptions="Center"
+                                               Margin="0,5,0,0"/>
+                                    </VerticalStackLayout>
+                                </CollectionView.EmptyView>
+
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Mensagem">
+                                        <Border Padding="12"
+                                                Margin="0,0,0,8"
+                                                BackgroundColor="{StaticResource CardBackground}"
+                                                StrokeThickness="1"
+                                                Stroke="{StaticResource Gray200}">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="8"/>
+                                            </Border.StrokeShape>
+
+                                            <VerticalStackLayout Spacing="6">
+                                                <HorizontalStackLayout Spacing="10">
+                                                    <Label Text="{Binding AutorNome}"
+                                                           FontSize="13"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource Primary}"/>
+                                                    <Label Text="{Binding DataEnvio, StringFormat='{0:dd/MM/yyyy HH:mm}'}"
+                                                           FontSize="12"
+                                                           TextColor="{StaticResource Gray500}"/>
+                                                </HorizontalStackLayout>
+
+                                                <Label Text="{Binding Texto}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource Gray700}"/>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Border>
+
+                        <Entry Placeholder="Digite sua mensagem..."
+                               Text="{Binding NovaMensagem}"
+                               FontSize="15"
+                               BackgroundColor="{StaticResource Gray50}"
+                               HeightRequest="50"/>
+
+                        <Button Text="Enviar Mensagem"
+                                Command="{Binding EnviarMensagemCommand}"
+                                BackgroundColor="{StaticResource Secondary}"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="15"
+                                HeightRequest="50"
+                                CornerRadius="8"/>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

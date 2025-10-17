@@ -8,18 +8,8 @@ namespace CajuAjuda.Desktop
         {
             InitializeComponent();
 
-#pragma warning disable CA1416
-            var token = SecureStorage.GetAsync("auth_token").Result;
-#pragma warning restore CA1416
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                MainPage = MauiProgram.Services!.GetService<AppShell>();
-            }
-            else
-            {
-                MainPage = MauiProgram.Services!.GetService<LoginPage>();
-            }
+            // Sempre abre na tela de login
+            MainPage = MauiProgram.Services!.GetService<LoginPage>();
         }
     }
 }
