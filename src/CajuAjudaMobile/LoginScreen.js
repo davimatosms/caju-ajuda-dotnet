@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
-import * as SecureStore from 'expo-secure-store'; // 1. Importar o SecureStore
-import { API_BASE_URL } from './src/config';
-
-const API_URL = ${API_BASE_URL}/auth/login;
+import * as SecureStore from 'expo-secure-store';
+import { loginAsync } from './src/services/AuthService'; // <- Importa do serviço
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
@@ -17,24 +15,20 @@ export default function LoginScreen({ navigation }) {
         }
         setIsLoading(true);
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, senha: senha }),
-            });
+            // Chama a função do serviço
+            const data = await loginAsync(email, senha);
 
-            if (response.ok) {
-                const data = await response.json();
-                // 2. Guardar o token de forma segura
+            if (data && data.token) {
+                // Guardar o token de forma segura
                 await SecureStore.setItemAsync('userToken', data.token);
                 navigation.replace('MainApp'); // Navega para as abas
             } else {
-                const errorData = await response.text();
-                Alert.alert('Falha no Login', errorData || 'E-mail ou senha inválidos.');
+                 // Se loginAsync não retornou dados ou token, consideramos falha
+                 Alert.alert('Falha no Login', 'Resposta inesperada do servidor.');
             }
         } catch (error) {
-            console.error(error);
-            Alert.alert('Erro de Conexão', 'Não foi possível conectar ao servidor.');
+             // O erro lançado pelo AuthService será capturado aqui
+            Alert.alert('Falha no Login', error.message);
         } finally {
             setIsLoading(false);
         }
@@ -56,6 +50,7 @@ export default function LoginScreen({ navigation }) {
     );
 }
 
+// Estilos permanecem os mesmos
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8f9fa', alignItems: 'center', justifyContent: 'center', padding: 20, },
     logo: { width: 100, height: 100, marginBottom: 20, },
