@@ -1,48 +1,73 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import * as SecureStore from 'expo-secure-store'; // Ainda necessário para o serviço pegar o token
-import { useSocket } from './useSocket'; // <- Importa o hook do socket
-import { getChamadoDetalhesAsync, sendMessageAsync } from './src/services/TicketService'; // <- Importa funções do serviço
+// TicketDetailScreen.js
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // <-- useCallback foi adicionado aqui
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    ActivityIndicator,
+    TextInput,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+    Alert
+} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons'; // Para o ícone de envio
+import { useSignalR } from './src/hooks/useSignalR'; // Importa o hook SignalR corrigido
+import { getChamadoDetalhesAsync, sendMessageAsync } from './src/services/TicketService'; // Importa funções do serviço
 
-export default function TicketDetailScreen({ route, navigation }) { // Adiciona navigation
+export default function TicketDetailScreen({ route, navigation }) {
     const { chamadoId } = route.params;
     const [chamadoInfo, setChamadoInfo] = useState(null);
     const [mensagens, setMensagens] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [novaMensagem, setNovaMensagem] = useState('');
-    const flatListRef = useRef(null);
+    const flatListRef = useRef(null); // Ref para controlar a FlatList
 
-    // Callback para adicionar novas mensagens recebidas via Socket
-    const handleMessageReceived = useCallback((newMessage) => {
-         setMensagens(prevMensagens => {
-            // Previne duplicatas caso a mensagem chegue via socket antes da confirmação da API (embora não busquemos mais após enviar)
-            if (prevMensagens.some(msg => msg.id === newMessage.id)) {
-                return prevMensagens;
-            }
-            return [...prevMensagens, newMessage];
-        });
-        // Rolar para o fim quando uma nova mensagem chega
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    }, []);
+    // --- Configuração do SignalR ---
 
-    // Hook para gerenciar a conexão Socket.IO para esta sala
-    const { isConnected } = useSocket(`chamado_${chamadoId}`, handleMessageReceived);
+    // Define o handler para receber novas mensagens via SignalR
+    const handlers = {
+        // !!! ATENÇÃO: Substitua "ReceiveNewMessage" pelo nome EXATO do método no seu NotificacaoHub.cs !!!
+        "ReceiveNewMessage": useCallback((message) => {
+            console.log("--- [TicketDetailScreen] Mensagem SignalR Recebida:", message);
+            // Adiciona a nova mensagem à lista, prevenindo duplicatas
+            setMensagens(prevMensagens => {
+                if (prevMensagens.some(msg => msg.id === message.id)) {
+                    return prevMensagens;
+                }
+                return [...prevMensagens, message];
+            });
+            // Rola para o fim um pouco depois para garantir que a UI atualizou
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }, []) // useCallback para memoizar a função e evitar recriações
+    };
 
-    // Efeito para buscar os detalhes iniciais do chamado e mensagens
+    // Usa o hook SignalR, passando APENAS os handlers
+    // A URL completa do Hub é obtida do config.js dentro do hook
+    const { connection, isConnected, invoke } = useSignalR(handlers);
+
+    // --- Fim da Configuração do SignalR ---
+
+
+    // Efeito para buscar detalhes iniciais do chamado via API REST
     useEffect(() => {
         const fetchDetalhes = async () => {
             setIsLoading(true);
+            setChamadoInfo(null); // Limpa info anterior
+            setMensagens([]); // Limpa mensagens anteriores
             try {
-                // Chama a função do serviço
+                // Chama a função do TicketService para buscar detalhes
                 const data = await getChamadoDetalhesAsync(chamadoId);
-                setChamadoInfo(data); // Guarda as infos do chamado
-                setMensagens(data.mensagens || []); // Guarda as mensagens iniciais
+                setChamadoInfo(data); // Armazena título, status, etc.
+                setMensagens(data.mensagens || []); // Armazena mensagens iniciais
             } catch (error) {
-                console.error("Erro ao buscar detalhes:", error);
+                console.error("Erro ao buscar detalhes do chamado:", error);
                 Alert.alert(
                     "Erro",
                     error.message || "Não foi possível carregar os detalhes do chamado.",
-                    [{ text: 'OK', onPress: () => navigation.goBack() }] // Volta para a lista se der erro
+                    // Botão que volta para a tela anterior em caso de erro
+                    [{ text: 'OK', onPress: () => navigation.goBack() }]
                 );
             } finally {
                 setIsLoading(false);
@@ -50,40 +75,64 @@ export default function TicketDetailScreen({ route, navigation }) { // Adiciona 
         };
         fetchDetalhes();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chamadoId, navigation]); // Adiciona navigation como dependência
+    }, [chamadoId, navigation]); // Depende do ID do chamado e da navegação
 
-    // Função para enviar uma nova mensagem
+
+    // Efeito para entrar na sala SignalR específica deste chamado
+    // Executa sempre que a conexão SignalR fica ativa (isConnected) ou o ID do chamado muda
+    useEffect(() => {
+        if (isConnected && chamadoId) {
+            const roomName = `chamado_${chamadoId}`;
+            console.log(`--- [TicketDetailScreen] Entrando na sala SignalR: ${roomName}`);
+
+            // !!! ATENÇÃO: Substitua "JoinRoom" pelo nome EXATO do método no seu NotificacaoHub.cs para entrar na sala !!!
+            // Chama o método 'JoinRoom' no Hub do backend
+            invoke('JoinRoom', roomName);
+
+            // Não é necessário um 'leaveRoom' explícito aqui, pois a conexão
+            // inteira é encerrada quando o componente é desmontado (limpeza do hook useSignalR)
+        }
+    }, [isConnected, chamadoId, invoke]); // Depende do estado da conexão, ID e da função invoke
+
+
+    // Função para ENVIAR uma nova mensagem (via API REST)
     const handleSendMessage = async () => {
         const trimmedMessage = novaMensagem.trim();
-        if (!trimmedMessage || !isConnected) return; // Não envia se vazio ou desconectado
+        // Não envia se a mensagem estiver vazia ou se não estiver conectado ao SignalR
+        if (!trimmedMessage || !isConnected) return;
 
-        const tempText = novaMensagem; // Guarda o texto antes de limpar
-        setNovaMensagem(''); // Limpa o input imediatamente
+        const messageToSend = novaMensagem; // Guarda o texto antes de limpar
+        setNovaMensagem(''); // Limpa o input otimisticamente
 
         try {
-            // Chama a função do serviço
-            await sendMessageAsync(chamadoId, trimmedMessage);
-            // Sucesso! A mensagem deve chegar via socket.
+            // Chama a função do TicketService para enviar a mensagem via POST
+            await sendMessageAsync(chamadoId, messageToSend);
+            // Sucesso! A mensagem foi enviada para a API.
+            // Agora esperamos que o backend processe, salve no banco,
+            // e envie a mensagem de volta para todos na sala via SignalR (incluindo nós).
         } catch (error) {
             console.error("Erro ao enviar mensagem:", error);
             Alert.alert('Erro', error.message || 'Não foi possível enviar a sua mensagem.');
-            setNovaMensagem(tempText); // Restaura o texto no input em caso de erro
+            setNovaMensagem(messageToSend); // Restaura o texto no input em caso de erro
         }
-        // Não precisamos de `finally` aqui
     };
 
-    // Renderiza cada balão de mensagem
+
+    // Função para renderizar cada item (mensagem) na FlatList
     const renderMensagem = ({ item }) => {
+        // Determina se a mensagem é do técnico ou do cliente para estilização
         const isTecnico = item.autor && item.autor.role === 'TECNICO';
+        // Nome do autor ou 'Desconhecido'
         const authorName = item.autor ? item.autor.nome : 'Desconhecido';
+        // Formata a data/hora
         const messageDate = item.dataEnvio ? new Date(item.dataEnvio) : null;
-        const timeString = messageDate ? messageDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Enviando...';
+        const timeString = messageDate
+            ? messageDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            : 'Enviando...';
 
         return (
-            <View style={[
-                styles.messageBubble,
-                isTecnico ? styles.tecnicoBubble : styles.clienteBubble
-            ]}>
+            // Aplica estilos diferentes para cliente vs técnico
+            <View style={[ styles.messageBubble, isTecnico ? styles.tecnicoBubble : styles.clienteBubble ]}>
                 <Text style={styles.authorText}>{authorName}</Text>
                 <Text style={styles.messageText}>{item.texto}</Text>
                 <Text style={styles.timestampText}>{timeString}</Text>
@@ -91,97 +140,181 @@ export default function TicketDetailScreen({ route, navigation }) { // Adiciona 
         );
      };
 
-    // Mostra loading se ainda não carregou os detalhes iniciais
+
+    // --- Renderização Condicional ---
+
+    // Se estiver carregando os dados iniciais
     if (isLoading) {
         return <ActivityIndicator style={styles.loader} size="large" color="#f97316" />;
     }
 
-    // Se após carregar, chamadoInfo ainda for nulo (erro no fetch), mostra mensagem
+    // Se ocorreu um erro ao carregar (chamadoInfo ainda é null após isLoading ser false)
     if (!chamadoInfo) {
          return (
              <View style={styles.loader}>
                  <Text style={styles.errorText}>Não foi possível carregar o chamado.</Text>
-                 {/* Adicionar um botão para tentar novamente ou voltar? */}
              </View>
          );
     }
 
-
+    // --- Renderização Principal ---
     return (
+        // KeyboardAvoidingView ajusta a tela quando o teclado abre
         <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : "height"} // Comportamento diferente por plataforma
             style={styles.container}
+            // Ajuste fino da distância que a tela sobe
             keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
             {/* Cabeçalho com Título e Status */}
             <View style={styles.header}>
                 <Text style={styles.title} numberOfLines={1}>{chamadoInfo.titulo}</Text>
+                {/* Mostra 'N/A' se o status não estiver definido */}
                 <Text style={styles.status}>{chamadoInfo.status?.replace('_', ' ') ?? 'N/A'}</Text>
             </View>
 
-            {/* Lista de Mensagens */}
+            {/* A lista de mensagens */}
             <FlatList
-                ref={flatListRef}
+                ref={flatListRef} // Passa a ref para podermos controlar o scroll
                 data={mensagens}
                 renderItem={renderMensagem}
+                // Chave única para cada mensagem (usa ID ou index como fallback)
                 keyExtractor={(item, index) => item.id?.toString() || `msg-${index}`}
-                contentContainerStyle={styles.chatContainer}
-                 // Rolar para o fim quando o teclado aparece ou o conteúdo muda
+                contentContainerStyle={styles.chatContainer} // Estilo para o container interno da lista
+                // Tenta rolar para o fim automaticamente quando o conteúdo da lista muda
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })} // Tenta rolar no layout inicial
+                // Tenta rolar para o fim quando o layout da lista é calculado pela primeira vez
+                onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
             />
 
-            {/* Input de Nova Mensagem */}
+            {/* Container para o input de texto e botão de enviar */}
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.textInput}
                     value={novaMensagem}
                     onChangeText={setNovaMensagem}
+                    // Placeholder muda se o SignalR não estiver conectado
                     placeholder={isConnected ? "Digite sua mensagem..." : "Conectando ao chat..."}
+                    // Só permite edição se conectado
                     editable={isConnected}
-                    multiline
+                    multiline // Permite que o input cresça verticalmente
                 />
                 <TouchableOpacity
-                    style={[styles.sendButton, (!isConnected || !novaMensagem.trim()) && styles.sendButtonDisabled]}
+                    style={[
+                        styles.sendButton,
+                        // Estilo desabilitado se não conectado ou se a mensagem (sem espaços) estiver vazia
+                        (!isConnected || !novaMensagem.trim()) && styles.sendButtonDisabled
+                    ]}
                     onPress={handleSendMessage}
+                    // Desabilita o toque também sob as mesmas condições
                     disabled={!isConnected || !novaMensagem.trim()}
                 >
-                    <Ionicons name="send" size={18} color="#fff" /> {/* Ícone de Enviar */}
+                    {/* Usa um ícone em vez de texto */}
+                    <Ionicons name="send" size={18} color="#fff" />
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
     );
 }
 
-// Estilos (adicionei errorText e ajustei sendButton/sendButtonText)
+// --- Estilos ---
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f0f2f5' },
-    loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    errorText: { color: 'red', fontSize: 16 }, // Estilo para erro
-    header: { padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#e2e8f0' },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#1a202c', marginBottom: 4 },
-    status: { fontSize: 14, color: '#4a5568', textTransform: 'capitalize' },
-    chatContainer: { paddingVertical: 10, paddingHorizontal: 16 },
-    messageBubble: { borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 10, maxWidth: '80%' }, // Ajustei padding
-    clienteBubble: { backgroundColor: '#e2e8f0', alignSelf: 'flex-start' },
-    tecnicoBubble: { backgroundColor: '#fde68a', alignSelf: 'flex-end' },
-    authorText: { fontWeight: 'bold', marginBottom: 4, color: '#4a5568', fontSize: 12 },
-    messageText: { fontSize: 16, color: '#1a202c' },
-    timestampText: { fontSize: 10, color: '#718096', alignSelf: 'flex-end', marginTop: 4 }, // Menos margem
-    inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#e2e8f0', alignItems: 'flex-end' }, // Alinha no fim para multiline
-    textInput: {
-        flex: 1,
-        maxHeight: 100, // Limita altura máxima para multiline
-        borderWidth: 1, borderColor: '#dee2e6', borderRadius: 20,
-        paddingHorizontal: 15, paddingVertical: 10, // Padding vertical
-        backgroundColor: '#f8f9fa', fontSize: 16,
-        paddingTop: 10, // Ajuste para iOS multiline
-     },
-    sendButton: {
-        marginLeft: 10, justifyContent: 'center', alignItems: 'center',
-        backgroundColor: '#f97316', borderRadius: 20,
-        width: 40, height: 40, // Botão redondo
-     },
-    sendButtonText: { color: '#fff', fontWeight: 'bold' }, // Removido, usando ícone
-    sendButtonDisabled: { backgroundColor: '#fdba74' }
+    container: {
+        flex: 1, // Ocupa toda a tela
+        backgroundColor: '#f0f2f5' // Fundo cinza claro
+    },
+    loader: {
+        flex: 1, // Centraliza o loader na tela inteira
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    errorText: { // Estilo para mensagens de erro
+        color: 'red',
+        fontSize: 16,
+        textAlign: 'center'
+    },
+    header: { // Cabeçalho da tela
+        padding: 16,
+        backgroundColor: '#fff', // Fundo branco
+        borderBottomWidth: 1, // Linha divisória
+        borderColor: '#e2e8f0' // Cinza claro
+    },
+    title: { // Título do chamado
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1a202c', // Cinza escuro
+        marginBottom: 4
+    },
+    status: { // Status do chamado
+        fontSize: 14,
+        color: '#4a5568', // Cinza médio
+        textTransform: 'capitalize' // Ex: Aberto, Em_Andamento -> Em Andamento
+    },
+    chatContainer: { // Container interno da FlatList
+        paddingVertical: 10, // Espaço acima e abaixo das mensagens
+        paddingHorizontal: 16 // Espaço nas laterais
+    },
+    messageBubble: { // Estilo base para os balões de mensagem
+        borderRadius: 12,
+        paddingVertical: 8, // Espaço vertical dentro do balão
+        paddingHorizontal: 12, // Espaço horizontal dentro do balão
+        marginBottom: 10, // Espaço entre balões
+        maxWidth: '80%' // Largura máxima para não ocupar a tela inteira
+    },
+    clienteBubble: { // Mensagens do cliente
+        backgroundColor: '#e2e8f0', // Fundo cinza claro
+        alignSelf: 'flex-start' // Alinha à esquerda
+    },
+    tecnicoBubble: { // Mensagens do técnico
+        backgroundColor: '#fde68a', // Fundo amarelo claro (cor do Caju?)
+        alignSelf: 'flex-end' // Alinha à direita
+    },
+    authorText: { // Nome do autor da mensagem
+        fontWeight: 'bold',
+        marginBottom: 4,
+        color: '#4a5568', // Cinza médio
+        fontSize: 12 // Tamanho menor
+    },
+    messageText: { // Texto da mensagem
+        fontSize: 16,
+        color: '#1a202c' // Cinza escuro
+    },
+    timestampText: { // Hora/Data da mensagem
+        fontSize: 10,
+        color: '#718096', // Cinza mais claro
+        alignSelf: 'flex-end', // Alinha à direita dentro do balão
+        marginTop: 4 // Pequeno espaço acima
+    },
+    inputContainer: { // Container do TextInput e botão Enviar
+        flexDirection: 'row', // Itens lado a lado
+        padding: 10,
+        backgroundColor: '#fff', // Fundo branco
+        borderTopWidth: 1, // Linha divisória acima
+        borderColor: '#e2e8f0', // Cinza claro
+        alignItems: 'flex-end' // Alinha itens na base (bom para multiline)
+    },
+    textInput: { // Caixa de texto para digitar a mensagem
+        flex: 1, // Ocupa o espaço disponível
+        maxHeight: 100, // Altura máxima antes de scroll interno (se multiline)
+        borderWidth: 1,
+        borderColor: '#dee2e6', // Cinza
+        borderRadius: 20, // Bordas arredondadas
+        paddingHorizontal: 15,
+        paddingVertical: 10, // Espaçamento interno
+        backgroundColor: '#f8f9fa', // Fundo levemente cinza
+        fontSize: 16,
+        paddingTop: 10, // Ajuste necessário para multiline no iOS
+    },
+    sendButton: { // Botão de Enviar
+        marginLeft: 10, // Espaço à esquerda do botão
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f97316', // Laranja Caju
+        borderRadius: 20, // Botão redondo
+        width: 40, // Largura fixa
+        height: 40, // Altura fixa (igual à largura)
+    },
+    sendButtonDisabled: { // Estilo do botão quando desabilitado
+        backgroundColor: '#fdba74' // Laranja mais claro
+    }
 });

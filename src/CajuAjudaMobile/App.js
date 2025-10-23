@@ -9,7 +9,7 @@ import RegisterScreen from './RegisterScreen';
 import TicketListScreen from './TicketListScreen';
 import NewTicketScreen from './NewTicketScreen';
 import ProfileScreen from './ProfileScreen';
-import TicketDetailScreen from './TicketDetailScreen'; // Importa a nova tela
+import TicketDetailScreen from './TicketDetailScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

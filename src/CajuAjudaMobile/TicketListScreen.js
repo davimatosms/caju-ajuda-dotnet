@@ -1,101 +1,135 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Adiciona useCallback
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native'; // Adiciona Alert e RefreshControl
-import * as SecureStore from 'expo-secure-store';
+// TicketListScreen.js
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import * as SecureStore from 'expo-secure-store'; // Necessário para getToken no serviço
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { getChamadosAsync } from './src/services/TicketService'; // <- Importa a função do serviço
+import { getChamadosAsync } from './src/services/TicketService'; // Importa a função do serviço
 
-export default function TicketListScreen({ navigation, route }) { // Adiciona route
+export default function TicketListScreen({ navigation, route }) {
     const [chamados, setChamados] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false); // Estado para o RefreshControl
+    const [isLoading, setIsLoading] = useState(true); // Controla o loading inicial grande
+    const [isRefreshing, setIsRefreshing] = useState(false); // Controla o loading do "Pull-to-Refresh"
 
-    // Usa useCallback para memoizar a função e evitar recriações
-    const fetchChamados = useCallback(async (showRefreshControl = false) => {
-        if (showRefreshControl) {
+    // Usa useCallback para memoizar a função fetchChamados
+    // Evita recriações desnecessárias a cada renderização
+    const fetchChamados = useCallback(async (isManualRefresh = false) => {
+        console.log("--- TicketListScreen: Iniciando fetchChamados. Refresh manual:", isManualRefresh); // Log A
+        // Define o estado de loading apropriado
+        if (isManualRefresh) {
             setIsRefreshing(true);
-        } else {
-            setIsLoading(true); // Só mostra o loading grande na primeira carga
+        } else if (!isRefreshing) { // Só ativa loading grande se não for refresh manual
+            setIsLoading(true);
         }
-        try {
-            // Chama a função do serviço
-            const data = await getChamadosAsync();
-            setChamados(data);
-        } catch (error) {
-            console.error('Erro ao buscar chamados:', error);
-            Alert.alert('Erro', error.message || 'Não foi possível carregar os chamados.');
-        } finally {
-             if (showRefreshControl) {
-                setIsRefreshing(false);
-            } else {
-                setIsLoading(false);
-            }
-        }
-    }, []); // Array de dependências vazio, pois a função não depende de props/state externos
 
+        try {
+            console.log("--- TicketListScreen: Chamando getChamadosAsync..."); // Log B
+            // Chama a função do serviço para buscar os dados
+            const data = await getChamadosAsync();
+            console.log("--- TicketListScreen: getChamadosAsync retornou. Qtd chamados:", data ? data.length : 'null/undefined'); // Log C
+            setChamados(data || []); // Garante que seja sempre um array
+        } catch (error) {
+            // Captura erros lançados pelo TicketService
+            console.error('--- TicketListScreen: Erro capturado em fetchChamados:', error); // Log D
+            // Mostra um alerta para o usuário
+            Alert.alert('Erro ao Carregar', error.message || 'Não foi possível carregar os chamados.');
+            setChamados([]); // Limpa chamados em caso de erro para evitar mostrar dados antigos
+        } finally {
+            // Garante que ambos os loadings sejam desativados
+             if (isManualRefresh) {
+                setIsRefreshing(false);
+            }
+             setIsLoading(false); // Sempre desativa o loading inicial após a tentativa
+             console.log("--- TicketListScreen: fetchChamados finalizado."); // Log Fim
+        }
+    }, []); // Array de dependências vazio, pois a função não depende diretamente de props/state
+
+    // Efeito para carregar dados:
+    // 1. Na montagem inicial do componente.
+    // 2. Quando a tela recebe foco (navegação de volta).
     useEffect(() => {
-        // Listener para recarregar quando a tela ganha foco
+        // Listener que executa a função quando a tela ganha foco
         const unsubscribeFocus = navigation.addListener('focus', () => {
-             // Verifica se veio da tela de Novo Chamado com o parâmetro 'refresh'
+             console.log("--- TicketListScreen: Tela focada. Route params:", route.params); // Log E
+             // Verifica se a navegação anterior (ex: NewTicketScreen) pediu um refresh
              if (route.params?.refresh) {
-                fetchChamados();
-                navigation.setParams({ refresh: false }); // Reseta o parâmetro
-             } else if (chamados.length === 0) { // Carrega apenas se a lista estiver vazia (evita recarregar sempre)
-                 fetchChamados();
+                console.log("--- TicketListScreen: Detectado refresh=true, chamando fetchChamados."); // Log F
+                fetchChamados(false); // Chama fetchChamados (sem ativar RefreshControl visual)
+                navigation.setParams({ refresh: false }); // Limpa o parâmetro para não recarregar de novo
              }
+             // Se não veio com parâmetro refresh, podemos decidir se recarregamos ou não.
+             // Recarregar sempre ao focar pode ser pesado. Talvez só se a lista estiver vazia.
+             // else if (chamados.length === 0 && !isLoading) {
+             //     console.log("--- TicketListScreen: Lista vazia e não carregando, chamando fetchChamados ao focar.");
+             //     fetchChamados(false);
+             // }
          });
 
-        // Carrega os dados na montagem inicial
-         fetchChamados();
+        // Executa o fetchChamados na montagem inicial do componente
+        console.log("--- TicketListScreen: Montando componente, chamando fetchChamados inicial."); // Log H
+        fetchChamados(false); // Primeira carga, sem ativar RefreshControl visual
 
-        // Limpa o listener ao desmontar
+        // Função de limpeza: remove o listener quando o componente é desmontado
         return unsubscribeFocus;
-    }, [navigation, fetchChamados, route.params?.refresh]); // Adiciona fetchChamados e route.params?.refresh como dependências
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigation, route.params?.refresh]); // Depende da navegação e do parâmetro refresh
 
+    // Função para renderizar cada item (chamado) na FlatList
     const renderItem = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
-            // Navega para Detalhes passando o ID
+            // Navega para a tela de detalhes passando o ID do chamado como parâmetro
             onPress={() => navigation.navigate('TicketDetail', { chamadoId: item.id })}
         >
+            {/* Cabeçalho do Card */}
             <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle} numberOfLines={2}>#{item.id} - {item.titulo}</Text> {/* Permite 2 linhas */}
+                {/* Título do chamado (permite quebrar em até 2 linhas) */}
+                <Text style={styles.cardTitle} numberOfLines={2}>#{item.id} - {item.titulo}</Text>
+                {/* Data de criação formatada */}
                 <Text style={styles.cardDate}>
                     {item.dataCriacao ? new Date(item.dataCriacao).toLocaleDateString('pt-BR') : ''}
                 </Text>
             </View>
+            {/* Corpo do Card */}
             <View style={styles.cardBody}>
+                {/* Badges de Status e Prioridade */}
                 <View style={styles.badgeContainer}>
-                    {/* Adiciona verificação para status e prioridade antes de usar replace/toUpperCase */}
+                    {/* Status (com tratamento para valor nulo/undefined) */}
                     <Text style={[styles.badge, styles.statusBadge]}>
-                        {item.status ? item.status.replace('_', ' ') : 'N/A'}
+                        {item.status ? String(item.status).replace('_', ' ') : 'N/A'}
                     </Text>
+                    {/* Prioridade (com tratamento e estilo dinâmico) */}
                     <Text style={[styles.badge, styles.priorityBadge(item.prioridade)]}>
                         {item.prioridade || 'N/A'}
                     </Text>
+                     {/* Opcional: Indicador de mensagens não lidas */}
+                    {/* {item.HasUnreadMessages && <Ionicons name="ellipse" size={10} color="red" style={{ marginLeft: 5, alignSelf: 'center' }} />} */}
                 </View>
+                {/* Ícone de seta indicando que é clicável */}
                 <Ionicons name="chevron-forward" size={24} color="#cccccc" />
             </View>
         </TouchableOpacity>
     );
 
-    // Mostra o ActivityIndicator grande apenas na carga inicial
+    // Renderização condicional: Mostra ActivityIndicator grande APENAS na carga inicial
     if (isLoading && !isRefreshing) {
         return <ActivityIndicator style={styles.loader} size="large" color="#f97316" />;
     }
 
+    // Renderização principal: A FlatList com os chamados
     return (
         <View style={styles.container}>
             <FlatList
                 data={chamados}
                 renderItem={renderItem}
-                keyExtractor={item => item.id.toString()}
-                contentContainerStyle={styles.list}
+                keyExtractor={item => item.id.toString()} // Usa o ID do chamado como chave
+                contentContainerStyle={styles.list} // Estilo para o container interno da lista
+                // Componente mostrado se a lista 'chamados' estiver vazia
                 ListEmptyComponent={<Text style={styles.emptyText}>Nenhum chamado aberto encontrado.</Text>}
-                // Adiciona a funcionalidade de "Puxar para atualizar" (Pull-to-Refresh)
+                // Habilita a funcionalidade "Puxar para atualizar" (Pull-to-Refresh)
                 refreshControl={
                     <RefreshControl
-                        refreshing={isRefreshing}
-                        onRefresh={() => fetchChamados(true)} // Passa true para indicar que é um refresh manual
+                        refreshing={isRefreshing} // Controla se o indicador de refresh está visível
+                        onRefresh={() => fetchChamados(true)} // Função chamada ao puxar (passa true)
                         colors={["#f97316"]} // Cor do indicador no Android
                         tintColor={"#f97316"} // Cor do indicador no iOS
                     />
@@ -105,7 +139,7 @@ export default function TicketListScreen({ navigation, route }) { // Adiciona ro
     );
 }
 
-// Estilos permanecem os mesmos (com pequenas adições de segurança)
+// Estilos (sem alterações significativas em relação à versão anterior com logs)
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f0f2f5' },
     list: { padding: 16 },
@@ -131,24 +165,23 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#1a202c',
-        flex: 1, // Permite que o título ocupe o espaço disponível
-        marginRight: 8, // Espaço antes da data
+        flex: 1,
+        marginRight: 8,
     },
     cardDate: {
         fontSize: 12,
         color: '#718096',
-        // marginLeft: 8, // Removido, marginRight no título cuida disso
     },
     cardBody: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8, // Adiciona espaço após o header
+        marginTop: 8,
     },
     badgeContainer: {
         flexDirection: 'row',
-        flexShrink: 1, // Permite encolher se necessário
-        marginRight: 8, // Espaço antes do ícone de seta
+        flexShrink: 1,
+        marginRight: 8,
     },
     badge: {
         borderRadius: 12,
@@ -161,12 +194,11 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     statusBadge: {
-        backgroundColor: '#e6f7ff', // Azul claro
-        color: '#1d6fa5' // Azul escuro
+        backgroundColor: '#e6f7ff',
+        color: '#1d6fa5'
     },
     priorityBadge: (priority) => {
         let colors = { backgroundColor: '#f3f4f6', color: '#4b5563' }; // Cinza (Baixa/Default)
-        // Usa toUpperCase para comparar de forma insensível a maiúsculas/minúsculas
         switch (String(priority).toUpperCase()) {
             case 'MEDIA':
                 colors = { backgroundColor: '#fffbe6', color: '#b45309' }; // Amarelo
@@ -174,7 +206,9 @@ const styles = StyleSheet.create({
             case 'ALTA':
                 colors = { backgroundColor: '#fee2e2', color: '#b91c1c' }; // Vermelho
                 break;
-            // Adicionar case para 'URGENTE' se necessário
+            case 'URGENTE': // Adicionando URGENTE se existir
+                colors = { backgroundColor: '#374151', color: '#f9fafb' }; // Cinza escuro com texto claro
+                break;
         }
         return colors;
     },
@@ -182,6 +216,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 50,
         color: '#718096',
-        fontSize: 16, // Aumenta um pouco o texto
+        fontSize: 16,
     }
 });
