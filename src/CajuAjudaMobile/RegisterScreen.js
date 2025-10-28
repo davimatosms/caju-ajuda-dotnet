@@ -9,13 +9,7 @@ import {
     ActivityIndicator,
     Image
 } from 'react-native';
-import { API_BASE_URL } from './src/config';
-
-// --- IMPORTANTE: USE O SEU IP AQUI ---
-// URLs da API para os dois endpoints que vamos chamar
-
-const API_REGISTER_URL = ${API_BASE_URL}/auth/register;
-const API_RESEND_EMAIL_URL = ${API_BASE_URL}/reenviar-verificacao;
+import { registerAndSendVerificationAsync } from './src/services/AuthService'; // <- Importa do serviço
 
 export default function RegisterScreen({ navigation }) {
     const [nome, setNome] = useState('');
@@ -30,28 +24,11 @@ export default function RegisterScreen({ navigation }) {
             return;
         }
         setIsLoading(true);
-
         try {
-            // --- PASSO 1: Tenta registar o utilizador ---
-            const registerResponse = await fetch(API_REGISTER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, email, senha }),
-            });
+            // Chama a função do serviço
+            await registerAndSendVerificationAsync(nome, email, senha);
 
-            if (!registerResponse.ok) {
-                const errorText = await registerResponse.text();
-                throw new Error(errorText || 'Não foi possível criar a sua conta.');
-            }
-
-            // --- PASSO 2: Se o registo funcionou, dispara o e-mail ---
-            await fetch(API_RESEND_EMAIL_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email }),
-            });
-
-            // Mostra a mensagem de sucesso
+            // Se chegou aqui, o registro (e tentativa de envio de email) foi bem-sucedido
             Alert.alert(
                 'Sucesso!',
                 'Sua conta foi criada. Enviámos um e-mail de verificação para você.',
@@ -59,6 +36,7 @@ export default function RegisterScreen({ navigation }) {
             );
 
         } catch (error) {
+            // O erro lançado pelo AuthService será capturado aqui
             Alert.alert('Erro no Registo', error.message);
         } finally {
             setIsLoading(false);
@@ -104,6 +82,7 @@ export default function RegisterScreen({ navigation }) {
     );
 }
 
+// Estilos permanecem os mesmos
 const styles = StyleSheet.create({
     container: {
         flex: 1,

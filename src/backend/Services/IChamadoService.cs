@@ -16,6 +16,8 @@ namespace CajuAjuda.Backend.Services
         Task<ChamadoDetailResponseDto?> GetChamadoByIdAsync(long chamadoId, string userEmail, string userRole);
         Task UpdateChamadoStatusAsync(long chamadoId, StatusChamado novoStatus);
         Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail);
+        Task<List<Anexo>> GetAnexosByChamadoIdAsync(long chamadoId, string userEmail, string userRole);
+        Task<Anexo?> GetAnexoByIdAsync(long anexoId, string userEmail, string userRole);
         Task AssignChamadoAsync(long chamadoId, string tecnicoEmail);
         Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail);
         Task MergeChamadosAsync(long chamadoDuplicadoId, long chamadoPrincipalId, string tecnicoEmail);

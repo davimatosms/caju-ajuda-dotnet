@@ -1,6 +1,7 @@
 using CajuAjuda.Backend.Data;
 using CajuAjuda.Backend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,10 +11,12 @@ namespace CajuAjuda.Backend.Repositories
     public class ChamadoRepository : IChamadoRepository
     {
         private readonly CajuAjudaDbContext _context;
+        private readonly ILogger<ChamadoRepository> _logger;
 
-        public ChamadoRepository(CajuAjudaDbContext context)
+        public ChamadoRepository(CajuAjudaDbContext context, ILogger<ChamadoRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task AddAsync(Chamado chamado)
@@ -51,19 +54,36 @@ namespace CajuAjuda.Backend.Repositories
 
         public async Task<Chamado?> GetByIdAsync(long id)
         {
-            return await _context.Chamados
+            _logger.LogInformation("🔍 [ChamadoRepository] Buscando chamado ID {ChamadoId} com AsNoTracking...", id);
+            
+            // Busca o chamado com AsNoTracking para evitar cache do EF
+            var chamado = await _context.Chamados
+                .AsNoTracking()
                 .Include(c => c.Cliente)
                 .Include(c => c.TecnicoResponsavel)
-                .Include(c => c.Mensagens)
+                .Include(c => c.Mensagens.OrderBy(m => m.DataEnvio))
                     .ThenInclude(m => m.Autor)
                 .FirstOrDefaultAsync(c => c.Id == id);
+            
+            if (chamado != null)
+            {
+                var qtdMensagens = chamado.Mensagens?.Count ?? 0;
+                _logger.LogInformation("📦 [ChamadoRepository] Chamado ID {ChamadoId} carregado com {QtdMensagens} mensagens", id, qtdMensagens);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ [ChamadoRepository] Chamado ID {ChamadoId} não encontrado!", id);
+            }
+            
+            return chamado;
         }
 
-        // CORRE��O: O tipo do par�metro foi alterado de 'string' para 'long'
+        // CORREÇÃO: O tipo do parâmetro foi alterado de 'string' para 'long'
         public async Task<IEnumerable<Chamado>> GetByClienteIdAsync(long clienteId)
         {
             return await _context.Chamados
-                .Include(c => c.Mensagens)
+                .AsNoTracking()
+                .Include(c => c.Mensagens.OrderBy(m => m.DataEnvio))
                     .ThenInclude(m => m.Autor)
                 .Where(c => c.ClienteId == clienteId) 
                 .OrderByDescending(c => c.DataCriacao)
@@ -79,6 +99,7 @@ namespace CajuAjuda.Backend.Repositories
         public async Task<IEnumerable<Chamado>> GetByTecnicoIdAsync(long tecnicoId)
         {
             return await _context.Chamados
+                .AsNoTracking()
                 .Include(c => c.Cliente)
                 .Where(c => c.TecnicoResponsavelId == tecnicoId)
                 .OrderByDescending(c => c.DataCriacao)
@@ -88,6 +109,7 @@ namespace CajuAjuda.Backend.Repositories
         public async Task<IEnumerable<Chamado>> GetNaoAtribuidosAsync()
         {
             return await _context.Chamados
+                .AsNoTracking()
                 .Include(c => c.Cliente)
                 .Where(c => c.TecnicoResponsavelId == null)
                 .OrderByDescending(c => c.DataCriacao)

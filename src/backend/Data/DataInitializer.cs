@@ -29,11 +29,12 @@ public class DataInitializer
         // --- CRIAÇÃO DE USUÁRIOS ---
         var admin = new Usuario { Nome = "Admin Caju", Email = "admin@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.ADMIN, Enabled = true };
         var tecnico = new Usuario { Nome = "Tecnico Caju", Email = "tecnico@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.TECNICO, Enabled = true };
+        var aiAssistant = new Usuario { Nome = "Assistente IA Caju", Email = "ia@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.ADMIN, Enabled = true };
         var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
         var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
         var clienteInativo = new Usuario { Nome = "Carlos Inativo", Email = "carlos.inativo@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = false };
 
-        await context.Usuarios.AddRangeAsync(admin, tecnico, cliente1, cliente2, clienteInativo);
+        await context.Usuarios.AddRangeAsync(admin, tecnico, aiAssistant, cliente1, cliente2, clienteInativo);
         await context.SaveChangesAsync(); // Salva para obter os IDs
 
         // --- CRIAÇÃO DE CHAMADOS ---
