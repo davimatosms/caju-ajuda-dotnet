@@ -1,13 +1,12 @@
 // src/services/ProfileService.js
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from '../config'; // Importa a URL base da API
+import { API_BASE_URL } from '../config'; // Importa a URL base da API (ex: http://192.168.15.11:5205/api)
 
-// URL base específica para as rotas de cliente/perfil
-const API_CLIENTE_PERFIL_URL = `${API_BASE_URL}/cliente/perfil`;
+// --- Constantes de Rota (baseadas no PerfilController.cs) ---
+const PERFIL_API_URL = `${API_BASE_URL}/Perfil`; // Rota base do PerfilController
 
 /**
  * Obtém o token de autenticação armazenado.
- * @returns {Promise<string|null>} O token ou null se não encontrado.
  */
 const getToken = async () => {
     return await SecureStore.getItemAsync('userToken');
@@ -15,8 +14,6 @@ const getToken = async () => {
 
 /**
  * Cria os headers padrão para requisições autenticadas.
- * @param {string} token - O token JWT.
- * @returns {object} Objeto de headers.
  */
 const createAuthHeaders = (token) => ({
     'Content-Type': 'application/json',
@@ -24,82 +21,93 @@ const createAuthHeaders = (token) => ({
 });
 
 /**
- * Lida com respostas não-OK da API, tentando extrair uma mensagem de erro.
- * @param {Response} response - A resposta do fetch.
- * @param {string} defaultMessage - Mensagem padrão em caso de erro.
+ * Lida com respostas não-OK da API.
  */
 const handleApiError = async (response, defaultMessage) => {
     try {
         const errorText = await response.text();
-         try {
+        console.log(`--- ProfileService (handleApiError): Status ${response.status}, Texto: ${errorText}`);
+        try {
             const errorJson = JSON.parse(errorText);
-            return errorJson.message || errorJson.title || errorText || defaultMessage;
+            return errorJson.message || errorJson.title || errorJson.error || errorText || defaultMessage;
         } catch {
             return errorText || defaultMessage;
         }
-    } catch {
+    } catch (e) {
+        console.error("--- ProfileService (handleApiError): Erro ao processar resposta de erro:", e);
         return defaultMessage;
     }
 };
 
-
 /**
- * Busca os dados do perfil do cliente logado.
- * @returns {Promise<object>} Um objeto com os dados do perfil (nome, email, etc.).
+ * Busca os dados do perfil do cliente logado. (GET /api/Perfil)
+ * @returns {Promise<object>} Um objeto com os dados do perfil (nome, email).
  */
 export const getProfileAsync = async () => {
+    console.log("--- ProfileService: Iniciando getProfileAsync ---");
     const token = await getToken();
     if (!token) throw new Error('Usuário não autenticado.');
 
     try {
-        const response = await fetch(API_CLIENTE_PERFIL_URL, {
+        console.log(`--- ProfileService: Fazendo fetch para ${PERFIL_API_URL}`);
+        const response = await fetch(PERFIL_API_URL, {
             headers: createAuthHeaders(token),
         });
+        console.log("--- ProfileService: Resposta do fetch recebida. Status:", response.status);
 
         if (response.ok) {
-            return await response.json(); // Retorna os dados do perfil
+            const data = await response.json();
+            console.log("--- ProfileService: Perfil recebido.");
+            return data;
         } else {
             const errorMessage = await handleApiError(response, 'Falha ao carregar dados do perfil.');
             throw new Error(errorMessage);
         }
     } catch (error) {
-        console.error('Erro em getProfileAsync:', error);
-        throw error instanceof Error ? error : new Error('Erro de conexão ao buscar perfil.');
+        console.error('--- ProfileService: Erro CRÍTICO em getProfileAsync:', error);
+        if (error instanceof TypeError && error.message.includes('Network request failed')) {
+             throw new Error('Não foi possível conectar ao servidor para buscar perfil.');
+        }
+        throw error;
     }
 };
 
 /**
- * Altera a senha do cliente logado.
+ * Altera a senha do cliente logado. (PATCH /api/Perfil/update-senha)
  * @param {string} senhaAtual - A senha atual do usuário.
  * @param {string} novaSenha - A nova senha desejada.
- * @returns {Promise<object>} Um objeto indicando sucesso (depende da resposta da API).
+ * @returns {Promise<object>} Um objeto indicando sucesso.
  */
 export const changePasswordAsync = async (senhaAtual, novaSenha) => {
+    console.log("--- ProfileService: Iniciando changePasswordAsync ---");
     const token = await getToken();
     if (!token) throw new Error('Usuário não autenticado.');
 
+    const url = `${PERFIL_API_URL}/update-senha`; // Endpoint do PerfilController
+
     try {
-        const response = await fetch(`${API_CLIENTE_PERFIL_URL}/alterar-senha`, {
-            method: 'POST',
+        console.log(`--- ProfileService: Fazendo PATCH para ${url}`);
+        const response = await fetch(url, {
+            method: 'PATCH', // --- CORRIGIDO: Usando PATCH como no PerfilController.cs ---
             headers: createAuthHeaders(token),
             body: JSON.stringify({ senhaAtual, novaSenha }),
         });
+        console.log("--- ProfileService (ChangePass): Resposta do PATCH recebida. Status:", response.status);
 
         if (response.ok) {
-            // API pode retornar 200 OK com corpo ou 204 No Content
-             try {
-                // Tenta ler o corpo, se houver
-                 return await response.json();
-             } catch {
-                 // Se não houver corpo (204) ou não for JSON, retorna sucesso genérico
-                 return { success: true };
-             }
+             console.log("--- ProfileService (ChangePass): Senha alterada com sucesso.");
+             // API retorna 204 No Content, então não há corpo para parsear
+             return { success: true };
         } else {
+            // Se falhar (ex: 400 Bad Request se a senha atual estiver errada), lê a mensagem de erro
             const errorMessage = await handleApiError(response, 'Erro ao alterar senha.');
             throw new Error(errorMessage);
         }
     } catch (error) {
-        console.error('Erro em changePasswordAsync:', error);
-        throw error instanceof Error ? error : new Error('Erro de conexão ao alterar senha.');
+        console.error('--- ProfileService (ChangePass): Erro CRÍTICO em changePasswordAsync:', error);
+         if (error instanceof TypeError && error.message.includes('Network request failed')) {
+             throw new Error('Não foi possível conectar ao servidor para alterar senha.');
+        }
+        throw error;
     }
 };

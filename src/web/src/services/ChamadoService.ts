@@ -18,7 +18,9 @@ export interface Mensagem {
     texto: string;
     dataEnvio: string;
     autorNome: string;
+    autorId: number;
     isNotaInterna: boolean;
+    lidoPeloCliente: boolean;
 }
 
 export interface ChamadoDetail extends Chamado {
@@ -26,7 +28,15 @@ export interface ChamadoDetail extends Chamado {
     nomeCliente: string;
     nomeTecnicoResponsavel?: string;
     dataFechamento?: string;
-    mensagens: { $values: Mensagem[] };
+    mensagens: Mensagem[] | { $values: Mensagem[] }; // Suporta ambos os formatos
+    sugestaoIA?: string; // Sugestão gerada pela IA (opcional)
+}
+
+export interface Anexo {
+    id: number;
+    nomeArquivo: string;
+    tipoArquivo: string;
+    chamadoId: number;
 }
 
 export interface ChamadoCreateData {
@@ -80,11 +90,56 @@ const addMensagem = async (chamadoId: number, data: MensagemCreateData): Promise
     return response.data;
 };
 
+/**
+ * NOVA FUNÇÃO: Faz upload de um anexo para um chamado existente.
+ */
+const uploadAnexo = async (chamadoId: number, file: File): Promise<any> => {
+    const token = JSON.parse(localStorage.getItem('user_token') || 'null');
+    if (!token) {
+        throw new Error("Nenhum token encontrado.");
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post(`${API_URL}/${chamadoId}/anexos`, formData, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+    return response.data;
+};
+
+/**
+ * NOVA FUNÇÃO: Busca todos os anexos de um chamado.
+ */
+const getAnexosByChamado = async (chamadoId: number): Promise<Anexo[]> => {
+    const config = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/${chamadoId}/anexos`, config);
+    return response.data;
+};
+
+/**
+ * NOVA FUNÇÃO: Faz download de um anexo.
+ */
+const downloadAnexo = async (anexoId: number): Promise<Blob> => {
+    const config = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/anexos/${anexoId}/download`, {
+        ...config,
+        responseType: 'blob'
+    });
+    return response.data;
+};
+
 const ChamadoService = {
     getMeusChamados,
     getChamadoById,
     createChamado,
     addMensagem, // Exportamos a nova função
+    uploadAnexo, // Exportamos a função de upload
+    getAnexosByChamado, // Exportamos a função de listar anexos
+    downloadAnexo, // Exportamos a função de download
 };
 
 export default ChamadoService;

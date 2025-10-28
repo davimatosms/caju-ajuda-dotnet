@@ -1,6 +1,7 @@
+// NewTicketScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import * as SecureStore from 'expo-secure-store'; // SecureStore ainda pode ser necessário se o serviço não lidar com o token
+// Não precisa mais do SecureStore aqui, pois o serviço cuida do token
 import { createChamadoAsync } from './src/services/TicketService'; // <- Importa a função do serviço
 
 export default function NewTicketScreen({ navigation }) {
@@ -10,7 +11,8 @@ export default function NewTicketScreen({ navigation }) {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async () => {
-        if (!titulo || !descricao) {
+        // Validação simples
+        if (!titulo.trim() || !descricao.trim()) {
             Alert.alert('Erro', 'Por favor, preencha o título e a descrição.');
             return;
         }
@@ -23,13 +25,16 @@ export default function NewTicketScreen({ navigation }) {
             // Se a função não lançou erro, consideramos sucesso
             Alert.alert('Sucesso', 'Seu chamado foi aberto com sucesso!');
 
-            // Limpa os campos e volta para a lista de chamados, sinalizando para atualizar
+            // Limpa os campos
             setTitulo('');
             setDescricao('');
             setPrioridade('BAIXA'); // Reseta para o padrão
+
+            // Volta para a lista de chamados, sinalizando para atualizar a lista
             navigation.navigate('Meus Chamados', { refresh: true });
 
         } catch (error) {
+            // Captura o erro lançado pelo serviço
             console.error('Erro ao criar chamado:', error);
             Alert.alert('Erro', error.message || 'Ocorreu um erro ao enviar seu chamado.'); // Mostra o erro vindo do serviço
         } finally {
@@ -37,6 +42,7 @@ export default function NewTicketScreen({ navigation }) {
         }
     };
 
+    // --- Renderização ---
     return (
         <View style={styles.container}>
             <Text style={styles.label}>Título do Chamado</Text>
@@ -45,6 +51,7 @@ export default function NewTicketScreen({ navigation }) {
                 value={titulo}
                 onChangeText={setTitulo}
                 placeholder="Ex: Problema ao acessar a fatura"
+                maxLength={150} // Adiciona limite baseado no modelo
             />
 
             <Text style={styles.label}>Descrição do Problema</Text>
@@ -56,10 +63,10 @@ export default function NewTicketScreen({ navigation }) {
                 multiline
             />
 
-            <Text style={styles.label}>Prioridade</Text>
+            <Text style={styles.label}>Prioridade (Definida pela IA, mas selecione uma base)</Text>
             {/* Componente de seleção de prioridade */}
             <View style={styles.priorityContainer}>
-                {/* Mapeia as prioridades disponíveis */}
+                {/* Mapeia as prioridades disponíveis (excluindo URGENTE, se for só da IA) */}
                 {['BAIXA', 'MEDIA', 'ALTA'].map((p) => (
                     <TouchableOpacity
                         key={p}
@@ -77,14 +84,17 @@ export default function NewTicketScreen({ navigation }) {
                 ))}
             </View>
 
+            {/* Botão de Enviar */}
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isLoading}>
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Abrir Chamado</Text>}
+                {isLoading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={styles.submitButtonText}>Abrir Chamado</Text>}
             </TouchableOpacity>
         </View>
     );
 }
 
-// Estilos permanecem os mesmos
+// --- Estilos --- (Sem alterações significativas)
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20, backgroundColor: '#f8f9fa' },
     label: { fontSize: 16, fontWeight: '500', color: '#4a5568', marginBottom: 8, },
@@ -98,19 +108,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 20,
     },
-    textArea: { height: 120, textAlignVertical: 'top' }, // Permite texto longo
+    textArea: { height: 120, textAlignVertical: 'top' },
     priorityContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30, },
     priorityButton: {
-        flex: 1, // Faz os botões ocuparem espaço igual
+        flex: 1,
         paddingVertical: 12,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#dee2e6',
         alignItems: 'center',
-        marginHorizontal: 4, // Pequeno espaço entre botões
+        marginHorizontal: 4,
     },
     prioritySelected: { backgroundColor: '#f97316', borderColor: '#f97316', },
-    priorityText: { color: '#4a5568', fontWeight: '500', textTransform: 'capitalize', }, // Capitaliza BAIXA -> Baixa
+    priorityText: { color: '#4a5568', fontWeight: '500', textTransform: 'capitalize', },
     priorityTextSelected: { color: '#fff', },
     submitButton: {
         backgroundColor: '#f97316',

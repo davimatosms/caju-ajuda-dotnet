@@ -103,7 +103,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionHandler>();
 
-app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials());
+// ATENÇÃO: Usamos o AllowAnyOrigin APENAS em desenvolvimento!
+app.UseCors(policy => policy
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowAnyOrigin()); // Permite qualquer origem
 
 app.UseAuthentication();
 app.UseAuthorization();
