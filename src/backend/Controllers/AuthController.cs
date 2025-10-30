@@ -52,13 +52,23 @@ public class AuthController : ControllerBase
     [HttpGet("verify")]
     public async Task<IActionResult> VerifyEmail([FromQuery] string token)
     {
+        Console.WriteLine($"[VERIFY] Token recebido: '{token}'");
+        Console.WriteLine($"[VERIFY] Token length: {token?.Length}");
+        
+        if (string.IsNullOrEmpty(token))
+        {
+            Console.WriteLine($"[VERIFY] ❌ Token vazio ou nulo");
+            return BadRequest(new { message = "Token não fornecido." });
+        }
+        
         var success = await _usuarioService.VerifyEmailAsync(token);
         if (success)
         {
-            // Idealmente, redirecionaria para uma página de sucesso no frontend.
-            // Por agora, retornamos uma mensagem.
-            return Ok("<h1>E-mail verificado com sucesso!</h1><p>Você já pode fechar esta aba e fazer o login na aplicação.</p>");
+            Console.WriteLine($"[VERIFY] ✅ Retornando OK para o frontend");
+            return Ok(new { message = "E-mail verificado com sucesso! Você já pode fazer login na aplicação." });
         }
-        return BadRequest("<h1>Erro na Verificação</h1><p>Token inválido ou expirado. Por favor, tente se registar novamente.</p>");
+        
+        Console.WriteLine($"[VERIFY] ❌ Retornando BadRequest para o frontend");
+        return BadRequest(new { message = "Token inválido ou expirado. Por favor, tente se registrar novamente." });
     }
 }
