@@ -60,8 +60,8 @@ namespace CajuAjuda.Desktop.ViewModels
                 {
                     foreach (var chamado in meusChamados)
                     {
-                        // Filtra apenas os que estão em andamento
-                        if (chamado.Status != "FECHADO" && chamado.Status != "RESOLVIDO" && chamado.Status != "CANCELADO")
+                        // Filtra apenas os que estão em andamento ou abertos
+                        if (chamado.Status != "FECHADO")
                         {
                             MeusChamados.Add(chamado);
                         }

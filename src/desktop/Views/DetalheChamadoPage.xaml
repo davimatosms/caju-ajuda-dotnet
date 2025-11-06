@@ -12,209 +12,316 @@
         <ToolbarItem Text="Atualizar" Command="{Binding LoadDetalhesCommand}"/>
     </ContentPage.ToolbarItems>
 
-    <Grid>
-        <ActivityIndicator IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}"
-                           Color="{StaticResource Primary}"
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center"
-                           WidthRequest="60"
-                           HeightRequest="60"/>
-
-        <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-            <VerticalStackLayout Padding="20" Spacing="15">
-
-                <Border BackgroundColor="{StaticResource CardBackground}"
-                        Padding="20"
-                        StrokeThickness="1"
-                        Stroke="{StaticResource Gray200}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="12"/>
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="15">
-                        <Label Text="Informacoes do Chamado"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Gray900}"/>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Titulo"
-                                   FontSize="13"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"/>
-                            <Label Text="{Binding Titulo}"
-                                   FontSize="16"
-                                   TextColor="{StaticResource Gray900}"/>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Descricao"
-                                   FontSize="13"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"/>
-                            <Label Text="{Binding Descricao}"
-                                   FontSize="15"
-                                   TextColor="{StaticResource Gray700}"/>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Cliente"
-                                   FontSize="13"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"/>
-                            <Label Text="{Binding NomeCliente}"
-                                   FontSize="15"
-                                   TextColor="{StaticResource Gray700}"/>
-                        </VerticalStackLayout>
-
-                        <HorizontalStackLayout Spacing="10">
-                            <Border Padding="10,6"
-                                    BackgroundColor="{StaticResource Primary}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="6"/>
-                                </Border.StrokeShape>
-                                <Label Text="{Binding Status}"
-                                       FontSize="13"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-                            </Border>
-
-                            <Border Padding="10,6"
-                                    BackgroundColor="{StaticResource Tertiary}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="6"/>
-                                </Border.StrokeShape>
-                                <Label Text="{Binding Prioridade}"
-                                       FontSize="13"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-                            </Border>
-                        </HorizontalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border BackgroundColor="{StaticResource CardBackground}"
-                        Padding="20"
-                        StrokeThickness="1"
-                        Stroke="{StaticResource Gray200}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="12"/>
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="15">
-                        <Label Text="Atualizar Status"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Gray900}"/>
-
-                        <Picker Title="Selecione o novo status"
-                                ItemsSource="{Binding StatusDisponiveis}"
-                                SelectedItem="{Binding NovoStatus}"
-                                FontSize="15"
-                                BackgroundColor="{StaticResource Gray50}"/>
-
-                        <Button Text="Atualizar Status"
-                                Command="{Binding UpdateStatusCommand}"
-                                BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                FontSize="15"
-                                HeightRequest="50"
-                                CornerRadius="8"/>
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border BackgroundColor="{StaticResource CardBackground}"
-                        Padding="20"
-                        StrokeThickness="1"
-                        Stroke="{StaticResource Gray200}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="12"/>
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="15">
-                        <Label Text="Mensagens"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Gray900}"/>
-
-                        <Border BackgroundColor="{StaticResource Gray50}"
-                                Padding="12"
-                                StrokeThickness="0"
-                                HeightRequest="350">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8"/>
-                            </Border.StrokeShape>
-
-                            <CollectionView ItemsSource="{Binding Mensagens}">
-                                <CollectionView.EmptyView>
-                                    <VerticalStackLayout VerticalOptions="Center" 
-                                                         HorizontalOptions="Center">
-                                        <Label Text="Nenhuma mensagem ainda"
-                                               TextColor="{StaticResource Gray500}"
-                                               FontSize="15"
-                                               HorizontalOptions="Center"/>
-                                        <Label Text="Envie a primeira mensagem abaixo"
-                                               TextColor="{StaticResource Gray400}"
-                                               FontSize="13"
-                                               HorizontalOptions="Center"
-                                               Margin="0,5,0,0"/>
-                                    </VerticalStackLayout>
-                                </CollectionView.EmptyView>
-
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:Mensagem">
-                                        <Border Padding="12"
-                                                Margin="0,0,0,8"
-                                                BackgroundColor="{StaticResource CardBackground}"
-                                                StrokeThickness="1"
-                                                Stroke="{StaticResource Gray200}">
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="8"/>
-                                            </Border.StrokeShape>
-
-                                            <VerticalStackLayout Spacing="6">
-                                                <HorizontalStackLayout Spacing="10">
-                                                    <Label Text="{Binding AutorNome}"
-                                                           FontSize="13"
-                                                           FontAttributes="Bold"
-                                                           TextColor="{StaticResource Primary}"/>
-                                                    <Label Text="{Binding DataEnvio, StringFormat='{0:dd/MM/yyyy HH:mm}'}"
-                                                           FontSize="12"
-                                                           TextColor="{StaticResource Gray500}"/>
-                                                </HorizontalStackLayout>
-
-                                                <Label Text="{Binding Texto}"
-                                                       FontSize="14"
-                                                       TextColor="{StaticResource Gray700}"/>
-                                            </VerticalStackLayout>
-                                        </Border>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </Border>
-
-                        <Entry Placeholder="Digite sua mensagem..."
-                               Text="{Binding NovaMensagem}"
-                               FontSize="15"
-                               BackgroundColor="{StaticResource Gray50}"
-                               HeightRequest="50"/>
-
-                        <Button Text="Enviar Mensagem"
-                                Command="{Binding EnviarMensagemCommand}"
-                                BackgroundColor="{StaticResource Secondary}"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                FontSize="15"
-                                HeightRequest="50"
-                                CornerRadius="8"/>
-                    </VerticalStackLayout>
-                </Border>
-
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Header -->
+        <Border Grid.Row="0"
+                BackgroundColor="{StaticResource Secondary}"
+                Padding="24,20"
+                StrokeThickness="0">
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Gerenciamento de Ticket"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextOnPrimary}"/>
+                <Label Text="Visualize e interaja com o chamado"
+                       FontSize="14"
+                       TextColor="{StaticResource TextOnPrimary}"
+                       Opacity="0.9"/>
             </VerticalStackLayout>
-        </ScrollView>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <!-- Loading Overlay -->
+            <Grid IsVisible="{Binding IsBusy}"
+                  BackgroundColor="{StaticResource OverlayMedium}">
+                <Border Style="{StaticResource ElevatedCard}"
+                        WidthRequest="240"
+                        HeightRequest="160"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Padding="32">
+                    <VerticalStackLayout Spacing="16"
+                                         HorizontalOptions="Center"
+                                         VerticalOptions="Center">
+                        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                           Style="{StaticResource LoadingIndicator}"/>
+                        <Label Text="Carregando..."
+                               Style="{StaticResource BodyText}"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Main Content -->
+            <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                <VerticalStackLayout Spacing="20" Padding="20">
+
+                    <!-- Card: Informações do Chamado -->
+                    <Border Style="{StaticResource Card}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                              RowSpacing="16">
+                            
+                            <!-- Header -->
+                            <Label Grid.Row="0"
+                                   Text="Informações do Chamado"
+                                   Style="{StaticResource H3}"/>
+
+                            <!-- Título -->
+                            <VerticalStackLayout Grid.Row="1" Spacing="6">
+                                <Label Text="TÍTULO"
+                                       Style="{StaticResource Label}"/>
+                                <Label Text="{Binding Titulo}"
+                                       Style="{StaticResource H4}"
+                                       LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+
+                            <!-- Descrição -->
+                            <VerticalStackLayout Grid.Row="2" Spacing="6">
+                                <Label Text="DESCRIÇÃO"
+                                       Style="{StaticResource Label}"/>
+                                <Border BackgroundColor="{StaticResource Gray50}"
+                                        Padding="12"
+                                        StrokeThickness="1"
+                                        Stroke="{StaticResource Border}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding Descricao}"
+                                           Style="{StaticResource BodyText}"
+                                           LineBreakMode="WordWrap"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Cliente -->
+                            <VerticalStackLayout Grid.Row="3" Spacing="6">
+                                <Label Text="CLIENTE"
+                                       Style="{StaticResource Label}"/>
+                                <Border BackgroundColor="{StaticResource InfoLight}"
+                                        Padding="12"
+                                        StrokeThickness="0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding NomeCliente}"
+                                           Style="{StaticResource Subtitle1}"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Badges -->
+                            <VerticalStackLayout Grid.Row="4" Spacing="6">
+                                <Label Text="STATUS E PRIORIDADE"
+                                       Style="{StaticResource Label}"/>
+                                <FlexLayout Wrap="Wrap"
+                                            JustifyContent="Start"
+                                            AlignItems="Center">
+                                    <Border Style="{StaticResource Badge}"
+                                            BackgroundColor="{Binding Status, Converter={StaticResource StatusColorConverter}}"
+                                            Margin="0,0,8,8">
+                                        <Label Style="{StaticResource BadgeText}"
+                                               Text="{Binding Status}"
+                                               TextColor="{StaticResource TextOnPrimary}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Badge}"
+                                            BackgroundColor="{Binding Prioridade, Converter={StaticResource PriorityColorConverter}}"
+                                            Margin="0,0,8,8">
+                                        <Label Style="{StaticResource BadgeText}"
+                                               Text="{Binding Prioridade}"
+                                               TextColor="{StaticResource TextOnPrimary}"/>
+                                    </Border>
+                                </FlexLayout>
+                            </VerticalStackLayout>
+
+                            <!-- Anexos do Cliente -->
+                            <VerticalStackLayout Grid.Row="5" 
+                                                 Spacing="12"
+                                                 IsVisible="{Binding Anexos.Count, Converter={StaticResource HasItemsConverter}}">
+                                <Label Text="ANEXOS DO CLIENTE"
+                                       Style="{StaticResource Label}"/>
+                                <CollectionView ItemsSource="{Binding Anexos}"
+                                                SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:Anexo">
+                                            <Border Style="{StaticResource Card}"
+                                                    Padding="16"
+                                                    Margin="0,0,0,8"
+                                                    BackgroundColor="{StaticResource Gray50}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                                      ColumnSpacing="16">
+                                                    <!-- Ícone -->
+                                                    <Border Grid.Column="0"
+                                                            Style="{StaticResource IconContainer}"
+                                                            WidthRequest="48"
+                                                            HeightRequest="48"
+                                                            BackgroundColor="{StaticResource Secondary}"
+                                                            VerticalOptions="Center">
+                                                        <Label Text="📄"
+                                                               FontSize="24"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center"/>
+                                                    </Border>
+                                                    
+                                                    <!-- Info -->
+                                                    <VerticalStackLayout Grid.Column="1" 
+                                                                         Spacing="4"
+                                                                         VerticalOptions="Center">
+                                                        <Label Text="{Binding NomeArquivo}"
+                                                               Style="{StaticResource Subtitle1}"
+                                                               LineBreakMode="TailTruncation"
+                                                               MaxLines="1"/>
+                                                        <Label Text="{Binding TipoArquivo}"
+                                                               Style="{StaticResource Caption}"
+                                                               TextColor="{StaticResource SecondaryText}"/>
+                                                    </VerticalStackLayout>
+
+                                                    <!-- Botão Download -->
+                                                    <Button Grid.Column="2"
+                                                            Text="📥 Baixar"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:DetalheChamadoViewModel}}, Path=DownloadAnexoCommand}"
+                                                            CommandParameter="{Binding .}"
+                                                            Style="{StaticResource SecondaryButton}"
+                                                            Padding="16,8"
+                                                            HeightRequest="40"
+                                                            FontSize="14"
+                                                            VerticalOptions="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <!-- Card: Atualizar Status -->
+                    <Border Style="{StaticResource Card}">
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="16">
+                            
+                            <Label Grid.Row="0"
+                                   Text="Atualizar Status"
+                                   Style="{StaticResource H3}"/>
+
+                            <VerticalStackLayout Grid.Row="1" Spacing="8">
+                                <Label Text="NOVO STATUS"
+                                       Style="{StaticResource Label}"/>
+                                <Border Style="{StaticResource InputContainer}"
+                                        HeightRequest="48">
+                                    <Picker Title="Selecione o novo status"
+                                            ItemsSource="{Binding StatusDisponiveis}"
+                                            SelectedItem="{Binding NovoStatus}"
+                                            Style="{StaticResource FormPicker}"
+                                            Margin="16,0"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Button Grid.Row="2"
+                                    Text="✓ Atualizar Status"
+                                    Command="{Binding UpdateStatusCommand}"
+                                    Style="{StaticResource PrimaryButton}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Card: Mensagens -->
+                    <Border Style="{StaticResource Card}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                              RowSpacing="16">
+                            
+                            <Label Grid.Row="0"
+                                   Text="Conversação"
+                                   Style="{StaticResource H3}"/>
+
+                            <!-- Chat Area -->
+                            <Border Grid.Row="1"
+                                    BackgroundColor="{StaticResource Gray50}"
+                                    Padding="12"
+                                    StrokeThickness="1"
+                                    Stroke="{StaticResource Border}"
+                                    HeightRequest="400">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8"/>
+                                </Border.StrokeShape>
+
+                                <ScrollView>
+                                    <CollectionView ItemsSource="{Binding Mensagens}">
+                                        <CollectionView.EmptyView>
+                                            <VerticalStackLayout Padding="40"
+                                                                 Spacing="12"
+                                                                 HorizontalOptions="Center"
+                                                                 VerticalOptions="Center">
+                                                <Label Text="Nenhuma mensagem"
+                                                       Style="{StaticResource H4}"
+                                                       HorizontalOptions="Center"/>
+                                                <Label Text="Inicie a conversa"
+                                                       Style="{StaticResource SecondaryText}"
+                                                       HorizontalOptions="Center"/>
+                                            </VerticalStackLayout>
+                                        </CollectionView.EmptyView>
+
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Mensagem">
+                                                <Border Padding="12"
+                                                        Margin="0,0,0,8"
+                                                        BackgroundColor="{StaticResource CardBackground}"
+                                                        StrokeThickness="1"
+                                                        Stroke="{StaticResource Border}">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="8"/>
+                                                    </Border.StrokeShape>
+
+                                                    <Grid RowDefinitions="Auto,Auto"
+                                                          RowSpacing="8">
+                                                        <!-- Header -->
+                                                        <Grid Grid.Row="0"
+                                                              ColumnDefinitions="*,Auto"
+                                                              ColumnSpacing="8">
+                                                            <Label Grid.Column="0"
+                                                                   Text="{Binding AutorNome}"
+                                                                   Style="{StaticResource Subtitle1}"/>
+                                                            <Label Grid.Column="1"
+                                                                   Text="{Binding DataEnvio, StringFormat='{0:dd/MM HH:mm}'}"
+                                                                   Style="{StaticResource Caption}"
+                                                                   VerticalOptions="Center"/>
+                                                        </Grid>
+
+                                                        <!-- Texto -->
+                                                        <Label Grid.Row="1"
+                                                               Text="{Binding Texto}"
+                                                               Style="{StaticResource BodyText}"
+                                                               LineBreakMode="WordWrap"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+                                </ScrollView>
+                            </Border>
+
+                            <!-- Input -->
+                            <VerticalStackLayout Grid.Row="2" Spacing="8">
+                                <Label Text="NOVA MENSAGEM"
+                                       Style="{StaticResource Label}"/>
+                                <Border Style="{StaticResource InputContainer}"
+                                        MinimumHeightRequest="100">
+                                    <Editor Placeholder="Digite sua mensagem..."
+                                            Text="{Binding NovaMensagem}"
+                                            Style="{StaticResource FormEditor}"
+                                            AutoSize="TextChanges"
+                                            Margin="16"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Botão Enviar -->
+                            <Button Grid.Row="3"
+                                    Text="Enviar Mensagem"
+                                    Command="{Binding EnviarMensagemCommand}"
+                                    Style="{StaticResource SecondaryButton}"/>
+                        </Grid>
+                    </Border>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
     </Grid>
 </ContentPage>

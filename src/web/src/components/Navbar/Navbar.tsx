@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, NavLink } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
+import cajuLogo from '../../assets/Caju.png';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -38,9 +39,7 @@ function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to={homeLink} className="flex items-center space-x-2" aria-label="Caju Ajuda">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">C</span>
-              </div>
+              <img src={cajuLogo} alt="Caju Ajuda" className="h-10 w-auto" />
               <span className="text-xl font-bold text-gray-900 hidden sm:block">Caju Ajuda</span>
             </Link>
 

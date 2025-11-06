@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
-import CajuLogoInline from '../../components/UI/CajuLogoInline';
+import cajuLogo from '../../assets/Caju.png';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -45,7 +45,7 @@ function LoginPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-block">
-                        <CajuLogoInline width={160} height={56} />
+                        <img src={cajuLogo} alt="Caju Ajuda" className="h-24 w-auto mx-auto" />
                     </Link>
                 </div>
 

@@ -26,6 +26,7 @@ public class TokenService : ITokenService
         {
             new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, usuario.Email),
+            new(ClaimTypes.Name, usuario.Nome), // Nome do usuário para SignalR
             new(ClaimTypes.Role, usuario.Role.ToString())
         };
 

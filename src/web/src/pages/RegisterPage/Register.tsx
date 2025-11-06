@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
-import CajuLogoInline from '../../components/UI/CajuLogoInline';
+import cajuLogo from '../../assets/Caju.png';
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -20,12 +20,10 @@ function RegisterPage() {
 
         try {
             await AuthService.register({ Nome: nome, Email: email, Senha: senha });
-            setMessage('Registro realizado com sucesso! Redirecionando para o login...');
+            setMessage('Registro realizado com sucesso! Verifique seu e-mail para ativar sua conta.');
+            setIsError(false);
             
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000);
-
+            // Não redireciona automaticamente - usuário precisa verificar email primeiro
         } catch (error: any) {
             setIsError(true);
             if (error.response && error.response.data) {
@@ -44,7 +42,7 @@ function RegisterPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-block">
-                        <CajuLogoInline width={160} height={56} />
+                        <img src={cajuLogo} alt="Caju Ajuda" className="h-24 w-auto mx-auto" />
                     </Link>
                 </div>
 

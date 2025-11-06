@@ -14,6 +14,7 @@ import AdminHomePage from './pages/Admin/AdminHomePage/AdminHomePage';
 // Páginas Públicas
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/Register';
+import VerificarEmailPage from './pages/VerificarEmailPage/VerificarEmailPage';
 import LandingPage from './pages/LandingPage/LandingPage';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 
@@ -53,6 +54,7 @@ function App() {
         {/* Rotas de Login/Registro - Redireciona se já estiver autenticado */}
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/verificar-email" element={<VerificarEmailPage />} />
         
         {/* Rotas Privadas - Requer Autenticação (CLIENTE, TECNICO ou ADMIN) */}
         <Route element={<ProtectedRoute allowedRoles={['CLIENTE', 'TECNICO', 'ADMIN']} />}>

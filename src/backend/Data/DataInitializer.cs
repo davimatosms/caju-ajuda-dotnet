@@ -20,24 +20,90 @@ public class DataInitializer
         // Aplica quaisquer migrações pendentes para garantir que o BD esteja atualizado
         await context.Database.MigrateAsync();
 
-        // Verifica se já existem usuários para não popular novamente
-        if (await context.Usuarios.AnyAsync())
+        Console.WriteLine("[SEED] Verificando usuários essenciais do sistema...");
+
+        // --- GARANTIR ADMIN PADRÃO ---
+        var adminEmail = "admin@cajuajuda.com";
+        var adminExistente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == adminEmail);
+        
+        if (adminExistente == null)
         {
-            return;
+            var admin = new Usuario 
+            { 
+                Nome = "Admin Caju", 
+                Email = adminEmail, 
+                Senha = BCrypt.Net.BCrypt.HashPassword("Admin@2025"), 
+                Role = Role.ADMIN, 
+                Enabled = true,
+                VerificationToken = null
+            };
+            await context.Usuarios.AddAsync(admin);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[SEED] ✅ Admin criado: {adminEmail} | Senha: Admin@2025");
+        }
+        else
+        {
+            Console.WriteLine($"[SEED] ℹ️  Admin já existe: {adminEmail}");
         }
 
-        // --- CRIAÇÃO DE USUÁRIOS ---
-        var admin = new Usuario { Nome = "Admin Caju", Email = "admin@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.ADMIN, Enabled = true };
-        var tecnico = new Usuario { Nome = "Tecnico Caju", Email = "tecnico@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.TECNICO, Enabled = true };
-        var aiAssistant = new Usuario { Nome = "Assistente IA Caju", Email = "ia@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.ADMIN, Enabled = true };
-        var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
-        var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true };
-        var clienteInativo = new Usuario { Nome = "Carlos Inativo", Email = "carlos.inativo@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = false };
+        // --- GARANTIR IA ASSISTENTE ---
+        var iaEmail = "ia@cajuajuda.com";
+        var iaExistente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == iaEmail);
+        
+        if (iaExistente == null)
+        {
+            var aiAssistant = new Usuario 
+            { 
+                Nome = "🤖 Assistente IA Caju", 
+                Email = iaEmail, 
+                Senha = BCrypt.Net.BCrypt.HashPassword("IA@2025SecurePassword"), 
+                Role = Role.ADMIN, 
+                Enabled = true,
+                VerificationToken = null
+            };
+            await context.Usuarios.AddAsync(aiAssistant);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[SEED] ✅ IA Assistente criado: {iaEmail}");
+        }
+        else
+        {
+            Console.WriteLine($"[SEED] ℹ️  IA Assistente já existe: {iaEmail}");
+        }
 
-        await context.Usuarios.AddRangeAsync(admin, tecnico, aiAssistant, cliente1, cliente2, clienteInativo);
+        // --- POPULAR DADOS DE EXEMPLO (apenas se não existir NENHUM usuário além dos essenciais) ---
+        var totalUsuarios = await context.Usuarios.CountAsync();
+        
+        if (totalUsuarios <= 2) // Apenas Admin e IA existem
+        {
+            Console.WriteLine("[SEED] Criando dados de exemplo (técnicos, clientes, chamados)...");
+            await SeedExampleDataAsync(context);
+        }
+        else
+        {
+            Console.WriteLine($"[SEED] ℹ️  Sistema já possui {totalUsuarios} usuários. Dados de exemplo não serão criados.");
+        }
+
+        Console.WriteLine("[SEED] Inicialização concluída!");
+    }
+
+    private async Task SeedExampleDataAsync(CajuAjudaDbContext context)
+    {
+        // --- CRIAÇÃO DE USUÁRIOS DE EXEMPLO ---
+        var tecnico = new Usuario { Nome = "Técnico Caju", Email = "tecnico@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("Tecnico@2025"), Role = Role.TECNICO, Enabled = true, VerificationToken = null };
+        var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true, VerificationToken = null };
+        var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true, VerificationToken = null };
+
+        await context.Usuarios.AddRangeAsync(tecnico, cliente1, cliente2);
         await context.SaveChangesAsync(); // Salva para obter os IDs
+        
+        Console.WriteLine("[SEED] ✅ Técnico criado: tecnico@cajuajuda.com | Senha: Tecnico@2025");
+        Console.WriteLine("[SEED] ✅ Clientes de exemplo criados");
 
-        // --- CRIAÇÃO DE CHAMADOS ---
+        // --- CRIAÇÃO DE CHAMADOS DE EXEMPLO ---
+        Console.WriteLine("[SEED] ✅ Técnico criado: tecnico@cajuajuda.com | Senha: Tecnico@2025");
+        Console.WriteLine("[SEED] ✅ Clientes de exemplo criados");
+
+        // --- CRIAÇÃO DE CHAMADOS DE EXEMPLO ---
         var chamadoAberto = new Chamado
         {
             Titulo = "Problema Crítico: Sistema de pagamentos fora do ar",
@@ -54,7 +120,7 @@ public class DataInitializer
             Status = StatusChamado.EM_ANDAMENTO,
             Prioridade = PrioridadeChamado.MEDIA,
             ClienteId = cliente2.Id,
-            TecnicoResponsavelId = tecnico.Id // Chamado já atribuído
+            TecnicoResponsavelId = tecnico.Id
         };
 
         var chamadoFechado = new Chamado
@@ -69,7 +135,8 @@ public class DataInitializer
         };
 
         await context.Chamados.AddRangeAsync(chamadoAberto, chamadoEmAndamento, chamadoFechado);
-        await context.SaveChangesAsync(); // Salva para obter os IDs
+        await context.SaveChangesAsync();
+        Console.WriteLine("[SEED] ✅ Chamados de exemplo criados");
 
         // --- CRIAÇÃO DE MENSAGENS ---
         var mensagens = new List<Mensagem>
@@ -80,6 +147,35 @@ public class DataInitializer
         };
 
         await context.Mensagens.AddRangeAsync(mensagens);
+        await context.SaveChangesAsync();
+        Console.WriteLine("[SEED] ✅ Mensagens de exemplo criadas");
+
+        // --- CRIAÇÃO DE ANEXOS DE EXEMPLO ---
+        var anexos = new List<Anexo>
+        {
+            new() { 
+                NomeArquivo = "print_erro_pagamento.png", 
+                NomeUnico = "exemplo_print_erro.png", 
+                TipoArquivo = "image/png", 
+                ChamadoId = chamadoAberto.Id 
+            },
+            new() { 
+                NomeArquivo = "relatorio_performance.pdf", 
+                NomeUnico = "exemplo_relatorio.pdf", 
+                TipoArquivo = "application/pdf", 
+                ChamadoId = chamadoEmAndamento.Id 
+            },
+            new() { 
+                NomeArquivo = "logs_sistema.txt", 
+                NomeUnico = "exemplo_logs.txt", 
+                TipoArquivo = "text/plain", 
+                ChamadoId = chamadoEmAndamento.Id 
+            }
+        };
+
+        await context.Anexos.AddRangeAsync(anexos);
+        await context.SaveChangesAsync();
+        Console.WriteLine("[SEED] ✅ Anexos de exemplo criados");
 
         // --- CRIAÇÃO DE RESPOSTAS PRONTAS ---
         if (!await context.RespostasProntas.AnyAsync())
@@ -92,6 +188,8 @@ public class DataInitializer
                 new() { Titulo = "Encerramento", Corpo = "Fico feliz em ajudar! Estou encerrando este chamado. Se precisar de mais alguma coisa, basta abrir um novo ticket. Tenha um ótimo dia!" }
             };
             await context.RespostasProntas.AddRangeAsync(respostas);
+            await context.SaveChangesAsync();
+            Console.WriteLine("[SEED] ✅ Respostas prontas criadas");
         }
     }
 }

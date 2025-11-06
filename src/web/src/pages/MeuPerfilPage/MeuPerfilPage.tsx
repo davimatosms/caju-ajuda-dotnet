@@ -16,7 +16,7 @@ function MeuPerfilPage() {
 
     // Esconder scroll do body quando o componente montar
     useEffect(() => {
-        document.body.style.overflow = 'hidden';
+        // Não esconde mais o overflow do body
         return () => {
             document.body.style.overflow = 'unset';
         };
@@ -84,20 +84,20 @@ function MeuPerfilPage() {
     }
 
     return (
-        <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
             <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-6">
-                <div className="container mx-auto max-w-4xl">
+                <div className="w-full mx-auto px-4">
                     <h1 className="text-3xl font-bold text-gray-900 mb-1">Meu Perfil</h1>
                     <p className="text-gray-600">Gerencie suas informações pessoais e senha</p>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
-                <div className="container mx-auto px-4 max-w-4xl h-full py-4">
-                    <div className="grid lg:grid-cols-3 gap-6 h-full overflow-hidden">
-                    {/* Profile Info Sidebar */}
-                    <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto">
+            <div className="flex-1 py-6">
+                <div className="w-full mx-auto px-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Profile Info Sidebar (33% em telas grandes) */}
+                    <div className="lg:col-span-1 flex flex-col gap-6">
                         <div className="card text-center flex-shrink-0">
                             <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <span className="text-white font-bold text-4xl">
@@ -138,8 +138,8 @@ function MeuPerfilPage() {
                         </div>
                     </div>
 
-                    {/* Forms */}
-                    <div className="lg:col-span-2 flex flex-col gap-6 overflow-y-auto">
+                    {/* Forms (67% em telas grandes) */}
+                    <div className="lg:col-span-2 flex flex-col gap-6">
                         {/* Personal Data Form */}
                         <div className="card flex-shrink-0">
                             <h3 className="text-lg font-semibold text-gray-900 mb-6">Dados Pessoais</h3>

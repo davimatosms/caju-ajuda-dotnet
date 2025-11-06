@@ -17,10 +17,12 @@
             <!-- Conversores -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:PriorityColorConverter x:Key="PriorityColorConverter" />
+            <converters:StatusColorConverter x:Key="StatusColorConverter" />
             <converters:TabColorConverter x:Key="TabColorConverter" />
             <converters:TabTextColorConverter x:Key="TabTextColorConverter" />
             <converters:IntToBoolConverter x:Key="IntToBoolConverter" />
             <converters:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
+            <converters:HasItemsConverter x:Key="HasItemsConverter" />
 
         </ResourceDictionary>
     </Application.Resources>

@@ -15,22 +15,27 @@ namespace CajuAjuda.Backend.Services
         private readonly IMensagemRepository _mensagemRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IChamadoRepository _chamadoRepository;
-        private readonly IHubContext<NotificacaoHub> _hubContext; // <- Injeção do HubContext
-        private readonly ILogger<MensagemService> _logger;         // <- Injeção do Logger
+        private readonly IHubContext<NotificacaoHub> _hubContext;
+        private readonly ILogger<MensagemService> _logger;
+        private readonly IEmailService _emailService;
+        private readonly EmailTemplateService _emailTemplateService;
 
-        // Construtor atualizado para receber IHubContext e ILogger
         public MensagemService(
             IMensagemRepository mensagemRepository,
             IUsuarioRepository usuarioRepository,
             IChamadoRepository chamadoRepository,
-            IHubContext<NotificacaoHub> hubContext, // <- Adicionado
-            ILogger<MensagemService> logger)        // <- Adicionado
+            IHubContext<NotificacaoHub> hubContext,
+            ILogger<MensagemService> logger,
+            IEmailService emailService,
+            EmailTemplateService emailTemplateService)
         {
             _mensagemRepository = mensagemRepository;
             _usuarioRepository = usuarioRepository;
             _chamadoRepository = chamadoRepository;
-            _hubContext = hubContext; // <- Atribuído
-            _logger = logger;         // <- Atribuído
+            _hubContext = hubContext;
+            _logger = logger;
+            _emailService = emailService;
+            _emailTemplateService = emailTemplateService;
         }
 
         public async Task<MensagemResponseDto> AddMensagemAsync(long chamadoId, MensagemCreateDto mensagemDto, string userEmail, string userRole)
@@ -62,10 +67,10 @@ namespace CajuAjuda.Backend.Services
             }
 
             // --- Validação de Status do Chamado ---
-            if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO) // Adicionado CANCELADO
+            if (chamado.Status == StatusChamado.FECHADO)
             {
                 _logger.LogWarning("Tentativa de adicionar mensagem ao chamado {ChamadoId} com status {Status}.", chamadoId, chamado.Status);
-                throw new BusinessRuleException("Não é possível adicionar mensagens a um chamado fechado ou cancelado.");
+                throw new BusinessRuleException("Não é possível adicionar mensagens a um chamado que já foi fechado.");
             }
 
             // --- Criação da Mensagem ---
@@ -98,6 +103,36 @@ namespace CajuAjuda.Backend.Services
             await _mensagemRepository.AddAsync(novaMensagem);
             _logger.LogInformation("Mensagem {MensagemId} salva no banco para o chamado {ChamadoId}.", novaMensagem.Id, chamadoId);
 
+            // --- ENVIO DE EMAIL ---
+            // Se um técnico/admin responder, envia email para o cliente
+            if (isAdminOrTecnico && chamado.Cliente != null)
+            {
+                try
+                {
+                    var emailBody = _emailTemplateService.GetNovaRespostaEmailBody(
+                        chamado.Cliente.Nome,
+                        chamado.Id.ToString(),
+                        chamado.Titulo,
+                        novaMensagem.Texto,
+                        autor.Nome
+                    );
+
+                    await _emailService.SendEmailAsync(
+                        chamado.Cliente.Email,
+                        $"Nova resposta no Chamado #{chamado.Id} - Caju Ajuda",
+                        emailBody
+                    );
+
+                    _logger.LogInformation("Email de notificação enviado para {ClienteEmail} sobre o chamado {ChamadoId}.", chamado.Cliente.Email, chamadoId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Falha ao enviar email de notificação para o cliente do chamado {ChamadoId}.", chamadoId);
+                    // Não lança exceção para não interromper o fluxo principal
+                }
+            }
+            // --- FIM DO ENVIO DE EMAIL ---
+
             // Se o status do chamado foi alterado, salva a alteração
             // if (_context.Entry(chamado).State == EntityState.Modified) // Verifica se houve mudança no objeto chamado
             // {
@@ -125,13 +160,17 @@ namespace CajuAjuda.Backend.Services
                 // IMPORTANTE: O nome do método "ReceiveNewMessage" DEVE ser o mesmo
                 // que está sendo ouvido no hook useSignalR do React Native.
                 await _hubContext.Clients.Group(roomName).SendAsync("ReceiveNewMessage", mensagemParaSignalR);
-                _logger.LogInformation("Mensagem {MensagemId} enviada via SignalR para a sala: {RoomName}", novaMensagem.Id, roomName);
+                
+                _logger.LogInformation("[SignalR] 📨 Mensagem {MensagemId} de {AutorNome} enviada para sala: {RoomName}", 
+                    novaMensagem.Id, autor.Nome, roomName);
+                _logger.LogInformation("[SignalR] 📊 Role do autor: {Role}, Texto: {Texto}", 
+                    userRole, novaMensagem.Texto.Substring(0, Math.Min(50, novaMensagem.Texto.Length)));
             }
             catch (Exception ex)
             {
                 // Loga um erro se o envio SignalR falhar, mas não lança a exceção para não
                 // reverter a operação principal (salvar a mensagem).
-                _logger.LogError(ex, "Falha ao enviar mensagem via SignalR para a sala do chamado {ChamadoId}.", chamadoId);
+                _logger.LogError(ex, "[SignalR] ❌ Falha ao enviar mensagem via SignalR para a sala do chamado {ChamadoId}.", chamadoId);
             }
             // --- FIM DO ENVIO ---
 

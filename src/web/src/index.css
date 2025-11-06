@@ -64,4 +64,23 @@
   .badge-primary {
     @apply bg-primary-100 text-primary-800;
   }
+
+  /* Scrollbar customizada para melhor UX */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+  }
+
+  /* Firefox scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(209, 213, 219) rgb(243, 244, 246);
+  }
 }

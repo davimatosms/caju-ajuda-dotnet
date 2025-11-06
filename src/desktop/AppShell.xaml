@@ -5,28 +5,29 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:CajuAjuda.Desktop.Views"
     Shell.FlyoutBehavior="Flyout"
-    Shell.FlyoutBackgroundColor="{StaticResource Gray50}"
+    Shell.FlyoutBackgroundColor="{StaticResource SidebarBackground}"
+    FlyoutWidth="280"
     Title="Caju Ajuda">
 
+    <!-- Header -->
     <Shell.FlyoutHeader>
-        <Grid BackgroundColor="{StaticResource Primary}" 
-              Padding="25" 
+        <Grid BackgroundColor="{StaticResource Primary}"
+              Padding="24"
               HeightRequest="140">
-            <VerticalStackLayout VerticalOptions="Center" Spacing="8">
-                <Label Text="CAJU AJUDA" 
-                       FontSize="28" 
+            <VerticalStackLayout VerticalOptions="Center" Spacing="12">
+                <Label Text="CAJU AJUDA"
+                       FontSize="24"
                        FontAttributes="Bold"
-                       TextColor="White"
-                       HorizontalOptions="Start"/>
-                <Label Text="Painel do Tecnico" 
-                       FontSize="15"
-                       TextColor="White"
-                       Opacity="0.9"
-                       HorizontalOptions="Start"/>
+                       TextColor="{StaticResource TextOnPrimary}"/>
+                <Label Text="Painel Técnico"
+                       FontSize="14"
+                       TextColor="{StaticResource TextOnPrimary}"
+                       Opacity="0.9"/>
             </VerticalStackLayout>
         </Grid>
     </Shell.FlyoutHeader>
 
+    <!-- Menu Items -->
     <FlyoutItem Title="Dashboard">
         <ShellContent
             Title="Chamados"
@@ -41,17 +42,14 @@
             Route="ProfilePage" />
     </FlyoutItem>
 
+    <!-- Footer -->
     <Shell.FlyoutFooter>
-        <Grid Padding="20" 
-              BackgroundColor="{StaticResource Gray100}" 
+        <Grid Padding="20"
+              BackgroundColor="{StaticResource Gray800}"
               HeightRequest="80">
-            <Button Text="Sair" 
+            <Button Text="Sair"
                     Clicked="OnLogoutClicked"
-                    BackgroundColor="{StaticResource Danger}"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    CornerRadius="8"
-                    HeightRequest="45"/>
+                    Style="{StaticResource DangerButton}"/>
         </Grid>
     </Shell.FlyoutFooter>
 
