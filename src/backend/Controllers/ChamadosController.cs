@@ -78,13 +78,16 @@ namespace CajuAjuda.Backend.Controllers
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
             if (userEmail == null || userRole == null) return Unauthorized();
+            
             var chamado = await _chamadoService.GetChamadoByIdAsync(id, userEmail, userRole);
             
-            if (chamado != null)
+            if (chamado == null)
             {
-                _logger.LogInformation("🔍 [ChamadosController] Retornando chamado ID {ChamadoId} com {MensagensCount} mensagens", 
-                    chamado.Id, chamado.Mensagens?.Count ?? 0);
+                return NotFound(new { message = "Chamado não encontrado." });
             }
+            
+            _logger.LogInformation("🔍 [ChamadosController] Retornando chamado ID {ChamadoId} com {MensagensCount} mensagens", 
+                chamado.Id, chamado.Mensagens?.Count ?? 0);
             
             return Ok(chamado);
         }
