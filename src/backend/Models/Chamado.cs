@@ -9,11 +9,7 @@ public enum StatusChamado
 {
     ABERTO,
     EM_ANDAMENTO,
-    AGUARDANDO_CLIENTE,// remover
-    FECHADO,
-    CANCELADO,
-    RESOLVIDO,// remover
-    MESCLADO // remover
+    FECHADO
 }
 
 public enum PrioridadeChamado

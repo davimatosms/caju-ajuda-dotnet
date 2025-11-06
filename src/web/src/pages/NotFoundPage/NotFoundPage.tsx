@@ -1,10 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import cajuLogo from '../../assets/Caju.png';
 
 const NotFoundPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center">
+        {/* Logo */}
+        <div className="mb-6">
+          <img src={cajuLogo} alt="Caju Ajuda" className="h-16 w-auto mx-auto" />
+        </div>
+        
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-primary-500">404</h1>
           <h2 className="text-3xl font-bold text-gray-800 mt-4 mb-2">

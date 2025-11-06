@@ -8,87 +8,121 @@
              Shell.NavBarIsVisible="False">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Padding="40" 
-                                 Spacing="30" 
-                                 VerticalOptions="Center"
-                                 MaximumWidthRequest="450"
-                                 HorizontalOptions="Center">
+        <!-- Background Gradient -->
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource Gray50}" Offset="0.0"/>
+                <GradientStop Color="{StaticResource Gray100}" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
 
-                <VerticalStackLayout Spacing="12" Margin="0,0,0,20">
-                    <Label Text="CAJU AJUDA"
-                           FontSize="36"
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource Primary}"
-                           HorizontalOptions="Center"/>
-                    <Label Text="Sistema de Suporte"
-                           FontSize="16"
-                           TextColor="{StaticResource Gray600}"
-                           HorizontalOptions="Center"/>
+        <ScrollView VerticalOptions="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="40"
+                  Padding="20"
+                  MaximumWidthRequest="480"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
+
+                <!-- Logo e Branding -->
+                <VerticalStackLayout Grid.Row="0" Spacing="20">
+                    <!-- Logo -->
+                    <Border WidthRequest="80"
+                            HeightRequest="80"
+                            BackgroundColor="{StaticResource Primary}"
+                            HorizontalOptions="Center"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="16"/>
+                        </Border.StrokeShape>
+                        <Label Text="CA"
+                               FontSize="36"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextOnPrimary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+
+                    <!-- Título -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="CAJU AJUDA"
+                               Style="{StaticResource H1}"
+                               HorizontalOptions="Center"
+                               CharacterSpacing="1"/>
+                        <Label Text="Sistema de Gestão de Suporte"
+                               Style="{StaticResource SecondaryText}"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
 
-                <Border BackgroundColor="{StaticResource CardBackground}"
-                        Padding="35"
-                        StrokeThickness="1"
-                        Stroke="{StaticResource Gray200}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="12"/>
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="20">
-                        <Label Text="Login"
-                               FontSize="24"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Gray900}"/>
-
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Email"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray700}"/>
-                            <Entry Placeholder="seu.email@exemplo.com"
-                                   Text="{Binding Email}"
-                                   Keyboard="Email"
-                                   FontSize="15"
-                                   HeightRequest="50"/>
+                <!-- Card de Login -->
+                <Border Grid.Row="1"
+                        Style="{StaticResource ElevatedCard}"
+                        HorizontalOptions="Fill">
+                    
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                          RowSpacing="24">
+                        
+                        <!-- Header -->
+                        <VerticalStackLayout Grid.Row="0" Spacing="8">
+                            <Label Text="Autenticação"
+                                   Style="{StaticResource H3}"/>
+                            <Label Text="Entre com suas credenciais de técnico"
+                                   Style="{StaticResource Caption}"/>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Senha"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray700}"/>
-                            <Entry Placeholder="Digite sua senha"
-                                   Text="{Binding Senha}"
-                                   IsPassword="True"
-                                   FontSize="15"
-                                   HeightRequest="50"/>
+                        <!-- Email -->
+                        <VerticalStackLayout Grid.Row="1" Spacing="8">
+                            <Label Text="EMAIL"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="seu.email@empresa.com"
+                                       Text="{Binding Email}"
+                                       Keyboard="Email"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
                         </VerticalStackLayout>
 
-                        <Button Text="ENTRAR"
-                                Command="{Binding LoginCommand}"
-                                BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                FontSize="16"
-                                HeightRequest="55"
-                                CornerRadius="8"
-                                Margin="0,15,0,0"/>
+                        <!-- Senha -->
+                        <VerticalStackLayout Grid.Row="2" Spacing="8">
+                            <Label Text="SENHA"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="Digite sua senha"
+                                       Text="{Binding Senha}"
+                                       IsPassword="True"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
 
-                        <ActivityIndicator IsRunning="{Binding IsBusy}"
-                                           IsVisible="{Binding IsBusy}"
-                                           Color="{StaticResource Primary}"
-                                           HorizontalOptions="Center"/>
-                    </VerticalStackLayout>
+                        <!-- Botão e Loading -->
+                        <VerticalStackLayout Grid.Row="3" Spacing="16">
+                            <Button Text="ENTRAR"
+                                    Command="{Binding LoginCommand}"
+                                    Style="{StaticResource PrimaryButton}"
+                                    HeightRequest="48"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"/>
+
+                            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                               IsVisible="{Binding IsBusy}"
+                                               Style="{StaticResource LoadingIndicator}"
+                                               HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Grid>
                 </Border>
 
-                <Label Text="2025 Caju Ajuda - Todos os direitos reservados"
-                       FontSize="12"
-                       TextColor="{StaticResource Gray500}"
-                       HorizontalOptions="Center"
-                       Margin="0,20,0,0"/>
-
-            </VerticalStackLayout>
+                <!-- Footer -->
+                <Label Grid.Row="2"
+                       Text="© 2025 Caju Ajuda - Todos os direitos reservados"
+                       Style="{StaticResource Caption}"
+                       HorizontalOptions="Center"/>
+            </Grid>
         </ScrollView>
     </Grid>
 </ContentPage>

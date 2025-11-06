@@ -5,299 +5,297 @@
              xmlns:models="clr-namespace:CajuAjuda.Desktop.Models"
              x:Class="CajuAjuda.Desktop.Views.MainPage"
              x:DataType="viewModels:MainViewModel"
-             Title="Dashboard - Chamados"
+             Title="Dashboard"
              BackgroundColor="{StaticResource PageBackground}">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Atualizar" Command="{Binding LoadDataCommand}"/>
     </ContentPage.ToolbarItems>
 
-    <Grid>
-        <ActivityIndicator IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}"
-                           Color="{StaticResource Primary}"
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center"
-                           WidthRequest="60"
-                           HeightRequest="60"/>
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Header -->
+        <Border Grid.Row="0"
+                BackgroundColor="{StaticResource Primary}"
+                Padding="24,20"
+                StrokeThickness="0">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="Gerenciamento de Chamados"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextOnPrimary}"/>
+                    <Label Text="Visualize e gerencie tickets de suporte"
+                           FontSize="14"
+                           TextColor="{StaticResource TextOnPrimary}"
+                           Opacity="0.9"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
 
-        <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-            <VerticalStackLayout Spacing="15" Padding="20">
-
-                <Border BackgroundColor="{StaticResource CardBackground}"
-                        Padding="5"
-                        StrokeThickness="1"
-                        Stroke="{StaticResource Gray200}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="10"/>
-                    </Border.StrokeShape>
-
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="5">
-                        <Button Grid.Column="0" 
-                                Text="Disponiveis"
-                                Clicked="OnTab0Clicked"
-                                BackgroundColor="{StaticResource Primary}"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                HeightRequest="45"/>
-
-                        <Button Grid.Column="1" 
-                                Text="Em Andamento"
-                                Clicked="OnTab1Clicked"
-                                BackgroundColor="{StaticResource Gray200}"
-                                TextColor="{StaticResource Gray700}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                HeightRequest="45"/>
-
-                        <Button Grid.Column="2" 
-                                Text="Fechados"
-                                Clicked="OnTab2Clicked"
-                                BackgroundColor="{StaticResource Gray200}"
-                                TextColor="{StaticResource Gray700}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                HeightRequest="45"/>
-                    </Grid>
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <!-- Loading Overlay -->
+            <Grid IsVisible="{Binding IsBusy}"
+                  BackgroundColor="{StaticResource OverlayMedium}">
+                <Border Style="{StaticResource ElevatedCard}"
+                        WidthRequest="240"
+                        HeightRequest="160"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Padding="32">
+                    <VerticalStackLayout Spacing="16"
+                                         HorizontalOptions="Center"
+                                         VerticalOptions="Center">
+                        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                           Style="{StaticResource LoadingIndicator}"/>
+                        <Label Text="Carregando..."
+                               Style="{StaticResource BodyText}"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
                 </Border>
+            </Grid>
 
-                <CollectionView ItemsSource="{Binding ChamadosDisponiveis}"
-                                IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}"
-                                SelectionMode="None">
-                    <CollectionView.EmptyView>
-                        <VerticalStackLayout VerticalOptions="Center" 
-                                             HorizontalOptions="Center"
-                                             Padding="60">
-                            <Label Text="Nenhum chamado disponivel" 
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"
-                                   HorizontalOptions="Center"/>
-                            <Label Text="Todos os chamados ja foram atribuidos" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource Gray500}"
-                                   HorizontalOptions="Center"
-                                   Margin="0,8,0,0"/>
-                        </VerticalStackLayout>
-                    </CollectionView.EmptyView>
+            <!-- Main Content -->
+            <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="20"
+                      Padding="20">
 
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Chamado">
-                            <Border BackgroundColor="{StaticResource CardBackground}"
-                                    Padding="18"
-                                    Margin="0,0,0,12"
-                                    StrokeThickness="1"
-                                    Stroke="{StaticResource Gray200}">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10"/>
-                                </Border.StrokeShape>
+                    <!-- Tabs -->
+                    <Border Grid.Row="0"
+                            Style="{StaticResource Card}"
+                            Padding="4">
+                        <Grid ColumnDefinitions="*,*,*"
+                              ColumnSpacing="4">
+                            <Button Grid.Column="0"
+                                    Text="Disponíveis"
+                                    Clicked="OnTab0Clicked"
+                                    BackgroundColor="{Binding SelectedTab, Converter={StaticResource TabColorConverter}, ConverterParameter=0}"
+                                    TextColor="{Binding SelectedTab, Converter={StaticResource TabTextColorConverter}, ConverterParameter=0}"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    CornerRadius="6"
+                                    HeightRequest="40"/>
 
-                                <VerticalStackLayout Spacing="12">
-                                    <Label Text="{Binding Titulo}"
-                                           FontSize="17"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Gray900}"/>
+                            <Button Grid.Column="1"
+                                    Text="Em Andamento"
+                                    Clicked="OnTab1Clicked"
+                                    BackgroundColor="{Binding SelectedTab, Converter={StaticResource TabColorConverter}, ConverterParameter=1}"
+                                    TextColor="{Binding SelectedTab, Converter={StaticResource TabTextColorConverter}, ConverterParameter=1}"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    CornerRadius="6"
+                                    HeightRequest="40"/>
 
-                                    <HorizontalStackLayout Spacing="6">
-                                        <Label Text="Cliente:"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"/>
-                                        <Label Text="{Binding NomeCliente}"
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource Gray700}"/>
-                                    </HorizontalStackLayout>
+                            <Button Grid.Column="2"
+                                    Text="Concluídos"
+                                    Clicked="OnTab2Clicked"
+                                    BackgroundColor="{Binding SelectedTab, Converter={StaticResource TabColorConverter}, ConverterParameter=2}"
+                                    TextColor="{Binding SelectedTab, Converter={StaticResource TabTextColorConverter}, ConverterParameter=2}"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    CornerRadius="6"
+                                    HeightRequest="40"/>
+                        </Grid>
+                    </Border>
 
-                                    <HorizontalStackLayout Spacing="12">
-                                        <Border Padding="8,4"
-                                                BackgroundColor="{StaticResource Gray100}"
-                                                StrokeThickness="0">
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="6"/>
-                                            </Border.StrokeShape>
-                                            <Label Text="{Binding DataCriacao, StringFormat='{0:dd/MM/yyyy}'}"
-                                                   FontSize="13"
-                                                   TextColor="{StaticResource Gray700}"/>
-                                        </Border>
+                    <!-- Content Area -->
+                    <Grid Grid.Row="1">
+                        <!-- Lista: Disponíveis -->
+                        <CollectionView ItemsSource="{Binding ChamadosDisponiveis}"
+                                        IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}"
+                                        SelectionMode="None">
+                            <CollectionView.EmptyView>
+                                <Border Style="{StaticResource Card}"
+                                        Padding="40"
+                                        MinimumHeightRequest="200">
+                                    <VerticalStackLayout Spacing="12"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
+                                        <Label Text="Nenhum chamado disponível"
+                                               Style="{StaticResource H4}"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Todos os tickets foram atribuídos"
+                                               Style="{StaticResource SecondaryText}"
+                                               HorizontalOptions="Center"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </CollectionView.EmptyView>
 
-                                        <Border Padding="8,4"
-                                                BackgroundColor="{StaticResource Tertiary}"
-                                                StrokeThickness="0">
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="6"/>
-                                            </Border.StrokeShape>
-                                            <Label Text="{Binding Prioridade}"
-                                                   FontSize="13"
-                                                   FontAttributes="Bold"
-                                                   TextColor="White"/>
-                                        </Border>
-                                    </HorizontalStackLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Chamado">
+                                    <Border Style="{StaticResource Card}"
+                                            Margin="0,0,0,12">
+                                        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                                              RowSpacing="12">
+                                            
+                                            <!-- Título e Cliente -->
+                                            <VerticalStackLayout Grid.Row="0" Spacing="8">
+                                                <Label Text="{Binding Titulo}"
+                                                       Style="{StaticResource H4}"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="2"/>
+                                                <Label Text="{Binding NomeCliente}"
+                                                       Style="{StaticResource SecondaryText}"/>
+                                            </VerticalStackLayout>
 
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
-                                        <Button Grid.Column="0"
-                                                Text="Ver Detalhes"
+                                            <!-- Badges -->
+                                            <FlexLayout Grid.Row="1"
+                                                        Wrap="Wrap"
+                                                        JustifyContent="Start"
+                                                        AlignItems="Center">
+                                                <Border Style="{StaticResource Badge}"
+                                                        BackgroundColor="{StaticResource Info}"
+                                                        Margin="0,0,8,8">
+                                                    <Label Style="{StaticResource BadgeText}"
+                                                           Text="{Binding DataCriacao, StringFormat='{0:dd/MM}'}"
+                                                           TextColor="{StaticResource TextOnPrimary}"/>
+                                                </Border>
+                                                <Border Style="{StaticResource Badge}"
+                                                        BackgroundColor="{Binding Prioridade, Converter={StaticResource PriorityColorConverter}}"
+                                                        Margin="0,0,8,8">
+                                                    <Label Style="{StaticResource BadgeText}"
+                                                           Text="{Binding Prioridade}"
+                                                           TextColor="{StaticResource TextOnPrimary}"/>
+                                                </Border>
+                                            </FlexLayout>
+
+                                            <!-- Divisor -->
+                                            <BoxView Grid.Row="2"
+                                                     Style="{StaticResource Divider}"
+                                                     Margin="0,4"/>
+
+                                            <!-- Botões -->
+                                            <Grid Grid.Row="3"
+                                                  ColumnDefinitions="*,*"
+                                                  ColumnSpacing="12">
+                                                <Button Grid.Column="0"
+                                                        Text="Detalhes"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=OpenChamadoCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        Style="{StaticResource GhostButton}"/>
+                                                <Button Grid.Column="1"
+                                                        Text="Assumir"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=AtribuirChamadoCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        Style="{StaticResource PrimaryButton}"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <!-- Lista: Em Andamento -->
+                        <CollectionView ItemsSource="{Binding MeusChamados}"
+                                        IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}"
+                                        SelectionMode="None">
+                            <CollectionView.EmptyView>
+                                <Border Style="{StaticResource Card}"
+                                        Padding="40"
+                                        MinimumHeightRequest="200">
+                                    <VerticalStackLayout Spacing="12"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
+                                        <Label Text="Nenhum chamado em andamento"
+                                               Style="{StaticResource H4}"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Assuma tickets para começar"
+                                               Style="{StaticResource SecondaryText}"
+                                               HorizontalOptions="Center"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </CollectionView.EmptyView>
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Chamado">
+                                    <Border Style="{StaticResource Card}"
+                                            Margin="0,0,0,12"
+                                            Stroke="{StaticResource Primary}"
+                                            StrokeThickness="2">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer 
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=OpenChamadoCommand}"
-                                                CommandParameter="{Binding .}"
-                                                BackgroundColor="{StaticResource Gray200}"
-                                                TextColor="{StaticResource Gray800}"
-                                                FontSize="14"
-                                                FontAttributes="Bold"
-                                                CornerRadius="8"
-                                                HeightRequest="42"/>
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
 
-                                        <Button Grid.Column="1"
-                                                Text="Assumir"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=AtribuirChamadoCommand}"
-                                                CommandParameter="{Binding .}"
-                                                BackgroundColor="{StaticResource Primary}"
-                                                TextColor="White"
-                                                FontSize="14"
-                                                FontAttributes="Bold"
-                                                CornerRadius="8"
-                                                HeightRequest="42"/>
-                                    </Grid>
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-                <CollectionView ItemsSource="{Binding MeusChamados}"
-                                IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}"
-                                SelectionMode="None">
-                    <CollectionView.EmptyView>
-                        <VerticalStackLayout VerticalOptions="Center" 
-                                             HorizontalOptions="Center"
-                                             Padding="60">
-                            <Label Text="Nenhum chamado em andamento" 
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"
-                                   HorizontalOptions="Center"/>
-                            <Label Text="Assuma chamados disponiveis para comecar" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource Gray500}"
-                                   HorizontalOptions="Center"
-                                   Margin="0,8,0,0"/>
-                        </VerticalStackLayout>
-                    </CollectionView.EmptyView>
-
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Chamado">
-                            <Border BackgroundColor="{StaticResource CardBackground}"
-                                    Padding="18"
-                                    Margin="0,0,0,12"
-                                    StrokeThickness="2"
-                                    Stroke="{StaticResource Primary}">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10"/>
-                                </Border.StrokeShape>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer 
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=OpenChamadoCommand}"
-                                        CommandParameter="{Binding .}"/>
-                                </Border.GestureRecognizers>
-
-                                <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Titulo}"
-                                           FontSize="17"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Gray900}"/>
-
-                                    <Border Padding="8,4"
-                                            BackgroundColor="{StaticResource Primary}"
-                                            StrokeThickness="0"
-                                            HorizontalOptions="Start">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="6"/>
-                                        </Border.StrokeShape>
-                                        <Label Text="{Binding Status}"
-                                               FontSize="12"
-                                               FontAttributes="Bold"
-                                               TextColor="White"/>
+                                        <Grid RowDefinitions="Auto,Auto,Auto"
+                                              RowSpacing="12">
+                                            <Label Grid.Row="0"
+                                                   Text="{Binding Titulo}"
+                                                   Style="{StaticResource H4}"/>
+                                            <Border Grid.Row="1"
+                                                    Style="{StaticResource Badge}"
+                                                    BackgroundColor="{StaticResource Warning}"
+                                                    HorizontalOptions="Start">
+                                                <Label Style="{StaticResource BadgeText}"
+                                                       Text="{Binding Status}"
+                                                       TextColor="{StaticResource TextOnPrimary}"/>
+                                            </Border>
+                                            <Label Grid.Row="2"
+                                                   Text="{Binding NomeCliente}"
+                                                   Style="{StaticResource SecondaryText}"/>
+                                        </Grid>
                                     </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
 
-                                    <HorizontalStackLayout Spacing="6">
-                                        <Label Text="Cliente:"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"/>
-                                        <Label Text="{Binding NomeCliente}"
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource Gray700}"/>
-                                    </HorizontalStackLayout>
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                        <!-- Lista: Concluídos -->
+                        <CollectionView ItemsSource="{Binding ChamadosFechados}"
+                                        IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}"
+                                        SelectionMode="None">
+                            <CollectionView.EmptyView>
+                                <Border Style="{StaticResource Card}"
+                                        Padding="40"
+                                        MinimumHeightRequest="200">
+                                    <VerticalStackLayout Spacing="12"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
+                                        <Label Text="Nenhum chamado concluído"
+                                               Style="{StaticResource H4}"
+                                               HorizontalOptions="Center"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </CollectionView.EmptyView>
 
-                <CollectionView ItemsSource="{Binding ChamadosFechados}"
-                                IsVisible="{Binding SelectedTab, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}"
-                                SelectionMode="None">
-                    <CollectionView.EmptyView>
-                        <VerticalStackLayout VerticalOptions="Center" 
-                                             HorizontalOptions="Center"
-                                             Padding="60">
-                            <Label Text="Nenhum chamado fechado" 
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Gray600}"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Chamado">
+                                    <Border Style="{StaticResource Card}"
+                                            Margin="0,0,0,12"
+                                            Opacity="0.8">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=OpenChamadoCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
 
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Chamado">
-                            <Border BackgroundColor="{StaticResource Gray50}"
-                                    Padding="18"
-                                    Margin="0,0,0,12"
-                                    StrokeThickness="1"
-                                    Stroke="{StaticResource Gray200}">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10"/>
-                                </Border.StrokeShape>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer 
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=OpenChamadoCommand}"
-                                        CommandParameter="{Binding .}"/>
-                                </Border.GestureRecognizers>
-
-                                <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Titulo}"
-                                           FontSize="17"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Gray700}"/>
-
-                                    <Border Padding="8,4"
-                                            BackgroundColor="{StaticResource Gray400}"
-                                            StrokeThickness="0"
-                                            HorizontalOptions="Start">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="6"/>
-                                        </Border.StrokeShape>
-                                        <Label Text="{Binding Status}"
-                                               FontSize="12"
-                                               FontAttributes="Bold"
-                                               TextColor="White"/>
+                                        <Grid RowDefinitions="Auto,Auto"
+                                              RowSpacing="8">
+                                            <Label Grid.Row="0"
+                                                   Text="{Binding Titulo}"
+                                                   Style="{StaticResource Subtitle1}"/>
+                                            <HorizontalStackLayout Grid.Row="1" Spacing="12">
+                                                <Border Style="{StaticResource Badge}"
+                                                        BackgroundColor="{StaticResource Success}">
+                                                    <Label Style="{StaticResource BadgeText}"
+                                                           Text="Concluído"
+                                                           TextColor="{StaticResource TextOnPrimary}"/>
+                                                </Border>
+                                                <Label Text="{Binding NomeCliente}"
+                                                       Style="{StaticResource Caption}"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
+                                        </Grid>
                                     </Border>
-
-                                    <HorizontalStackLayout Spacing="6">
-                                        <Label Text="Cliente:"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray600}"/>
-                                        <Label Text="{Binding NomeCliente}"
-                                               FontSize="14"
-                                               TextColor="{StaticResource Gray700}"/>
-                                    </HorizontalStackLayout>
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-            </VerticalStackLayout>
-        </ScrollView>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Grid>
+                </Grid>
+            </ScrollView>
+        </Grid>
     </Grid>
 </ContentPage>

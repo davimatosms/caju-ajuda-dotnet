@@ -26,4 +26,15 @@ public partial class DetalheChamadoPage : ContentPage
             }
         }
     }
+
+    // 🧹 Cleanup ao sair da página
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        if (BindingContext is DetalheChamadoViewModel viewModel)
+        {
+            await viewModel.OnDisappearingAsync();
+        }
+    }
 }

@@ -45,5 +45,10 @@ namespace CajuAjuda.Desktop.Views
                 viewModel.SelectTabCommand.Execute(2);
             }
         }
+
+        private async void OnPerfilClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("//ProfilePage");
+        }
     }
 }

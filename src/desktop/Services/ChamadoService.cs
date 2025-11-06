@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CajuAjuda.Desktop.Services
 {
@@ -16,7 +17,12 @@ namespace CajuAjuda.Desktop.Services
         public ChamadoService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _serializerOptions = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                // Importante: serializa enums como strings
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+            };
         }
 
         /// <summary>
@@ -66,9 +72,29 @@ namespace CajuAjuda.Desktop.Services
         /// </summary>
         public async Task UpdateStatusChamadoAsync(int chamadoId, StatusChamado novoStatus)
         {
-            var statusDto = new { Status = novoStatus.ToString() };
-            var response = await _httpClient.PutAsJsonAsync($"api/Chamados/{chamadoId}/status", statusDto);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                // ✅ CORRIGIDO: Cria um DTO tipado com o enum diretamente
+                var statusDto = new UpdateStatusRequest { Status = novoStatus };
+                
+                Debug.WriteLine($"[ChamadoService] 🔄 Atualizando status do chamado {chamadoId} para {novoStatus}");
+                
+                var response = await _httpClient.PutAsJsonAsync($"api/Chamados/{chamadoId}/status", statusDto, _serializerOptions);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[ChamadoService] ❌ Erro ao atualizar status: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erro ao atualizar status: {response.StatusCode} - {errorContent}");
+                }
+                
+                Debug.WriteLine($"[ChamadoService] ✅ Status atualizado com sucesso");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ChamadoService] ❌ Exceção ao atualizar status: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -82,5 +108,32 @@ namespace CajuAjuda.Desktop.Services
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Mensagem>(content, _serializerOptions);
         }
+
+        /// <summary>
+        /// Faz download de um anexo
+        /// </summary>
+        public async Task<byte[]?> DownloadAnexoAsync(long anexoId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/Chamados/anexos/{anexoId}/download");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsByteArrayAsync();
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    // ✅ DTO tipado para atualização de status
+    public class UpdateStatusRequest
+    {
+        public StatusChamado Status { get; set; }
     }
 }

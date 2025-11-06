@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.SignalR;
-using System.Threading.Tasks; // Necessário para Task
+using System.Threading.Tasks; // NecessÃ¡rio para Task
 using Microsoft.AspNetCore.Authorization; // Opcional: Se quiser autorizar o Hub
+using System.Security.Claims; // Para acessar ClaimTypes
+using System.IdentityModel.Tokens.Jwt; // Para JwtRegisteredClaimNames
 
 namespace CajuAjuda.Backend.Hubs;
 
-// [Authorize] // Descomente se quiser que apenas usuários autenticados (com token JWT válido) possam conectar ao Hub
+// [Authorize] // Descomente se quiser que apenas usuï¿½rios autenticados (com token JWT vï¿½lido) possam conectar ao Hub
 public class NotificacaoHub : Hub
 {
     private readonly ILogger<NotificacaoHub> _logger;
@@ -16,23 +18,31 @@ public class NotificacaoHub : Hub
     }
 
     /// <summary>
-    /// Método chamado pelo cliente (React Native) para entrar em um grupo (sala) específico de um chamado.
-    /// O nome do método aqui ("JoinRoom") deve corresponder exatamente ao que o cliente chama via invoke.
+    /// Mï¿½todo chamado pelo cliente (React Native) para entrar em um grupo (sala) especï¿½fico de um chamado.
+    /// O nome do mï¿½todo aqui ("JoinRoom") deve corresponder exatamente ao que o cliente chama via invoke.
     /// </summary>
     /// <param name="roomName">O nome da sala (ex: "chamado_123").</param>
     public async Task JoinRoom(string roomName)
     {
-        // Adiciona a conexão atual (identificada por Context.ConnectionId) ao grupo SignalR especificado.
+        // Adiciona a conexÃ£o atual (identificada por Context.ConnectionId) ao grupo SignalR especificado.
         await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
-        _logger.LogInformation("Cliente SignalR {ConnectionId} entrou na sala: {RoomName}", Context.ConnectionId, roomName);
+        
+        // Obter informaÃ§Ãµes do usuÃ¡rio do contexto
+        var userName = Context.User?.Identity?.Name 
+            ?? Context.User?.FindFirst(ClaimTypes.Email)?.Value 
+            ?? Context.User?.FindFirst(JwtRegisteredClaimNames.Email)?.Value
+            ?? "AnÃ´nimo";
+        
+        _logger.LogInformation("[SignalR] ðŸ‘¤ Cliente {ConnectionId} ({UserName}) entrou na sala: {RoomName}", 
+            Context.ConnectionId, userName, roomName);
 
-        // Opcional: Enviar uma mensagem de confirmação de volta apenas para o cliente que acabou de entrar.
-        // await Clients.Caller.SendAsync("ConfirmationMessage", $"Você entrou na sala {roomName}");
+        // Opcional: Enviar uma mensagem de confirmaÃ§Ã£o de volta apenas para o cliente que acabou de entrar.
+        // await Clients.Caller.SendAsync("ConfirmationMessage", $"VocÃª entrou na sala {roomName}");
     }
 
     /// <summary>
-    /// Opcional: Método chamado pelo cliente para sair explicitamente de um grupo.
-    /// Geralmente não é necessário, pois o SignalR remove a conexão do grupo automaticamente ao desconectar.
+    /// Opcional: Mï¿½todo chamado pelo cliente para sair explicitamente de um grupo.
+    /// Geralmente nï¿½o ï¿½ necessï¿½rio, pois o SignalR remove a conexï¿½o do grupo automaticamente ao desconectar.
     /// </summary>
     /// <param name="roomName">O nome da sala a sair.</param>
     public async Task LeaveRoom(string roomName)
@@ -47,7 +57,7 @@ public class NotificacaoHub : Hub
     public override async Task OnConnectedAsync()
     {
         _logger.LogInformation("Cliente SignalR conectado: {ConnectionId}", Context.ConnectionId);
-        // Você poderia adicionar lógica aqui se necessário, como registrar a conexão
+        // Vocï¿½ poderia adicionar lï¿½gica aqui se necessï¿½rio, como registrar a conexï¿½o
         await base.OnConnectedAsync();
     }
 
@@ -56,7 +66,7 @@ public class NotificacaoHub : Hub
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        // O SignalR remove automaticamente a conexão de todos os grupos dos quais ela fazia parte.
+        // O SignalR remove automaticamente a conexï¿½o de todos os grupos dos quais ela fazia parte.
         _logger.LogWarning(exception, "Cliente SignalR desconectado: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
