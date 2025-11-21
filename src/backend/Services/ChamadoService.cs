@@ -215,41 +215,36 @@ namespace CajuAjuda.Backend.Services
 
         public async Task UpdateChamadoStatusAsync(long chamadoId, StatusChamado novoStatus)
         {
-            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+            // Use AsNoTracking to avoid tracking issues
+            var chamado = await _context.Chamados
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == chamadoId);
+                
+            if (chamado == null) 
+                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
 
             if (chamado.Status == StatusChamado.FECHADO)
             {
                 throw new BusinessRuleException("Não é possível alterar o status de um chamado que já foi fechado.");
             }
             
+            // Update only the necessary fields
             chamado.Status = novoStatus;
             if (novoStatus == StatusChamado.FECHADO)
             {
                 chamado.DataFechamento = DateTime.UtcNow;
             }
             
-            // Detach any tracked entities with the same ID to avoid tracking conflicts
-            var trackedEntity = _context.ChangeTracker.Entries<Usuario>()
-                .FirstOrDefault(e => e.Entity.Id == chamado.ClienteId);
+            // Attach and mark as modified
+            _context.Chamados.Attach(chamado);
+            _context.Entry(chamado).Property(c => c.Status).IsModified = true;
             
-            if (trackedEntity != null)
+            if (novoStatus == StatusChamado.FECHADO)
             {
-                trackedEntity.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+                _context.Entry(chamado).Property(c => c.DataFechamento).IsModified = true;
             }
             
-            if (chamado.TecnicoResponsavelId.HasValue)
-            {
-                var trackedTecnico = _context.ChangeTracker.Entries<Usuario>()
-                    .FirstOrDefault(e => e.Entity.Id == chamado.TecnicoResponsavelId.Value);
-                
-                if (trackedTecnico != null)
-                {
-                    trackedTecnico.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-                }
-            }
-            
-            await _chamadoRepository.UpdateAsync(chamado);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail)

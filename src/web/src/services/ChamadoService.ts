@@ -54,6 +54,7 @@ export interface MensagemCreateData {
 const getAuthHeaders = () => {
     const token = JSON.parse(localStorage.getItem('user_token') || 'null');
     if (!token) {
+        console.warn('[ChamadoService] Token não encontrado');
         throw new Error("Nenhum token encontrado.");
     }
     return {
