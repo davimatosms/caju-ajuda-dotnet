@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChamadoService, { Chamado } from '../../services/ChamadoService';
 import { useNavigate } from 'react-router-dom';
+import AuthService from '../../services/AuthService';
 
 function DashboardPage() {
     const [chamados, setChamados] = useState<Chamado[]>([]);
@@ -20,8 +21,10 @@ function DashboardPage() {
                     setChamados(response || []); 
                 }
             } catch (err: any) {
+                console.error('[Dashboard] Erro ao carregar chamados:', err);
                 if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                    navigate('/login');
+                    AuthService.logout();
+                    window.location.href = '/login';
                 } else {
                     setError("Não foi possível carregar seus chamados.");
                 }
@@ -31,7 +34,7 @@ function DashboardPage() {
         };
 
         fetchChamados();
-    }, [navigate]);
+    }, []);
 
     // Filtrar chamados
     const filteredChamados = chamados.filter(chamado => {

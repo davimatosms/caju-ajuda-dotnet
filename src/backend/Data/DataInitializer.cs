@@ -70,12 +70,36 @@ public class DataInitializer
             Console.WriteLine($"[SEED] ℹ️  IA Assistente já existe: {iaEmail}");
         }
 
+        // --- GARANTIR TÉCNICO PADRÃO ---
+        var tecnicoEmail = "tecnico@cajuajuda.com";
+        var tecnicoExistente = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == tecnicoEmail);
+        
+        if (tecnicoExistente == null)
+        {
+            var tecnico = new Usuario 
+            { 
+                Nome = "Técnico Caju", 
+                Email = tecnicoEmail, 
+                Senha = BCrypt.Net.BCrypt.HashPassword("Tecnico@2025"), 
+                Role = Role.TECNICO, 
+                Enabled = true,
+                VerificationToken = null
+            };
+            await context.Usuarios.AddAsync(tecnico);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[SEED] ✅ Técnico criado: {tecnicoEmail} | Senha: Tecnico@2025");
+        }
+        else
+        {
+            Console.WriteLine($"[SEED] ℹ️  Técnico já existe: {tecnicoEmail}");
+        }
+
         // --- POPULAR DADOS DE EXEMPLO (apenas se não existir NENHUM usuário além dos essenciais) ---
         var totalUsuarios = await context.Usuarios.CountAsync();
         
-        if (totalUsuarios <= 2) // Apenas Admin e IA existem
+        if (totalUsuarios <= 3) // Apenas Admin, IA e Técnico existem
         {
-            Console.WriteLine("[SEED] Criando dados de exemplo (técnicos, clientes, chamados)...");
+            Console.WriteLine("[SEED] Criando dados de exemplo (clientes, chamados)...");
             await SeedExampleDataAsync(context);
         }
         else
@@ -88,20 +112,22 @@ public class DataInitializer
 
     private async Task SeedExampleDataAsync(CajuAjudaDbContext context)
     {
-        // --- CRIAÇÃO DE USUÁRIOS DE EXEMPLO ---
-        var tecnico = new Usuario { Nome = "Técnico Caju", Email = "tecnico@cajuajuda.com", Senha = BCrypt.Net.BCrypt.HashPassword("Tecnico@2025"), Role = Role.TECNICO, Enabled = true, VerificationToken = null };
+        // --- CRIAÇÃO DE CLIENTES DE EXEMPLO ---
         var cliente1 = new Usuario { Nome = "Ana Cliente", Email = "ana.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true, VerificationToken = null };
         var cliente2 = new Usuario { Nome = "Beto Cliente", Email = "beto.cliente@email.com", Senha = BCrypt.Net.BCrypt.HashPassword("senha123"), Role = Role.CLIENTE, Enabled = true, VerificationToken = null };
 
-        await context.Usuarios.AddRangeAsync(tecnico, cliente1, cliente2);
+        await context.Usuarios.AddRangeAsync(cliente1, cliente2);
         await context.SaveChangesAsync(); // Salva para obter os IDs
         
-        Console.WriteLine("[SEED] ✅ Técnico criado: tecnico@cajuajuda.com | Senha: Tecnico@2025");
         Console.WriteLine("[SEED] ✅ Clientes de exemplo criados");
 
-        // --- CRIAÇÃO DE CHAMADOS DE EXEMPLO ---
-        Console.WriteLine("[SEED] ✅ Técnico criado: tecnico@cajuajuda.com | Senha: Tecnico@2025");
-        Console.WriteLine("[SEED] ✅ Clientes de exemplo criados");
+        // Busca o técnico que já foi criado
+        var tecnico = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == "tecnico@cajuajuda.com");
+        if (tecnico == null)
+        {
+            Console.WriteLine("[SEED] ⚠️  Técnico não encontrado. Pulando criação de chamados de exemplo.");
+            return;
+        }
 
         // --- CRIAÇÃO DE CHAMADOS DE EXEMPLO ---
         var chamadoAberto = new Chamado
