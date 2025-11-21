@@ -38,9 +38,12 @@ public class DashboardService : IDashboardService
         double totalHorasResolucao = 0;
         if (chamadosFechados.Any())
         {
-            totalHorasResolucao = chamadosFechados
-                .Where(c => c.DataFechamento.HasValue)
-                .Average(c => (c.DataFechamento.Value - c.DataCriacao).TotalHours);
+            var chamadosComDataFechamento = chamadosFechados.Where(c => c.DataFechamento.HasValue).ToList();
+            if (chamadosComDataFechamento.Any())
+            {
+                totalHorasResolucao = chamadosComDataFechamento
+                    .Average(c => (c.DataFechamento!.Value - c.DataCriacao).TotalHours);
+            }
         }
         double totalHorasPrimeiraResposta = 0;
         var chamadosComResposta = todosChamados

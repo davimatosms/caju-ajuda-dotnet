@@ -88,6 +88,10 @@ namespace CajuAjuda.Backend.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<string>("SugestaoIA")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<long?>("TecnicoResponsavelId")
                         .HasColumnType("bigint");
 

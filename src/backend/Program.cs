@@ -36,6 +36,7 @@ builder.Services.AddScoped<IFileStorageService, LocalStorageService>();
 builder.Services.AddScoped<IRespostaProntaService, RespostaProntaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<IAIService, AIService>();
 
 builder.Services.AddTransient<DataInitializer>();
@@ -51,6 +52,19 @@ builder.Services.AddAuthentication(options =>
 {
     options.Events = new JwtBearerEvents
     {
+        // Permitir token via query string para SignalR
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificacaoHub"))
+            {
+                context.Token = accessToken;
+                Console.WriteLine($"[SignalR] Token recebido via query string para {path}");
+            }
+            return Task.CompletedTask;
+        },
         OnAuthenticationFailed = context =>
         {
             Console.WriteLine("--------------------------------------------------");
@@ -103,7 +117,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionHandler>();
 
-app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials());
+// CORS configurado para SignalR
+app.UseCors(policy => policy
+    .WithOrigins("http://localhost:3000", "http://localhost:3001") 
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials()
+    .WithExposedHeaders("*")); // Expor todos os headers para SignalR
 
 app.UseAuthentication();
 app.UseAuthorization();

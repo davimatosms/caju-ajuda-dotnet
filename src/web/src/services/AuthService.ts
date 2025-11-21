@@ -16,6 +16,7 @@ interface LoginData {
 
 interface DecodedToken {
     email: string;
+    name?: string;
     role: 'CLIENTE' | 'TECNICO' | 'ADMIN';
     // Adicione outras propriedades do token se houver (exp, iat, etc.)
 }
@@ -33,7 +34,9 @@ const login = async (data: LoginData) => {
 };
 
 const logout = () => {
+    // Remove o token e limpa qualquer outra informação de autenticação
     localStorage.removeItem('user_token');
+    localStorage.clear(); // Limpa todo o localStorage para garantir
 };
 
 const getCurrentUser = (): DecodedToken | null => {

@@ -1,41 +1,156 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CajuAjuda.Desktop.Views.ProfilePage"
              xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
+             x:Class="CajuAjuda.Desktop.Views.ProfilePage"
              x:DataType="viewModels:ProfileViewModel"
-             Title="Meu Perfil">
+             Title="Perfil"
+             BackgroundColor="{StaticResource PageBackground}">
 
-    <Grid RowDefinitions="Auto, *" Padding="20">
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="20"
+              Padding="20"
+              MaximumWidthRequest="600"
+              HorizontalOptions="Center">
 
-        <VerticalStackLayout Spacing="15" VerticalOptions="Start">
+            <!-- Profile Header -->
+            <Border Grid.Row="0"
+                    Style="{StaticResource ElevatedCard}">
+                <VerticalStackLayout Spacing="20">
+                    <!-- Avatar -->
+                    <Border WidthRequest="100"
+                            HeightRequest="100"
+                            BackgroundColor="{StaticResource Primary}"
+                            HorizontalOptions="Center"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="50"/>
+                        </Border.StrokeShape>
+                        <Label Text="T"
+                               FontSize="48"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextOnPrimary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
 
-            <Label Text="Alterar Senha" 
-                   FontSize="24" 
-                   FontAttributes="Bold" />
+                    <!-- Info -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Técnico de Suporte"
+                               Style="{StaticResource H3}"
+                               HorizontalOptions="Center"/>
+                        <Border Style="{StaticResource Badge}"
+                                BackgroundColor="{StaticResource Primary}"
+                                HorizontalOptions="Center">
+                            <Label Style="{StaticResource BadgeText}"
+                                   Text="Equipe TI"
+                                   TextColor="{StaticResource TextOnPrimary}"/>
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Entry Placeholder="Senha Atual"
-                   Text="{Binding SenhaAtual, Mode=TwoWay}"
-                   IsPassword="True" />
+                    <BoxView Style="{StaticResource Divider}"/>
 
-            <Entry Placeholder="Nova Senha"
-                   Text="{Binding NovaSenha, Mode=TwoWay}"
-                   IsPassword="True" />
+                    <!-- Contact Info -->
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource IconContainer}"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    BackgroundColor="{StaticResource Info}">
+                                <Label Text="@"
+                                       FontSize="18"
+                                       TextColor="{StaticResource TextOnPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="E-MAIL"
+                                       Style="{StaticResource Label}"/>
+                                <Label Text="tecnico@cajuajuda.com"
+                                       Style="{StaticResource BodyText}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
-            <Entry Placeholder="Confirmar Nova Senha"
-                   Text="{Binding ConfirmarNovaSenha, Mode=TwoWay}"
-                   IsPassword="True" />
+            <!-- Security Card -->
+            <Border Grid.Row="1"
+                    Style="{StaticResource Card}">
+                <Grid RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="20">
+                    
+                    <Label Grid.Row="0"
+                           Text="Segurança"
+                           Style="{StaticResource H3}"/>
 
-            <Button Text="Salvar Alterações"
-                    Command="{Binding SavePasswordCommand}"
-                    HorizontalOptions="Fill"
-                    Margin="0,20,0,0" />
+                    <!-- Form -->
+                    <Grid Grid.Row="1"
+                          RowDefinitions="Auto,Auto,Auto"
+                          RowSpacing="16">
+                        
+                        <!-- Senha Atual -->
+                        <VerticalStackLayout Grid.Row="0" Spacing="8">
+                            <Label Text="SENHA ATUAL"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="Digite sua senha atual"
+                                       Text="{Binding SenhaAtual}"
+                                       IsPassword="True"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" 
-                               IsVisible="{Binding IsBusy}"
-                               HorizontalOptions="Center" />
+                        <!-- Nova Senha -->
+                        <VerticalStackLayout Grid.Row="1" Spacing="8">
+                            <Label Text="NOVA SENHA"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="Digite a nova senha"
+                                       Text="{Binding NovaSenha}"
+                                       IsPassword="True"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
 
-        </VerticalStackLayout>
+                        <!-- Confirmar -->
+                        <VerticalStackLayout Grid.Row="2" Spacing="8">
+                            <Label Text="CONFIRMAR SENHA"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="Confirme a nova senha"
+                                       Text="{Binding ConfirmarNovaSenha}"
+                                       IsPassword="True"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
 
-    </Grid>
+                    <!-- Actions -->
+                    <VerticalStackLayout Grid.Row="2" Spacing="12">
+                        <Button Text="Salvar Alterações"
+                                Command="{Binding SavePasswordCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"/>
+
+                        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                           IsVisible="{Binding IsBusy}"
+                                           Style="{StaticResource LoadingIndicator}"
+                                           HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollView>
 </ContentPage>

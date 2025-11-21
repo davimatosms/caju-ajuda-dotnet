@@ -15,5 +15,7 @@ public class ChamadoDetailResponseDto
     public DateTime? DataFechamento { get; set; }
     public int? NotaAvaliacao { get; set; }
     public string? ComentarioAvaliacao { get; set; }
+    public string? SugestaoIA { get; set; }
     public List<MensagemResponseDto> Mensagens { get; set; } = new();
+    public List<AnexoResponseDto> Anexos { get; set; } = new();
 }

@@ -1,53 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:CajuAjuda.Desktop.ViewModels"
-             x:DataType="viewModels:LoginViewModel"
              x:Class="CajuAjuda.Desktop.Views.LoginPage"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Gray100}">
+             x:DataType="viewModels:LoginViewModel"
+             BackgroundColor="{StaticResource PageBackground}"
+             Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*">
+    <Grid>
+        <!-- Background Gradient -->
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource Gray50}" Offset="0.0"/>
+                <GradientStop Color="{StaticResource Gray100}" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
 
-        <ActivityIndicator Grid.RowSpan="3" Grid.ColumnSpan="3"
-                           IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"
-                           Color="{StaticResource Primary}"/>
+        <ScrollView VerticalOptions="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="40"
+                  Padding="20"
+                  MaximumWidthRequest="480"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center">
 
-        <Border Grid.Row="1" Grid.Column="0"
-                StrokeShape="RoundRectangle 10"
-                StrokeThickness="0"
-                Padding="20"
-                Margin="20"
-                BackgroundColor="White"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"
-                WidthRequest="400">
+                <!-- Logo e Branding -->
+                <VerticalStackLayout Grid.Row="0" Spacing="20">
+                    <!-- Logo -->
+                    <Border WidthRequest="80"
+                            HeightRequest="80"
+                            BackgroundColor="{StaticResource Primary}"
+                            HorizontalOptions="Center"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="16"/>
+                        </Border.StrokeShape>
+                        <Label Text="CA"
+                               FontSize="36"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextOnPrimary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
 
-            <VerticalStackLayout Spacing="15">
-                <Label 
-                    Text="Bem-vindo ao Caju Ajuda"
-                    SemanticProperties.HeadingLevel="Level1"
-                    FontSize="24"
-                    HorizontalOptions="Center" />
+                    <!-- Título -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="CAJU AJUDA"
+                               Style="{StaticResource H1}"
+                               HorizontalOptions="Center"
+                               CharacterSpacing="1"/>
+                        <Label Text="Sistema de Gestão de Suporte"
+                               Style="{StaticResource SecondaryText}"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
 
-                <Entry 
-                    Placeholder="E-mail"
-                    Text="{Binding Email, Mode=TwoWay}"
-                    Keyboard="Email"/>
+                <!-- Card de Login -->
+                <Border Grid.Row="1"
+                        Style="{StaticResource ElevatedCard}"
+                        HorizontalOptions="Fill">
+                    
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                          RowSpacing="24">
+                        
+                        <!-- Header -->
+                        <VerticalStackLayout Grid.Row="0" Spacing="8">
+                            <Label Text="Autenticação"
+                                   Style="{StaticResource H3}"/>
+                            <Label Text="Entre com suas credenciais de técnico"
+                                   Style="{StaticResource Caption}"/>
+                        </VerticalStackLayout>
 
-                <Entry 
-                    Placeholder="Senha"
-                    IsPassword="True"
-                    Text="{Binding Senha, Mode=TwoWay}"/>
+                        <!-- Email -->
+                        <VerticalStackLayout Grid.Row="1" Spacing="8">
+                            <Label Text="EMAIL"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="seu.email@empresa.com"
+                                       Text="{Binding Email}"
+                                       Keyboard="Email"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
 
-                <Button 
-                    Text="Entrar"
-                    Command="{Binding LoginCommand}"
-                    HorizontalOptions="FillAndExpand"/>
-            </VerticalStackLayout>
-        </Border>
+                        <!-- Senha -->
+                        <VerticalStackLayout Grid.Row="2" Spacing="8">
+                            <Label Text="SENHA"
+                                   Style="{StaticResource Label}"/>
+                            <Border Style="{StaticResource InputContainer}"
+                                    HeightRequest="48">
+                                <Entry Placeholder="Digite sua senha"
+                                       Text="{Binding Senha}"
+                                       IsPassword="True"
+                                       Style="{StaticResource FormEntry}"
+                                       VerticalOptions="Center"
+                                       Margin="16,0"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Botão e Loading -->
+                        <VerticalStackLayout Grid.Row="3" Spacing="16">
+                            <Button Text="ENTRAR"
+                                    Command="{Binding LoginCommand}"
+                                    Style="{StaticResource PrimaryButton}"
+                                    HeightRequest="48"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"/>
+
+                            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                               IsVisible="{Binding IsBusy}"
+                                               Style="{StaticResource LoadingIndicator}"
+                                               HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Footer -->
+                <Label Grid.Row="2"
+                       Text="© 2025 Caju Ajuda - Todos os direitos reservados"
+                       Style="{StaticResource Caption}"
+                       HorizontalOptions="Center"/>
+            </Grid>
+        </ScrollView>
     </Grid>
-
 </ContentPage>

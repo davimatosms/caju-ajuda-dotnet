@@ -1,11 +1,12 @@
-// CajuAjuda.Backend/Services/MensagemService.cs
-
 using CajuAjuda.Backend.Exceptions;
 using CajuAjuda.Backend.Models;
 using CajuAjuda.Backend.Repositories;
 using CajuAjuda.Backend.Services.Dtos;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging; // Adicionado para logging
+using CajuAjuda.Backend.Hubs;      // Adicionado - Namespace do seu Hub
+using Microsoft.AspNetCore.SignalR; // Adicionado - Namespace do SignalR Core
 
 namespace CajuAjuda.Backend.Services
 {
@@ -14,84 +15,193 @@ namespace CajuAjuda.Backend.Services
         private readonly IMensagemRepository _mensagemRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IChamadoRepository _chamadoRepository;
+        private readonly IHubContext<NotificacaoHub> _hubContext;
+        private readonly ILogger<MensagemService> _logger;
+        private readonly IEmailService _emailService;
+        private readonly EmailTemplateService _emailTemplateService;
 
-        public MensagemService(IMensagemRepository mensagemRepository, IUsuarioRepository usuarioRepository, IChamadoRepository chamadoRepository)
+        public MensagemService(
+            IMensagemRepository mensagemRepository,
+            IUsuarioRepository usuarioRepository,
+            IChamadoRepository chamadoRepository,
+            IHubContext<NotificacaoHub> hubContext,
+            ILogger<MensagemService> logger,
+            IEmailService emailService,
+            EmailTemplateService emailTemplateService)
         {
             _mensagemRepository = mensagemRepository;
             _usuarioRepository = usuarioRepository;
             _chamadoRepository = chamadoRepository;
+            _hubContext = hubContext;
+            _logger = logger;
+            _emailService = emailService;
+            _emailTemplateService = emailTemplateService;
         }
 
-        
         public async Task<MensagemResponseDto> AddMensagemAsync(long chamadoId, MensagemCreateDto mensagemDto, string userEmail, string userRole)
         {
+            _logger.LogInformation("Iniciando AddMensagemAsync para chamado {ChamadoId} por {UserEmail}", chamadoId, userEmail);
+
             var autor = await _usuarioRepository.GetByEmailAsync(userEmail);
             if (autor == null)
             {
+                _logger.LogWarning("Autor não encontrado para email {UserEmail} ao adicionar mensagem.", userEmail);
                 throw new NotFoundException("Utilizador autor não encontrado.");
             }
 
-            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId); // Assume que GetByIdAsync inclui o Cliente
             if (chamado == null)
             {
+                _logger.LogWarning("Chamado {ChamadoId} não encontrado ao adicionar mensagem.", chamadoId);
                 throw new NotFoundException("Chamado não encontrado.");
             }
 
-            if (userRole != "TECNICO" && userRole != "ADMIN" && chamado.ClienteId != autor.Id)
+            // --- Validação de Permissão ---
+            bool isAdminOrTecnico = autor.Role == Role.ADMIN || autor.Role == Role.TECNICO;
+            bool isClienteDoChamado = autor.Role == Role.CLIENTE && chamado.ClienteId == autor.Id;
+
+            if (!isAdminOrTecnico && !isClienteDoChamado)
             {
+                _logger.LogWarning("Acesso não autorizado negado para {UserEmail} no chamado {ChamadoId}.", userEmail, chamadoId);
                 throw new UnauthorizedAccessException("Você não tem permissão para adicionar mensagens a este chamado.");
             }
 
-            if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
+            // --- Validação de Status do Chamado ---
+            if (chamado.Status == StatusChamado.FECHADO)
             {
-                throw new BusinessRuleException("Não é possível adicionar mensagens a um chamado fechado ou cancelado.");
+                _logger.LogWarning("Tentativa de adicionar mensagem ao chamado {ChamadoId} com status {Status}.", chamadoId, chamado.Status);
+                throw new BusinessRuleException("Não é possível adicionar mensagens a um chamado que já foi fechado.");
             }
 
+            // --- Criação da Mensagem ---
             var novaMensagem = new Mensagem
             {
                 Texto = mensagemDto.Texto,
                 DataEnvio = DateTime.UtcNow,
                 AutorId = autor.Id,
                 ChamadoId = chamadoId,
-                IsNotaInterna = false, // Em AddMensagem, nunca é nota interna
-                LidoPeloCliente = (autor.Role == Role.CLIENTE)
+                IsNotaInterna = false, // AddMensagemAsync é sempre para mensagens visíveis
+                // Define LidoPeloCliente: Se quem enviou foi Cliente, o técnico precisa ler (false). Se foi técnico/admin, o cliente precisa ler (false).
+                LidoPeloCliente = (autor.Role == Role.CLIENTE), // Simplificado: Se for cliente, já marca como lido por ele mesmo.
+                // TODO: Futuramente, implementar lógica de "LidoPeloTecnico" se necessário.
+                Autor = autor // Atribui o objeto autor para uso posterior no SignalR
             };
 
-            if (autor.Role == Role.TECNICO || autor.Role == Role.ADMIN)
-            {
-                chamado.Status = StatusChamado.AGUARDANDO_CLIENTE;
-            }
-            else
-            {
-                chamado.Status = StatusChamado.EM_ANDAMENTO;
-            }
+            // --- Atualização de Status do Chamado (Regra de Negócio) ---
+            // Se um técnico/admin responde, muda para Aguardando Cliente
+            // Se o cliente responde, volta para Em Andamento (se não estava Aberto)
+            // if (isAdminOrTecnico && chamado.Status != StatusChamado.FECHADO && chamado.Status != StatusChamado.CANCELADO)
+            // {
+            //     chamado.Status = StatusChamado.AGUARDANDO_CLIENTE; // Removido Status AGUARDANDO_CLIENTE
+            // }
+            // else if (isClienteDoChamado && chamado.Status != StatusChamado.ABERTO && chamado.Status != StatusChamado.FECHADO && chamado.Status != StatusChamado.CANCELADO)
+            // {
+            //     chamado.Status = StatusChamado.EM_ANDAMENTO;
+            // }
 
+            // Salva a mensagem no banco de dados ANTES de enviar pelo SignalR
             await _mensagemRepository.AddAsync(novaMensagem);
+            _logger.LogInformation("Mensagem {MensagemId} salva no banco para o chamado {ChamadoId}.", novaMensagem.Id, chamadoId);
 
-            
+            // --- ENVIO DE EMAIL ---
+            // Se um técnico/admin responder, envia email para o cliente
+            if (isAdminOrTecnico && chamado.Cliente != null)
+            {
+                try
+                {
+                    var emailBody = _emailTemplateService.GetNovaRespostaEmailBody(
+                        chamado.Cliente.Nome,
+                        chamado.Id.ToString(),
+                        chamado.Titulo,
+                        novaMensagem.Texto,
+                        autor.Nome
+                    );
+
+                    await _emailService.SendEmailAsync(
+                        chamado.Cliente.Email,
+                        $"Nova resposta no Chamado #{chamado.Id} - Caju Ajuda",
+                        emailBody
+                    );
+
+                    _logger.LogInformation("Email de notificação enviado para {ClienteEmail} sobre o chamado {ChamadoId}.", chamado.Cliente.Email, chamadoId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Falha ao enviar email de notificação para o cliente do chamado {ChamadoId}.", chamadoId);
+                    // Não lança exceção para não interromper o fluxo principal
+                }
+            }
+            // --- FIM DO ENVIO DE EMAIL ---
+
+            // Se o status do chamado foi alterado, salva a alteração
+            // if (_context.Entry(chamado).State == EntityState.Modified) // Verifica se houve mudança no objeto chamado
+            // {
+            //     await _chamadoRepository.UpdateAsync(chamado);
+            //     _logger.LogInformation("Status do chamado {ChamadoId} atualizado para {Status}.", chamadoId, chamado.Status);
+            // }
+
+
+            // --- ENVIO VIA SIGNALR ---
+            try
+            {
+                string roomName = $"chamado_{chamadoId}";
+
+                // Cria um DTO específico para o SignalR, para não expor a entidade completa
+                var mensagemParaSignalR = new MensagemResponseDto
+                {
+                    Id = novaMensagem.Id,
+                    Texto = novaMensagem.Texto,
+                    DataEnvio = novaMensagem.DataEnvio,
+                    AutorNome = novaMensagem.Autor.Nome, // Usa o objeto Autor carregado
+                    AutorId = novaMensagem.AutorId,
+                    IsNotaInterna = novaMensagem.IsNotaInterna
+                };
+
+                // IMPORTANTE: O nome do método "ReceiveNewMessage" DEVE ser o mesmo
+                // que está sendo ouvido no hook useSignalR do React Native.
+                await _hubContext.Clients.Group(roomName).SendAsync("ReceiveNewMessage", mensagemParaSignalR);
+                
+                _logger.LogInformation("[SignalR] 📨 Mensagem {MensagemId} de {AutorNome} enviada para sala: {RoomName}", 
+                    novaMensagem.Id, autor.Nome, roomName);
+                _logger.LogInformation("[SignalR] 📊 Role do autor: {Role}, Texto: {Texto}", 
+                    userRole, novaMensagem.Texto.Substring(0, Math.Min(50, novaMensagem.Texto.Length)));
+            }
+            catch (Exception ex)
+            {
+                // Loga um erro se o envio SignalR falhar, mas não lança a exceção para não
+                // reverter a operação principal (salvar a mensagem).
+                _logger.LogError(ex, "[SignalR] ❌ Falha ao enviar mensagem via SignalR para a sala do chamado {ChamadoId}.", chamadoId);
+            }
+            // --- FIM DO ENVIO ---
+
+            // Retorna o DTO da mensagem criada para a resposta da API REST
             return new MensagemResponseDto
             {
                 Id = novaMensagem.Id,
                 Texto = novaMensagem.Texto,
                 DataEnvio = novaMensagem.DataEnvio,
-                AutorNome = autor.Nome,
+                AutorNome = autor.Nome, // Retorna o nome do autor
                 AutorId = autor.Id,
                 IsNotaInterna = novaMensagem.IsNotaInterna
             };
         }
 
-        
+        // Método para adicionar nota interna (NÃO envia SignalR)
         public async Task<MensagemResponseDto> AddNotaInternaAsync(long chamadoId, MensagemCreateDto notaDto, string tecnicoEmail)
         {
+            _logger.LogInformation("Iniciando AddNotaInternaAsync para chamado {ChamadoId} por {TecnicoEmail}", chamadoId, tecnicoEmail);
+
             var autor = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
             if (autor == null || autor.Role == Role.CLIENTE)
             {
+                _logger.LogWarning("Acesso não autorizado negado para {TecnicoEmail} ao adicionar nota interna no chamado {ChamadoId}.", tecnicoEmail, chamadoId);
                 throw new UnauthorizedAccessException("Apenas técnicos ou administradores podem adicionar notas internas.");
             }
 
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
             if (chamado == null)
             {
+                _logger.LogWarning("Chamado {ChamadoId} não encontrado ao adicionar nota interna.", chamadoId);
                 throw new NotFoundException("Chamado não encontrado.");
             }
 
@@ -101,13 +211,14 @@ namespace CajuAjuda.Backend.Services
                 DataEnvio = DateTime.UtcNow,
                 AutorId = autor.Id,
                 ChamadoId = chamadoId,
-                IsNotaInterna = true,
-                LidoPeloCliente = false
+                IsNotaInterna = true, // Marcado como nota interna
+                LidoPeloCliente = false // Notas internas nunca são lidas pelo cliente
             };
 
             await _mensagemRepository.AddAsync(novaNota);
+            _logger.LogInformation("Nota interna {MensagemId} salva no banco para o chamado {ChamadoId}.", novaNota.Id, chamadoId);
 
-            
+            // Retorna o DTO da nota criada
             return new MensagemResponseDto
             {
                 Id = novaNota.Id,

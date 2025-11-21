@@ -9,11 +9,7 @@ public enum StatusChamado
 {
     ABERTO,
     EM_ANDAMENTO,
-    AGUARDANDO_CLIENTE,
-    FECHADO,
-    CANCELADO,
-    RESOLVIDO,
-    MESCLADO
+    FECHADO
 }
 
 public enum PrioridadeChamado
@@ -50,6 +46,10 @@ public class Chamado
     public int? NotaAvaliacao { get; set; }
     
     public string? ComentarioAvaliacao { get; set; }
+    
+    // Sugestão de solução gerada pela IA
+    [StringLength(4000)]
+    public string? SugestaoIA { get; set; }
     
     // --- CAMPOS PARA MESCLAGEM ---
     public long? ChamadoPrincipalId { get; set; } 

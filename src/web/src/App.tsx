@@ -1,17 +1,22 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
 
+// Componentes de Proteção de Rotas
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import PublicRoute from './components/PublicRoute/PublicRoute';
+
 // Layouts
 import Layout from './components/Layout/Layout';
 import PublicNavbar from './components/PublicNavbar/PublicNavbar';
 import Footer from './components/Footer/Footer';
-import AuthLayout from './components/AuthLayout/AuthLayout';
 import AdminHomePage from './pages/Admin/AdminHomePage/AdminHomePage';
 
 // Páginas Públicas
 import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/Register';
+import VerificarEmailPage from './pages/VerificarEmailPage/VerificarEmailPage';
 import LandingPage from './pages/LandingPage/LandingPage';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 
 // Páginas do Cliente (Privadas)
 import DashboardPage from './pages/DashboardPage/DashboardPage';
@@ -28,11 +33,13 @@ import GerenciarClientesPage from './pages/Admin/GerenciarClientesPage/Gerenciar
 
 // Componente de Layout para a Landing Page (com Navbar e Footer)
 const PublicLayout = () => (
-  <>
+  <div className="flex flex-col min-h-screen">
     <PublicNavbar />
-    <Outlet />
+    <main className="flex-grow">
+      <Outlet />
+    </main>
     <Footer />
-  </>
+  </div>
 );
 
 function App() {
@@ -44,26 +51,34 @@ function App() {
           <Route path="/" element={<LandingPage />} />
         </Route>
 
-        {/* Rotas de Login/Registro usam o AuthLayout para centralizar */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Route>
+        {/* Rotas de Login/Registro - Redireciona se já estiver autenticado */}
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/verificar-email" element={<VerificarEmailPage />} />
         
-        {/* Rotas Privadas usam o Layout para usuários logados */}
-        <Route element={<Layout />}>
-          {/* Rotas do Cliente */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/chamados/novo" element={<NovoChamadoPage />} />
-          <Route path="/chamado/:id" element={<ChamadoDetailPage />} />
-          <Route path="/perfil" element={<MeuPerfilPage />} />
-
-          {/* Rotas do Admin */}
-          <Route path="/admin" element={<AdminHomePage />} />
-          <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
-          <Route path="/admin/tecnicos" element={<GerenciarTecnicosPage />} />
-          <Route path="/admin/clientes" element={<GerenciarClientesPage />} />
+        {/* Rotas Privadas - Requer Autenticação (CLIENTE, TECNICO ou ADMIN) */}
+        <Route element={<ProtectedRoute allowedRoles={['CLIENTE', 'TECNICO', 'ADMIN']} />}>
+          <Route element={<Layout />}>
+            {/* Rotas do Cliente */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/chamados/novo" element={<NovoChamadoPage />} />
+            <Route path="/chamado/:id" element={<ChamadoDetailPage />} />
+            <Route path="/perfil" element={<MeuPerfilPage />} />
+          </Route>
         </Route>
+
+        {/* Rotas Administrativas - Requer ADMIN ou TECNICO */}
+        <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TECNICO']} />}>
+          <Route element={<Layout />}>
+            <Route path="/admin" element={<AdminHomePage />} />
+            <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
+            <Route path="/admin/tecnicos" element={<GerenciarTecnicosPage />} />
+            <Route path="/admin/clientes" element={<GerenciarClientesPage />} />
+          </Route>
+        </Route>
+
+        {/* Rota 404 - Página não encontrada */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

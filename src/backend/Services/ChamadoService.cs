@@ -27,6 +27,8 @@ namespace CajuAjuda.Backend.Services
         private readonly IHubContext<NotificacaoHub> _hubContext;
         private readonly ILogger<ChamadoService> _logger;
         private readonly IAIService _aiService;
+        private readonly IEmailService _emailService;
+        private readonly EmailTemplateService _emailTemplateService;
 
         public ChamadoService(
             CajuAjudaDbContext context,
@@ -37,7 +39,9 @@ namespace CajuAjuda.Backend.Services
             IMensagemRepository mensagemRepository,
             IHubContext<NotificacaoHub> hubContext,
             ILogger<ChamadoService> logger,
-            IAIService aiService)
+            IAIService aiService,
+            IEmailService emailService,
+            EmailTemplateService emailTemplateService)
         {
             _context = context;
             _chamadoRepository = chamadoRepository;
@@ -48,6 +52,8 @@ namespace CajuAjuda.Backend.Services
             _hubContext = hubContext;
             _logger = logger;
             _aiService = aiService;
+            _emailService = emailService;
+            _emailTemplateService = emailTemplateService;
         }
 
         public async Task<Chamado> CreateAsync(ChamadoCreateDto chamadoDto, string clienteEmail)
@@ -58,7 +64,16 @@ namespace CajuAjuda.Backend.Services
                 throw new BusinessRuleException("Cliente não encontrado ou utilizador não autorizado para criar chamados.");
             }
 
+            _logger.LogInformation("🎯 Criando novo chamado. Iniciando análise de IA...");
+
+            // 1. Definir prioridade usando IA
             var prioridadeDefinidaPelaIA = await _aiService.DefinirPrioridadeAsync(chamadoDto.Titulo, chamadoDto.Descricao);
+            _logger.LogInformation("✅ Prioridade definida: {Prioridade}", prioridadeDefinidaPelaIA);
+
+            // 2. Gerar sugestão de solução usando IA
+            _logger.LogInformation("🤖 Gerando sugestão de solução com IA...");
+            var sugestaoIA = await _aiService.SugerirSolucaoAsync(chamadoDto.Titulo, chamadoDto.Descricao);
+            _logger.LogInformation("✅ Sugestão de solução gerada ({Length} caracteres)", sugestaoIA.Length);
 
             var novoChamado = new Chamado
             {
@@ -67,11 +82,48 @@ namespace CajuAjuda.Backend.Services
                 Prioridade = prioridadeDefinidaPelaIA,
                 Status = StatusChamado.ABERTO,
                 DataCriacao = DateTime.UtcNow,
-                ClienteId = cliente.Id
+                ClienteId = cliente.Id,
+                SugestaoIA = sugestaoIA // Mantém para referência futura
             };
             await _chamadoRepository.AddAsync(novoChamado);
 
-            await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new { id = novoChamado.Id, titulo = novoChamado.Titulo, clienteNome = cliente.Nome });
+            // 3. Criar mensagem automática da IA com a sugestão
+            _logger.LogInformation("🔍 Buscando usuário da IA (ia@cajuajuda.com)...");
+            var aiUsuario = await _usuarioRepository.GetByEmailAsync("ia@cajuajuda.com");
+            
+            if (aiUsuario == null)
+            {
+                _logger.LogWarning("⚠️ ATENÇÃO: Usuário da IA não encontrado no banco de dados! A mensagem automática NÃO será criada.");
+                _logger.LogWarning("💡 Solução: Recrie o banco de dados para criar o usuário 'ia@cajuajuda.com'");
+            }
+            else if (string.IsNullOrEmpty(sugestaoIA))
+            {
+                _logger.LogWarning("⚠️ Sugestão da IA está vazia. Mensagem não será criada.");
+            }
+            else
+            {
+                _logger.LogInformation("✅ Usuário da IA encontrado! Criando mensagem automática...");
+                var mensagemIA = new Mensagem
+                {
+                    Texto = $"🤖 **Olá! Sou a Assistente IA do Caju Ajuda.**\n\nAnalisei sua solicitação e tenho algumas sugestões que podem ajudar:\n\n{sugestaoIA}\n\n💡 *Enquanto isso, um técnico irá analisar seu caso em breve. Caso precise de mais informações, fique à vontade para escrever aqui!*",
+                    ChamadoId = novoChamado.Id,
+                    AutorId = aiUsuario.Id,
+                    DataEnvio = DateTime.UtcNow,
+                    LidoPeloCliente = false,
+                    IsNotaInterna = false
+                };
+                await _mensagemRepository.AddAsync(mensagemIA);
+                _logger.LogInformation("✅ Mensagem da IA criada com sucesso no banco de dados");
+            }
+
+            _logger.LogInformation("📢 Enviando notificação de novo chamado via SignalR...");
+            await _hubContext.Clients.All.SendAsync("NovoChamadoRecebido", new { 
+                id = novoChamado.Id, 
+                titulo = novoChamado.Titulo, 
+                clienteNome = cliente.Nome,
+                temSugestaoIA = !string.IsNullOrEmpty(sugestaoIA)
+            });
+            
             return novoChamado;
         }
 
@@ -124,6 +176,9 @@ namespace CajuAjuda.Backend.Services
                 ? chamado.Mensagens.Where(m => !m.IsNotaInterna)
                 : chamado.Mensagens;
 
+            // Buscar os anexos do chamado
+            var anexos = await _anexoRepository.GetByChamadoIdAsync(chamadoId);
+
             return new ChamadoDetailResponseDto
             {
                 Id = chamado.Id,
@@ -137,6 +192,7 @@ namespace CajuAjuda.Backend.Services
                 DataFechamento = chamado.DataFechamento,
                 NotaAvaliacao = chamado.NotaAvaliacao,
                 ComentarioAvaliacao = chamado.ComentarioAvaliacao,
+                SugestaoIA = chamado.SugestaoIA,
                 Mensagens = mensagensParaMostrar.Select(m => new MensagemResponseDto
                 {
                     Id = m.Id,
@@ -145,25 +201,50 @@ namespace CajuAjuda.Backend.Services
                     AutorNome = m.Autor.Nome,
                     AutorId = m.Autor.Id,
                     IsNotaInterna = m.IsNotaInterna
-                }).OrderBy(m => m.DataEnvio).ToList()
+                }).OrderBy(m => m.DataEnvio).ToList(),
+                Anexos = anexos.Select(a => new AnexoResponseDto
+                {
+                    Id = a.Id,
+                    NomeArquivo = a.NomeArquivo,
+                    NomeUnico = a.NomeUnico,
+                    TipoArquivo = a.TipoArquivo,
+                    ChamadoId = a.ChamadoId
+                }).ToList()
             };
         }
 
         public async Task UpdateChamadoStatusAsync(long chamadoId, StatusChamado novoStatus)
         {
-            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+            // Use AsNoTracking to avoid tracking issues
+            var chamado = await _context.Chamados
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == chamadoId);
+                
+            if (chamado == null) 
+                throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
 
-            if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
+            if (chamado.Status == StatusChamado.FECHADO)
             {
-                throw new BusinessRuleException("Não é possível alterar o status de um chamado que já foi fechado ou cancelado.");
+                throw new BusinessRuleException("Não é possível alterar o status de um chamado que já foi fechado.");
             }
+            
+            // Update only the necessary fields
             chamado.Status = novoStatus;
             if (novoStatus == StatusChamado.FECHADO)
             {
                 chamado.DataFechamento = DateTime.UtcNow;
             }
-            await _chamadoRepository.UpdateAsync(chamado);
+            
+            // Attach and mark as modified
+            _context.Chamados.Attach(chamado);
+            _context.Entry(chamado).Property(c => c.Status).IsModified = true;
+            
+            if (novoStatus == StatusChamado.FECHADO)
+            {
+                _context.Entry(chamado).Property(c => c.DataFechamento).IsModified = true;
+            }
+            
+            await _context.SaveChangesAsync();
         }
 
         public async Task<Anexo> AddAnexoAsync(long chamadoId, IFormFile file, string userEmail)
@@ -184,6 +265,40 @@ namespace CajuAjuda.Backend.Services
             return anexo;
         }
 
+        public async Task<List<Anexo>> GetAnexosByChamadoIdAsync(long chamadoId, string userEmail, string userRole)
+        {
+            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+            if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
+
+            // Verifica permissão: Admin/Técnico pode ver todos, Cliente só pode ver seus próprios
+            bool isAdminOrTecnico = userRole == "ADMIN" || userRole == "TECNICO";
+            bool isClienteDoChamado = chamado.Cliente.Email == userEmail;
+
+            if (!isAdminOrTecnico && !isClienteDoChamado)
+            {
+                throw new UnauthorizedAccessException("Você não tem permissão para visualizar os anexos deste chamado.");
+            }
+
+            return await _anexoRepository.GetByChamadoIdAsync(chamadoId);
+        }
+
+        public async Task<Anexo?> GetAnexoByIdAsync(long anexoId, string userEmail, string userRole)
+        {
+            var anexo = await _anexoRepository.GetByIdAsync(anexoId);
+            if (anexo == null) throw new NotFoundException($"Anexo com ID {anexoId} não encontrado.");
+
+            // Verifica permissão
+            bool isAdminOrTecnico = userRole == "ADMIN" || userRole == "TECNICO";
+            bool isClienteDoChamado = anexo.Chamado.Cliente.Email == userEmail;
+
+            if (!isAdminOrTecnico && !isClienteDoChamado)
+            {
+                throw new UnauthorizedAccessException("Você não tem permissão para acessar este anexo.");
+            }
+
+            return anexo;
+        }
+
         public async Task AssignChamadoAsync(long chamadoId, string tecnicoEmail)
         {
             var tecnico = await _usuarioRepository.GetByEmailAsync(tecnicoEmail);
@@ -192,9 +307,9 @@ namespace CajuAjuda.Backend.Services
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
             if (chamado == null) throw new NotFoundException($"Chamado com ID {chamadoId} não encontrado.");
 
-            if (chamado.Status == StatusChamado.FECHADO || chamado.Status == StatusChamado.CANCELADO)
+            if (chamado.Status == StatusChamado.FECHADO)
             {
-                throw new BusinessRuleException("Não é possível atribuir um chamado fechado ou cancelado.");
+                throw new BusinessRuleException("Não é possível atribuir um chamado que já foi fechado.");
             }
 
             chamado.TecnicoResponsavelId = tecnico.Id;
@@ -203,6 +318,32 @@ namespace CajuAjuda.Backend.Services
                 chamado.Status = StatusChamado.EM_ANDAMENTO;
             }
             await _chamadoRepository.UpdateAsync(chamado);
+
+            // --- ENVIO DE EMAIL DE ATRIBUIÇÃO ---
+            try
+            {
+                var emailBody = _emailTemplateService.GetChamadoAtribuidoEmailBody(
+                    tecnico.Nome,
+                    chamado.Id.ToString(),
+                    chamado.Titulo,
+                    chamado.Descricao,
+                    chamado.Cliente?.Nome ?? "Cliente"
+                );
+
+                await _emailService.SendEmailAsync(
+                    tecnico.Email,
+                    $"Chamado #{chamado.Id} atribuído a você - Caju Ajuda",
+                    emailBody
+                );
+
+                _logger.LogInformation("Email de atribuição enviado para {TecnicoEmail} sobre o chamado {ChamadoId}.", tecnico.Email, chamadoId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Falha ao enviar email de atribuição para o técnico do chamado {ChamadoId}.", chamadoId);
+                // Não lança exceção para não interromper o fluxo principal
+            }
+            // --- FIM DO ENVIO DE EMAIL ---
         }
 
         public async Task AvaliarChamadoAsync(long chamadoId, AvaliacaoDto avaliacaoDto, string clienteEmail)
@@ -255,7 +396,7 @@ namespace CajuAjuda.Backend.Services
                     anexo.ChamadoId = chamadoPrincipal.Id;
                 }
 
-                chamadoDuplicado.Status = StatusChamado.MESCLADO;
+                chamadoDuplicado.Status = StatusChamado.FECHADO;
                 chamadoDuplicado.DataFechamento = DateTime.UtcNow;
                 chamadoDuplicado.ChamadoPrincipalId = chamadoPrincipal.Id;
 

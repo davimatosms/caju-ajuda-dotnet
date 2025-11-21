@@ -28,12 +28,22 @@ namespace CajuAjuda.Desktop.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<LoginResponse>(content, _serializerOptions);
+                    var loginResponse = JsonSerializer.Deserialize<LoginResponse>(content, _serializerOptions);
+                    
+                    // 🔥 CRITICAL: Salva o token no SecureStorage
+                    if (loginResponse != null && !string.IsNullOrEmpty(loginResponse.Token))
+                    {
+                        await SecureStorage.SetAsync("user_token", loginResponse.Token);
+                        System.Diagnostics.Debug.WriteLine($"[AuthService] ✅ Token salvo no SecureStorage");
+                    }
+                    
+                    return loginResponse;
                 }
                 return null;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[AuthService] ❌ Erro no login: {ex.Message}");
                 return null;
             }
         }

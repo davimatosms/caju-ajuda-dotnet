@@ -11,11 +11,13 @@ namespace CajuAjuda.Backend.Services
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IEmailService _emailService;
+        private readonly EmailTemplateService _emailTemplateService;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository, IEmailService emailService)
+        public UsuarioService(IUsuarioRepository usuarioRepository, IEmailService emailService, EmailTemplateService emailTemplateService)
         {
             _usuarioRepository = usuarioRepository;
             _emailService = emailService;
+            _emailTemplateService = emailTemplateService;
         }
 
         public async Task<Usuario?> AuthenticateAsync(LoginDto loginDto)
@@ -42,28 +44,46 @@ namespace CajuAjuda.Backend.Services
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha);
 
+            // Gerar token de verificação
+            var verificationToken = Guid.NewGuid().ToString();
+            Console.WriteLine($"[REGISTER] Token gerado: '{verificationToken}'");
+            Console.WriteLine($"[REGISTER] Token length: {verificationToken.Length}");
+
             var novoUsuario = new Usuario
             {
                 Nome = usuarioDto.Nome,
                 Email = usuarioDto.Email,
                 Senha = passwordHash,
                 Role = Role.CLIENTE,
-                Enabled = true, // Facilitando para não precisar de verificação de email
-                VerificationToken = null
+                Enabled = false, // Conta desabilitada até verificar email
+                VerificationToken = verificationToken
             };
 
             await _usuarioRepository.AddAsync(novoUsuario);
+
+            // Enviar email de verificação
+            Console.WriteLine($"[REGISTER] Enviando email com token: '{verificationToken}'");
+            await SendVerificationEmailAsync(novoUsuario.Email, novoUsuario.Nome, verificationToken);
+
             return novoUsuario;
         }
 
         public async Task<bool> VerifyEmailAsync(string token)
         {
+            Console.WriteLine($"[VERIFY_SERVICE] Buscando usuário com token: '{token}'");
             var user = await _usuarioRepository.GetByVerificationTokenAsync(token);
-            if (user == null) return false;
+            
+            if (user == null)
+            {
+                Console.WriteLine($"[VERIFY_SERVICE] ❌ Nenhum usuário encontrado com este token!");
+                return false;
+            }
 
+            Console.WriteLine($"[VERIFY_SERVICE] ✅ Usuário encontrado: {user.Email}, Enabled: {user.Enabled}");
             user.Enabled = true;
             user.VerificationToken = null;
             await _usuarioRepository.UpdateAsync(user);
+            Console.WriteLine($"[VERIFY_SERVICE] ✅ Usuário ativado com sucesso!");
             return true;
         }
 
@@ -106,6 +126,12 @@ namespace CajuAjuda.Backend.Services
 
             user.Senha = BCrypt.Net.BCrypt.HashPassword(senhaDto.NovaSenha);
             await _usuarioRepository.UpdateAsync(user);
+        }
+
+        private async Task SendVerificationEmailAsync(string email, string nome, string token)
+        {
+            var emailBody = _emailTemplateService.GetVerificationEmailBody(nome, token);
+            await _emailService.SendEmailAsync(email, "Verificação de E-mail - Caju Ajuda", emailBody);
         }
     }
 }

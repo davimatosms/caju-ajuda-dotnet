@@ -4,19 +4,53 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:CajuAjuda.Desktop.Views"
-    Shell.FlyoutBehavior="Disabled"
-    Title="CajuAjuda">
+    Shell.FlyoutBehavior="Flyout"
+    Shell.FlyoutBackgroundColor="{StaticResource SidebarBackground}"
+    FlyoutWidth="280"
+    Title="Caju Ajuda">
 
-    <Shell.TitleView>
-        <Grid Padding="10">
-            <!-- Logo image removed; use plain app title to avoid runtime asset dependency -->
-            <Label Text="Caju Ajuda" VerticalOptions="Center" HorizontalOptions="Start" FontSize="18" />
+    <!-- Header -->
+    <Shell.FlyoutHeader>
+        <Grid BackgroundColor="{StaticResource Primary}"
+              Padding="24"
+              HeightRequest="140">
+            <VerticalStackLayout VerticalOptions="Center" Spacing="12">
+                <Label Text="CAJU AJUDA"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextOnPrimary}"/>
+                <Label Text="Painel Técnico"
+                       FontSize="14"
+                       TextColor="{StaticResource TextOnPrimary}"
+                       Opacity="0.9"/>
+            </VerticalStackLayout>
         </Grid>
-    </Shell.TitleView>
+    </Shell.FlyoutHeader>
 
-    <ShellContent
-        Title="Dashboard"
-        ContentTemplate="{DataTemplate views:MainPage}"
-        Route="MainPage" />
+    <!-- Menu Items -->
+    <FlyoutItem Title="Dashboard">
+        <ShellContent
+            Title="Chamados"
+            ContentTemplate="{DataTemplate views:MainPage}"
+            Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Perfil">
+        <ShellContent
+            Title="Meu Perfil"
+            ContentTemplate="{DataTemplate views:ProfilePage}"
+            Route="ProfilePage" />
+    </FlyoutItem>
+
+    <!-- Footer -->
+    <Shell.FlyoutFooter>
+        <Grid Padding="20"
+              BackgroundColor="{StaticResource Gray800}"
+              HeightRequest="80">
+            <Button Text="Sair"
+                    Clicked="OnLogoutClicked"
+                    Style="{StaticResource DangerButton}"/>
+        </Grid>
+    </Shell.FlyoutFooter>
 
 </Shell>
