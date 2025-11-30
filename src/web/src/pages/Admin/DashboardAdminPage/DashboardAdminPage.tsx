@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminService, { DashboardMetrics } from '../../../services/AdminService';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-
-const COLORS = ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 function DashboardAdminPage() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import cajuLogo from '../../assets/Caju.png';
 
 function RegisterPage() {
-    const navigate = useNavigate();
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
