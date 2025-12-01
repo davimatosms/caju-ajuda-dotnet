@@ -109,17 +109,20 @@ using (var scope = app.Services.CreateScope())
     await dataInitializer.SeedDataAsync();
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Habilitar Swagger em todos os ambientes
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseMiddleware<GlobalExceptionHandler>();
 
-// CORS configurado para SignalR
+// CORS configurado para SignalR e Azure
+var frontendUrl = builder.Configuration["FRONTEND_URL"] ?? "https://blue-bay-088f9e20f.azurestaticapps.net";
 app.UseCors(policy => policy
-    .WithOrigins("http://localhost:3000", "http://localhost:3001") 
+    .WithOrigins(
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        frontendUrl
+    ) 
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials()
