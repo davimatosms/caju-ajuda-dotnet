@@ -5,9 +5,6 @@ import API_CONFIG from '../config';
 const API_BASE = API_CONFIG.baseURL;
 const API_URL = `${API_BASE}/api/chamados`;
 
-console.log('[ChamadoService] API_BASE:', API_BASE);
-console.log('[ChamadoService] API_URL:', API_URL);
-
 // --- INTERFACES (Nossos "Contratos" de Dados) ---
 
 export interface Chamado {
