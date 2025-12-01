@@ -354,7 +354,7 @@ public class EmailTemplateService
 
     public string GetVerificationEmailBody(string nome, string token)
     {
-        var verificationUrl = $"{_configuration["AppSettings:FrontendUrl"]}/verificar-email?token={Uri.EscapeDataString(token)}";
+        var verificationUrl = $"{_configuration["AppSettings:FrontendUrl"]}/verificar-email?token={token}";
 
         var body = GetEmailHeader("Confirme seu cadastro");
         
@@ -372,11 +372,6 @@ public class EmailTemplateService
                         
                         <div class='cta-container'>
                             <a href='{verificationUrl}' class='cta-button'>✓ Verificar meu e-mail</a>
-                        </div>
-                        
-                        <p>Ou copie e cole o link abaixo no seu navegador:</p>
-                        <div class='link-box'>
-                            <a href='{verificationUrl}'>{verificationUrl}</a>
                         </div>
                         
                         <div class='divider'></div>
