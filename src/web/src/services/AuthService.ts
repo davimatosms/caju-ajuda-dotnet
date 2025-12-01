@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_URL = 'http://localhost:5205/api/auth';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5205';
+const API_URL = `${API_BASE}/api/auth`;
 
 interface RegisterData {
     Nome?: string;

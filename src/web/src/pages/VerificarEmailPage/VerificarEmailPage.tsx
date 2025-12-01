@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import cajuLogo from '../../assets/Caju.png';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5205/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5205';
+const API_URL = `${API_BASE}/api`;
 
 function VerificarEmailPage() {
     const [searchParams] = useSearchParams();
