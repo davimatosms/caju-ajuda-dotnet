@@ -87,6 +87,25 @@ namespace CajuAjuda.Backend.Services
             return true;
         }
 
+        public async Task<bool> ActivateAccountByEmailAsync(string email)
+        {
+            Console.WriteLine($"[ACTIVATE] Buscando usuário com email: '{email}'");
+            var user = await _usuarioRepository.GetByEmailAsync(email);
+            
+            if (user == null || user.Enabled)
+            {
+                Console.WriteLine($"[ACTIVATE] ❌ Usuário não encontrado ou já está ativo!");
+                return false;
+            }
+
+            Console.WriteLine($"[ACTIVATE] ✅ Ativando usuário: {user.Email}");
+            user.Enabled = true;
+            user.VerificationToken = null;
+            await _usuarioRepository.UpdateAsync(user);
+            Console.WriteLine($"[ACTIVATE] ✅ Usuário ativado com sucesso!");
+            return true;
+        }
+
         public async Task<PerfilResponseDto> GetPerfilAsync(string userEmail)
         {
             var user = await _usuarioRepository.GetByEmailAsync(userEmail);

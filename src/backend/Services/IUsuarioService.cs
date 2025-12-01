@@ -9,6 +9,7 @@ namespace CajuAjuda.Backend.Services
         Task<Usuario> RegisterClienteAsync(UsuarioCreateDto usuarioDto);
         Task<Usuario?> AuthenticateAsync(LoginDto loginDto);
         Task<bool> VerifyEmailAsync(string token);
+        Task<bool> ActivateAccountByEmailAsync(string email);
         Task<PerfilResponseDto> GetPerfilAsync(string userEmail);
         Task UpdatePerfilAsync(string userEmail, PerfilUpdateDto perfilDto);
         Task UpdateSenhaAsync(string userEmail, SenhaUpdateDto senhaDto);

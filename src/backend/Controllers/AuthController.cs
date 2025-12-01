@@ -71,4 +71,18 @@ public class AuthController : ControllerBase
         Console.WriteLine($"[VERIFY] ❌ Retornando BadRequest para o frontend");
         return BadRequest(new { message = "Token inválido ou expirado. Por favor, tente se registrar novamente." });
     }
+
+    // ENDPOINT TEMPORÁRIO PARA ATIVAR CONTA MANUALMENTE (DESENVOLVIMENTO)
+    [HttpPost("activate-by-email")]
+    public async Task<IActionResult> ActivateAccountByEmail([FromBody] ActivateAccountDto dto)
+    {
+        var success = await _usuarioService.ActivateAccountByEmailAsync(dto.Email);
+        if (success)
+        {
+            return Ok(new { message = "Conta ativada com sucesso! Você já pode fazer login." });
+        }
+        return BadRequest(new { message = "Usuário não encontrado ou já está ativo." });
+    }
 }
+
+public record ActivateAccountDto(string Email);
