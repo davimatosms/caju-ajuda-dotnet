@@ -1,7 +1,8 @@
 import axios from 'axios';
+import API_CONFIG from '../config';
 
 // A URL base da nossa API de chamados
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5205';
+const API_BASE = API_CONFIG.baseURL;
 const API_URL = `${API_BASE}/api/chamados`;
 
 // --- INTERFACES (Nossos "Contratos" de Dados) ---
