@@ -26,7 +26,7 @@ namespace CajuAjuda.Backend.Services
         private readonly IMensagemRepository _mensagemRepository;
         private readonly IHubContext<NotificacaoHub> _hubContext;
         private readonly ILogger<ChamadoService> _logger;
-        private readonly IAIService _aiService;
+        private readonly IAIService? _aiService;
         private readonly IEmailService _emailService;
         private readonly EmailTemplateService _emailTemplateService;
 
@@ -39,7 +39,7 @@ namespace CajuAjuda.Backend.Services
             IMensagemRepository mensagemRepository,
             IHubContext<NotificacaoHub> hubContext,
             ILogger<ChamadoService> logger,
-            IAIService aiService,
+            IAIService? aiService,
             IEmailService emailService,
             EmailTemplateService emailTemplateService)
         {
@@ -66,14 +66,26 @@ namespace CajuAjuda.Backend.Services
 
             _logger.LogInformation("🎯 Criando novo chamado. Iniciando análise de IA...");
 
-            // 1. Definir prioridade usando IA
-            var prioridadeDefinidaPelaIA = await _aiService.DefinirPrioridadeAsync(chamadoDto.Titulo, chamadoDto.Descricao);
-            _logger.LogInformation("✅ Prioridade definida: {Prioridade}", prioridadeDefinidaPelaIA);
+            // 1. Definir prioridade usando IA (ou usar padrão se IA não disponível)
+            var prioridadeDefinidaPelaIA = PrioridadeChamado.MEDIA;
+            if (_aiService != null)
+            {
+                prioridadeDefinidaPelaIA = await _aiService.DefinirPrioridadeAsync(chamadoDto.Titulo, chamadoDto.Descricao);
+                _logger.LogInformation("✅ Prioridade definida pela IA: {Prioridade}", prioridadeDefinidaPelaIA);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ Serviço de IA não disponível. Usando prioridade MEDIA como padrão.");
+            }
 
-            // 2. Gerar sugestão de solução usando IA
-            _logger.LogInformation("🤖 Gerando sugestão de solução com IA...");
-            var sugestaoIA = await _aiService.SugerirSolucaoAsync(chamadoDto.Titulo, chamadoDto.Descricao);
-            _logger.LogInformation("✅ Sugestão de solução gerada ({Length} caracteres)", sugestaoIA.Length);
+            // 2. Gerar sugestão de solução usando IA (opcional)
+            string? sugestaoIA = null;
+            if (_aiService != null)
+            {
+                _logger.LogInformation("🤖 Gerando sugestão de solução com IA...");
+                sugestaoIA = await _aiService.SugerirSolucaoAsync(chamadoDto.Titulo, chamadoDto.Descricao);
+                _logger.LogInformation("✅ Sugestão de solução gerada ({Length} caracteres)", sugestaoIA.Length);
+            }
 
             var novoChamado = new Chamado
             {
@@ -83,7 +95,7 @@ namespace CajuAjuda.Backend.Services
                 Status = StatusChamado.ABERTO,
                 DataCriacao = DateTime.UtcNow,
                 ClienteId = cliente.Id,
-                SugestaoIA = sugestaoIA // Mantém para referência futura
+                SugestaoIA = sugestaoIA
             };
             await _chamadoRepository.AddAsync(novoChamado);
 

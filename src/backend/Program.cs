@@ -37,7 +37,20 @@ builder.Services.AddScoped<IRespostaProntaService, RespostaProntaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<EmailTemplateService>();
-builder.Services.AddScoped<IAIService, AIService>();
+
+// Registrar AIService apenas se a chave estiver configurada
+var geminiKey = builder.Configuration["Gemini:ApiKey"];
+if (!string.IsNullOrEmpty(geminiKey))
+{
+    builder.Services.AddScoped<IAIService, AIService>();
+    Console.WriteLine("[STARTUP] ✅ Serviço de IA (Gemini) configurado e registrado.");
+}
+else
+{
+    Console.WriteLine("[STARTUP] ⚠️ Chave do Gemini não encontrada. Serviço de IA não será registrado (funcionalidade opcional).");
+    // Registrar um serviço null/vazio opcional
+    builder.Services.AddScoped<IAIService>(sp => null!);
+}
 
 builder.Services.AddTransient<DataInitializer>();
 builder.Services.AddSignalR();
