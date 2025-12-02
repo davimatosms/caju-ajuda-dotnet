@@ -14,32 +14,21 @@ const DEV_API_PORT = 5205;
 // integrado ao ASP.NET Core, você pode remover ou comentar a linha SOCKET_URL abaixo.
 const DEV_SOCKET_PORT = 9092; // <- PENDENTE DE CONFIRMAÇÃO
 
+// --- Configurações de Produção ---
+const PROD_API_URL = 'https://cajuajuda-backend-engaa9gfezfndcgd.eastus2-01.azurewebsites.net/api';
+const PROD_SIGNALR_HUB_URL = 'https://cajuajuda-backend-engaa9gfezfndcgd.eastus2-01.azurewebsites.net/notificacaoHub';
+
 // --- URLs Exportadas ---
 
-// URL base completa para a API REST em ambiente de desenvolvimento
-// Ex: http://192.168.15.11:5205/api
-export const API_BASE_URL = `http://${DEV_IP}:${DEV_API_PORT}/api`;
+// URL base completa para a API REST
+// Em desenvolvimento: http://192.168.15.11:5205/api
+// Em produção: Azure backend
+export const API_BASE_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/api` : PROD_API_URL;
 
-// URL completa para o Hub SignalR em ambiente de desenvolvimento
-// Ex: http://192.168.15.11:5205/notificacaoHub
-// (Note que usa a mesma porta da API, pois está mapeado no Program.cs)
-export const SIGNALR_HUB_URL = `http://${DEV_IP}:${DEV_API_PORT}/notificacaoHub`;
-
-// (Comentado - Exemplo de como era para Socket.IO, pode remover se não usar)
-// export const SOCKET_URL = `http://${DEV_IP}:${DEV_SOCKET_PORT}`;
-
-
-// --- Configurações de Produção (Exemplo - Preencher depois) ---
-// const PROD_API_URL = 'https://sua-api-de-producao.azurewebsites.net/api';
-// const PROD_SIGNALR_HUB_URL = 'https://sua-api-de-producao.azurewebsites.net/notificacaoHub';
-
-
-// --- Exportação Condicional (Opcional) ---
-// Descomente as linhas abaixo se quiser alternar automaticamente entre DEV e PROD
-// (A variável global __DEV__ é definida automaticamente pelo React Native/Expo)
-
-// export const API_BASE_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/api` : PROD_API_URL;
-// export const SIGNALR_HUB_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/notificacaoHub` : PROD_SIGNALR_HUB_URL;
+// URL completa para o Hub SignalR
+// Em desenvolvimento: http://192.168.15.11:5205/notificacaoHub
+// Em produção: Azure backend
+export const SIGNALR_HUB_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/notificacaoHub` : PROD_SIGNALR_HUB_URL;
 
 // Exporta as portas individualmente (pode ser útil para debug ou configurações)
 export const API_PORT = DEV_API_PORT;
