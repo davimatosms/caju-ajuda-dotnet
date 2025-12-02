@@ -27,9 +27,8 @@ namespace CajuAjuda.Desktop
 #endif
 
             // --- CONFIGURAÇÃO DA INJEÇÃO DE DEPENDÊNCIA ---
-            string baseAddress = DeviceInfo.Platform == DevicePlatform.Android
-                ? "http://10.0.2.2:5205"
-                : "http://localhost:5205";
+            // Backend no Azure
+            string baseAddress = "https://cajuajuda-backend-engaa9gfezfndcgd.eastus2-01.azurewebsites.net";
 
             // Registra o AuthorizationMessageHandler
             builder.Services.AddTransient<AuthorizationMessageHandler>();

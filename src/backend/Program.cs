@@ -133,14 +133,19 @@ app.UseSwaggerUI();
 
 app.UseMiddleware<GlobalExceptionHandler>();
 
-// CORS configurado para SignalR e Azure
+// CORS configurado para Web, Desktop e Mobile
 var frontendUrl = builder.Configuration["FRONTEND_URL"] ?? "https://blue-bay-088f9e20f.azurestaticapps.net";
 app.UseCors(policy => policy
-    .WithOrigins(
-        "http://localhost:3000", 
-        "http://localhost:3001",
-        frontendUrl
-    ) 
+    .SetIsOriginAllowed(origin => 
+    {
+        // Permite localhost (desenvolvimento web)
+        if (origin.StartsWith("http://localhost")) return true;
+        // Permite frontend Azure
+        if (origin == frontendUrl) return true;
+        // Permite aplicativos nativos (Desktop/Mobile) - eles não enviam Origin header ou enviam "null"
+        if (string.IsNullOrEmpty(origin) || origin == "null") return true;
+        return false;
+    })
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials()
