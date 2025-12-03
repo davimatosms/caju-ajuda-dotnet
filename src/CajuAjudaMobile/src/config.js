@@ -20,15 +20,13 @@ const PROD_SIGNALR_HUB_URL = 'https://cajuajuda-backend-engaa9gfezfndcgd.eastus2
 
 // --- URLs Exportadas ---
 
-// URL base completa para a API REST
-// Em desenvolvimento: http://192.168.15.11:5205/api
-// Em produção: Azure backend
-export const API_BASE_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/api` : PROD_API_URL;
+// TEMPORÁRIO: Forçar produção para testes
+// export const API_BASE_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/api` : PROD_API_URL;
+// export const SIGNALR_HUB_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/notificacaoHub` : PROD_SIGNALR_HUB_URL;
 
-// URL completa para o Hub SignalR
-// Em desenvolvimento: http://192.168.15.11:5205/notificacaoHub
-// Em produção: Azure backend
-export const SIGNALR_HUB_URL = __DEV__ ? `http://${DEV_IP}:${DEV_API_PORT}/notificacaoHub` : PROD_SIGNALR_HUB_URL;
+// Usar Azure mesmo em desenvolvimento
+export const API_BASE_URL = PROD_API_URL;
+export const SIGNALR_HUB_URL = PROD_SIGNALR_HUB_URL;
 
 // Exporta as portas individualmente (pode ser útil para debug ou configurações)
 export const API_PORT = DEV_API_PORT;
